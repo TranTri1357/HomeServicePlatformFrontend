@@ -9,6 +9,7 @@ export const SCREEN_PATHS: Record<Screen, string> = {
   technicianDetail: "/customer/technician/detail",
   booking: "/customer/booking",
   payment: "/customer/payment",
+  mockGateway: "/customer/payment/gateway",
   chat: "/customer/chat",
   customerProfile: "/customer/profile",
   bookingManagement: "/customer/bookings",

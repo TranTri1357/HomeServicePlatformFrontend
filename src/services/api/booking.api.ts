@@ -1,5 +1,11 @@
 import { get, post, put, unwrap, type ApiResponse } from "./client";
-import type { CreateBookingInput, CreateBookingResult, MyBooking } from "@/shared/types";
+import type {
+  CreateBookingInput,
+  CreateBookingResult,
+  CreateDisputeInput,
+  CreateReviewInput,
+  MyBooking,
+} from "@/shared/types";
 
 /** GET /api/customer/bookings/my-orders — the current customer's bookings. */
 export async function getMyBookings(): Promise<MyBooking[]> {
@@ -26,5 +32,32 @@ export async function cancelBooking(bookingId: number, cancelReason: string): Pr
   const response = await put<ApiResponse<boolean>>(`/customer/bookings/${bookingId}/cancel`, {
     cancelReason,
   });
+  return unwrap(response);
+}
+
+/**
+ * POST /api/bookings/{bookingItemId}/reviews — review a completed job.
+ * Requires the Customer role; CustomerId comes from the JWT. The booking item
+ * must belong to the customer and its booking must be Completed. Returns the
+ * new review id.
+ */
+export async function createReview(
+  bookingItemId: number,
+  input: CreateReviewInput,
+): Promise<number> {
+  const response = await post<ApiResponse<number>>(`/bookings/${bookingItemId}/reviews`, input);
+  return unwrap(response);
+}
+
+/**
+ * POST /api/bookings/{bookingId}/disputes — file a complaint about a booking.
+ * Requires the Customer role; CustomerId comes from the JWT. Reason must be
+ * 10–1000 chars. Returns the new dispute id.
+ */
+export async function createDispute(
+  bookingId: number,
+  input: CreateDisputeInput,
+): Promise<number> {
+  const response = await post<ApiResponse<number>>(`/bookings/${bookingId}/disputes`, input);
   return unwrap(response);
 }

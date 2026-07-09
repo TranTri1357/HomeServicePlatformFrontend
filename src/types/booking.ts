@@ -61,6 +61,8 @@ export type BookingStatusCode = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 /** One row of GET /api/customer/bookings/my-orders. */
 export interface MyBooking {
   bookingId: number;
+  /** First booking item's id — needed to submit a review. Null if no items. */
+  bookingItemId: number | null;
   serviceName: string;
   taskerId: number | null;
   taskerName: string | null;

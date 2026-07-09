@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useEffect, useState } from "react";
 import {
   MapPin,
   Search,
@@ -9,9 +9,12 @@ import {
   LayoutGrid,
   BadgeCheck,
   Sparkles,
+  Loader2,
+  X,
+  Wrench,
 } from "lucide-react";
 import type { Screen } from "@/shared/types";
-import { categoryApi, serviceApi, taskerApi } from "@/services/api";
+import { categoryApi, serviceApi, taskerApi, searchApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
 import { Avatar } from "@/shared/ui";
 import { getApiAssetUrl, getUnsplashUrl, formatVnd } from "@/shared/lib";
@@ -54,6 +57,30 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
     { initialData: mockPopularServices },
   );
 
+  // Global search — GET /api/Search?keyword= (debounced, dropdown results).
+  const [keyword, setKeyword] = useState("");
+  const trimmed = keyword.trim();
+  const showResults = trimmed.length >= 2;
+  const { data: searchResult, loading: searching, refetch: runSearch } = useApi(
+    () => searchApi.globalSearch(trimmed),
+    { immediate: false },
+  );
+  useEffect(() => {
+    if (trimmed.length < 2) return;
+    const t = setTimeout(() => void runSearch(), 350);
+    return () => clearTimeout(t);
+  }, [trimmed, runSearch]);
+
+  const selectResult = (screen: Screen, payload?: object) => {
+    setKeyword("");
+    onNavigate(screen, payload);
+  };
+  const hasAnyResult =
+    !!searchResult &&
+    (searchResult.categories.length > 0 ||
+      searchResult.services.length > 0 ||
+      searchResult.taskers.length > 0);
+
   return (
     <div className="overflow-y-auto h-full">
       {/* Header */}
@@ -79,12 +106,98 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
         </div>
 
         {/* Search */}
-        <div className="flex items-center gap-2 bg-white rounded-xl px-4 py-3">
-          <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-          <input
-            className="flex-1 text-sm bg-transparent focus:outline-none text-foreground"
-            placeholder="Tìm kiếm dịch vụ..."
-          />
+        <div className="relative">
+          <div className="flex items-center gap-2 bg-white rounded-xl px-4 py-3">
+            <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <input
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              className="flex-1 text-sm bg-transparent focus:outline-none text-foreground"
+              placeholder="Tìm dịch vụ, thợ..."
+            />
+            {searching && <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />}
+            {keyword && !searching && (
+              <button onClick={() => setKeyword("")} aria-label="Xóa tìm kiếm">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            )}
+          </div>
+
+          {showResults && (
+            <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-border z-30 max-h-80 overflow-y-auto">
+              {searching && !searchResult ? (
+                <div className="flex items-center gap-2 px-4 py-6 text-sm text-muted-foreground justify-center">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Đang tìm...
+                </div>
+              ) : !hasAnyResult ? (
+                <div className="px-4 py-6 text-sm text-muted-foreground text-center">
+                  Không tìm thấy kết quả cho “{trimmed}”.
+                </div>
+              ) : (
+                <div className="py-1">
+                  {searchResult!.categories.length > 0 && (
+                    <div>
+                      <p className="px-4 pt-2 pb-1 text-[11px] font-bold uppercase text-muted-foreground">
+                        Danh mục
+                      </p>
+                      {searchResult!.categories.map((c) => (
+                        <button
+                          key={`c-${c.id}`}
+                          onClick={() => selectResult("serviceList")}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left"
+                        >
+                          <LayoutGrid className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                          <span className="text-sm text-foreground truncate">{c.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {searchResult!.services.length > 0 && (
+                    <div>
+                      <p className="px-4 pt-2 pb-1 text-[11px] font-bold uppercase text-muted-foreground">
+                        Dịch vụ
+                      </p>
+                      {searchResult!.services.map((s) => (
+                        <button
+                          key={`s-${s.id}`}
+                          onClick={() => selectResult("serviceDetail", { serviceId: s.id })}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left"
+                        >
+                          <Wrench className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                          <span className="text-sm text-foreground truncate">{s.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {searchResult!.taskers.length > 0 && (
+                    <div>
+                      <p className="px-4 pt-2 pb-1 text-[11px] font-bold uppercase text-muted-foreground">
+                        Thợ
+                      </p>
+                      {searchResult!.taskers.map((t) => (
+                        <button
+                          key={`t-${t.id}`}
+                          onClick={() => selectResult("technicianDetail", { taskerId: t.id })}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left"
+                        >
+                          <Avatar size={28} name={t.fullName} />
+                          <span className="flex-1 text-sm text-foreground truncate">
+                            {t.fullName}
+                          </span>
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
+                            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                            {t.ratingAvg}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

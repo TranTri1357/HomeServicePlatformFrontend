@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
-import { Wrench, Star, AlertCircle, Check, Loader2 } from "lucide-react";
-import type { Screen } from "@/shared/types";
-import { serviceApi, bookingApi } from "@/services/api";
+import { Wrench, Star, AlertCircle, Check, MapPin } from "lucide-react";
+import type { Screen, CustomerAddress, CreateBookingInput } from "@/shared/types";
+import { serviceApi, addressApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
 import { useAuth } from "@/app/providers";
 import { TopBar, Avatar } from "@/shared/ui";
-import { formatVnd, notify, getErrorMessage } from "@/shared/lib";
+import { formatVnd } from "@/shared/lib";
 
 const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 const TIME_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
@@ -48,8 +48,19 @@ export function Booking({
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [note, setNote] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Saved addresses — GET /api/customer/addresses. `savedAddr` keeps the picked
+  // one so we can forward its ward/district codes + coordinates on submit.
+  const { data: savedAddresses = [] } = useApi(() => addressApi.getMyAddresses(), {
+    initialData: [],
+  });
+  const [savedAddr, setSavedAddr] = useState<CustomerAddress | null>(null);
+
+  const pickSavedAddress = (addr: CustomerAddress) => {
+    setSavedAddr(addr);
+    setAddress(addr.addressLine);
+  };
 
   // ── Guards ────────────────────────────────────────────────────────────────
   if (!serviceId) {
@@ -109,7 +120,9 @@ export function Booking({
     return d;
   };
 
-  const handleSubmit = async () => {
+  // Validate the form and forward a booking *draft* to the payment screen.
+  // The order itself is created there, only when the customer confirms payment.
+  const handleSubmit = () => {
     setFormError(null);
 
     if (!fullName.trim()) return setFormError("Vui lòng nhập tên người nhận.");
@@ -122,32 +135,35 @@ export function Booking({
       return setFormError("Vui lòng chọn thời gian hẹn trong tương lai.");
     const endAt = new Date(startAt.getTime() + (detail.durationMinutes || 60) * 60_000);
 
-    setSubmitting(true);
-    try {
-      const res = await bookingApi.createBooking({
-        fullName: fullName.trim(),
-        phone: phone.trim(),
-        addressLine: address.trim(),
-        note: note.trim() || undefined,
-        bookingItems: [
-          {
-            serviceId: detail.serviceId,
-            taskerId: taskerId ?? null,
-            startAt: startAt.toISOString(),
-            endAt: endAt.toISOString(),
-            unitPrice,
-            quantity: 1,
-          },
-        ],
-      });
-      notify.success(res.message || "Đặt lịch thành công");
-      onNavigate("payment", { bookingId: res.bookingId, finalAmount: res.finalAmount });
-    } catch (err) {
-      notify.error(err);
-      setFormError(getErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
+    // Attach ward/district codes + coordinates only when the field still holds
+    // the picked saved address (user hasn't retyped it).
+    const useSaved = savedAddr && savedAddr.addressLine === address.trim();
+
+    const draft: CreateBookingInput = {
+      fullName: fullName.trim(),
+      phone: phone.trim(),
+      addressLine: address.trim(),
+      provinceCode: useSaved ? savedAddr!.provinceCode : undefined,
+      districtCode: useSaved ? savedAddr!.districtCode : undefined,
+      wardCode: useSaved ? savedAddr!.wardCode : undefined,
+      latitude: useSaved ? savedAddr!.latitude : undefined,
+      longitude: useSaved ? savedAddr!.longitude : undefined,
+      note: note.trim() || undefined,
+      bookingItems: [
+        {
+          serviceId: detail.serviceId,
+          taskerId: taskerId ?? null,
+          startAt: startAt.toISOString(),
+          endAt: endAt.toISOString(),
+          unitPrice,
+          quantity: 1,
+        },
+      ],
+    };
+
+    // Estimated total (discount is applied server-side; 0 here).
+    const estimatedAmount = unitPrice;
+    onNavigate("payment", { draft, estimatedAmount });
   };
 
   return (
@@ -299,9 +315,33 @@ export function Booking({
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-muted-foreground">Địa chỉ chi tiết</label>
+            {savedAddresses.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                {savedAddresses.map((addr) => {
+                  const active = savedAddr?.addressId === addr.addressId;
+                  return (
+                    <button
+                      key={addr.addressId}
+                      type="button"
+                      onClick={() => pickSavedAddress(addr)}
+                      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${active ? "border-blue-600 bg-accent text-blue-600" : "border-border bg-muted text-foreground"}`}
+                    >
+                      <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="max-w-[160px] truncate">{addr.addressLine}</span>
+                      {addr.isDefault && (
+                        <span className="text-[10px] text-green-600 font-semibold">Mặc định</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <input
               value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              onChange={(e) => {
+                setAddress(e.target.value);
+                setSavedAddr(null);
+              }}
               className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="123 Lê Lợi, Quận 1, TP.HCM"
             />
@@ -352,11 +392,9 @@ export function Booking({
         )}
         <button
           onClick={handleSubmit}
-          disabled={submitting}
-          className="w-full py-4 bg-blue-600 disabled:opacity-70 text-white rounded-xl font-bold text-base hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 active:scale-[0.98] flex items-center justify-center gap-2"
+          className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-base hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 active:scale-[0.98] flex items-center justify-center gap-2"
         >
-          {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
-          {submitting ? "Đang đặt lịch..." : "Xác nhận đặt lịch →"}
+          Tiếp tục thanh toán →
         </button>
       </div>
     </div>

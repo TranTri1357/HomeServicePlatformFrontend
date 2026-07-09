@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { Calendar, MapPin, MessageCircle, Map, Star, AlertCircle, Loader2 } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  MessageCircle,
+  Map,
+  Star,
+  Flag,
+  CreditCard,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { bookingApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
@@ -27,6 +37,9 @@ const TABS: { key: string; label: string; statuses: number[] | null }[] = [
 
 // Backend allows a customer to cancel only while the booking is still Pending.
 const CANCELLABLE = [0];
+// A complaint makes sense once a tasker is engaged (on the way / working / done).
+const DISPUTABLE = [2, 3, 4];
+const MIN_DISPUTE_LEN = 10;
 
 function formatDateTime(iso: string): string {
   const d = new Date(iso);
@@ -40,7 +53,11 @@ function formatDateTime(iso: string): string {
   });
 }
 
-export function BookingManagement({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+export function BookingManagement({
+  onNavigate,
+}: {
+  onNavigate: (s: Screen, d?: object) => void;
+}) {
   const [activeTab, setActiveTab] = useState("all");
   const { data: bookings = [], loading, error, refetch } = useApi(() => bookingApi.getMyBookings());
 
@@ -48,6 +65,17 @@ export function BookingManagement({ onNavigate }: { onNavigate: (s: Screen) => v
   const [cancelTarget, setCancelTarget] = useState<number | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
+
+  // Dispute (complaint) modal state.
+  const [disputeTarget, setDisputeTarget] = useState<number | null>(null);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [disputing, setDisputing] = useState(false);
+
+  // Review modal state (keyed by bookingItemId).
+  const [reviewTarget, setReviewTarget] = useState<number | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewing, setReviewing] = useState(false);
 
   const activeStatuses = TABS.find((t) => t.key === activeTab)?.statuses ?? null;
   const filtered = activeStatuses ? bookings.filter((b) => activeStatuses.includes(b.status)) : bookings;
@@ -69,6 +97,52 @@ export function BookingManagement({ onNavigate }: { onNavigate: (s: Screen) => v
       notify.error(err);
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const confirmDispute = async () => {
+    if (disputeTarget == null) return;
+    if (disputeReason.trim().length < MIN_DISPUTE_LEN) {
+      notify.error(`Lý do khiếu nại cần ít nhất ${MIN_DISPUTE_LEN} ký tự.`);
+      return;
+    }
+    setDisputing(true);
+    try {
+      await bookingApi.createDispute(disputeTarget, { reason: disputeReason.trim() });
+      notify.success("Đã gửi khiếu nại. Chúng tôi sẽ xem xét sớm nhất.");
+      setDisputeTarget(null);
+      setDisputeReason("");
+    } catch (err) {
+      notify.error(err);
+    } finally {
+      setDisputing(false);
+    }
+  };
+
+  const openReview = (bookingItemId: number | null) => {
+    if (bookingItemId == null) {
+      notify.error("Đơn này chưa có hạng mục để đánh giá.");
+      return;
+    }
+    setReviewTarget(bookingItemId);
+    setReviewRating(5);
+    setReviewComment("");
+  };
+
+  const confirmReview = async () => {
+    if (reviewTarget == null) return;
+    setReviewing(true);
+    try {
+      await bookingApi.createReview(reviewTarget, {
+        rating: reviewRating,
+        comment: reviewComment.trim() || undefined,
+      });
+      notify.success("Cảm ơn bạn đã gửi đánh giá!");
+      setReviewTarget(null);
+    } catch (err) {
+      notify.error(err);
+    } finally {
+      setReviewing(false);
     }
   };
 
@@ -164,9 +238,38 @@ export function BookingManagement({ onNavigate }: { onNavigate: (s: Screen) => v
                       </button>
                     )}
                     {bk.status === 4 && (
-                      <button className="px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-xs font-semibold flex items-center gap-1">
+                      <button
+                        onClick={() => openReview(bk.bookingItemId)}
+                        className="px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-xs font-semibold flex items-center gap-1 hover:bg-amber-100 transition-colors"
+                      >
                         <Star className="w-3.5 h-3.5" />
                         Đánh giá
+                      </button>
+                    )}
+                    {DISPUTABLE.includes(bk.status) && (
+                      <button
+                        onClick={() => {
+                          setDisputeTarget(bk.bookingId);
+                          setDisputeReason("");
+                        }}
+                        className="px-3 py-1.5 bg-orange-50 text-orange-600 rounded-lg text-xs font-semibold flex items-center gap-1 hover:bg-orange-100 transition-colors"
+                      >
+                        <Flag className="w-3.5 h-3.5" />
+                        Khiếu nại
+                      </button>
+                    )}
+                    {bk.status === 0 && (
+                      <button
+                        onClick={() =>
+                          onNavigate("payment", {
+                            bookingId: bk.bookingId,
+                            finalAmount: bk.finalAmount,
+                          })
+                        }
+                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1 hover:bg-blue-700 transition-colors"
+                      >
+                        <CreditCard className="w-3.5 h-3.5" />
+                        Thanh toán
                       </button>
                     )}
                     {CANCELLABLE.includes(bk.status) && (
@@ -221,6 +324,99 @@ export function BookingManagement({ onNavigate }: { onNavigate: (s: Screen) => v
               >
                 {cancelling && <Loader2 className="w-4 h-4 animate-spin" />}
                 {cancelling ? "Đang hủy..." : "Xác nhận hủy"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dispute modal */}
+      {disputeTarget != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">
+            <div>
+              <h3 className="font-bold text-foreground">Khiếu nại đơn BK{disputeTarget}</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Mô tả chi tiết vấn đề bạn gặp phải (ít nhất {MIN_DISPUTE_LEN} ký tự).
+              </p>
+            </div>
+            <textarea
+              value={disputeReason}
+              onChange={(e) => setDisputeReason(e.target.value)}
+              rows={4}
+              maxLength={1000}
+              autoFocus
+              className="w-full bg-muted rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
+              placeholder="VD: Thợ đến trễ, chất lượng chưa đạt, tính phí sai..."
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDisputeTarget(null)}
+                disabled={disputing}
+                className="flex-1 py-2.5 border border-border rounded-xl text-sm font-semibold disabled:opacity-60"
+              >
+                Quay lại
+              </button>
+              <button
+                onClick={confirmDispute}
+                disabled={disputing}
+                className="flex-1 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold hover:bg-orange-700 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {disputing && <Loader2 className="w-4 h-4 animate-spin" />}
+                {disputing ? "Đang gửi..." : "Gửi khiếu nại"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Review modal */}
+      {reviewTarget != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">
+            <div>
+              <h3 className="font-bold text-foreground">Đánh giá dịch vụ</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Chọn số sao và chia sẻ cảm nhận của bạn về thợ.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setReviewRating(star)}
+                  aria-label={`${star} sao`}
+                >
+                  <Star
+                    className={`w-8 h-8 ${star <= reviewRating ? "fill-amber-400 text-amber-400" : "text-gray-300 fill-gray-200"}`}
+                  />
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+              rows={3}
+              maxLength={500}
+              className="w-full bg-muted rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+              placeholder="VD: Thợ làm việc chuyên nghiệp, đúng giờ... (không bắt buộc)"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setReviewTarget(null)}
+                disabled={reviewing}
+                className="flex-1 py-2.5 border border-border rounded-xl text-sm font-semibold disabled:opacity-60"
+              >
+                Quay lại
+              </button>
+              <button
+                onClick={confirmReview}
+                disabled={reviewing}
+                className="flex-1 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-semibold hover:bg-amber-600 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {reviewing && <Loader2 className="w-4 h-4 animate-spin" />}
+                {reviewing ? "Đang gửi..." : "Gửi đánh giá"}
               </button>
             </div>
           </div>
