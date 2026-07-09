@@ -31,4 +31,3 @@ export interface District {
   active: boolean;
   color: string;
 }
-

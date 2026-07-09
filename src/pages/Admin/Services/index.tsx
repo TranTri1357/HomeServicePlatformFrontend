@@ -21,27 +21,15 @@ export function Services() {
       (s.name.toLowerCase().includes(search.toLowerCase()) ||
         s.type.toLowerCase().includes(search.toLowerCase())),
   );
-  const paged = filtered.slice(
-    (page - 1) * perPage,
-    page * perPage,
-  );
-  const types = [
-    "all",
-    ...Array.from(
-      new Set(adminServicesList.map((s) => s.type)),
-    ),
-  ];
+  const paged = filtered.slice((page - 1) * perPage, page * perPage);
+  const types = ["all", ...Array.from(new Set(adminServicesList.map((s) => s.type)))];
 
   return (
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Quản lý dịch vụ
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Danh sách các dịch vụ trong hệ thống
-          </p>
+          <h1 className="text-2xl font-bold text-foreground">Quản lý dịch vụ</h1>
+          <p className="text-sm text-muted-foreground">Danh sách các dịch vụ trong hệ thống</p>
         </div>
         <button
           onClick={() => setShowAdd(true)}
@@ -101,27 +89,16 @@ export function Services() {
             </thead>
             <tbody className="divide-y divide-border">
               {paged.map((s) => (
-                <tr
-                  key={s.id}
-                  className="hover:bg-muted/30 transition-colors"
-                >
-                  <td className="px-4 py-3 text-sm font-semibold text-foreground">
-                    {s.name}
-                  </td>
+                <tr key={s.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3 text-sm font-semibold text-foreground">{s.name}</td>
                   <td className="px-4 py-3">
                     <span className="bg-accent text-blue-600 text-xs font-semibold px-2 py-0.5 rounded-full">
                       {s.type}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm font-bold text-blue-600">
-                    {s.price}đ
-                  </td>
-                  <td className="px-4 py-3 text-sm text-foreground">
-                    {s.providers}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-foreground">
-                    {s.orders}
-                  </td>
+                  <td className="px-4 py-3 text-sm font-bold text-blue-600">{s.price}đ</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{s.providers}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{s.orders}</td>
                   <td className="px-4 py-3">
                     <AdminBadge status={s.status} />
                   </td>
@@ -151,12 +128,7 @@ export function Services() {
             </tbody>
           </table>
         </div>
-        <AdminPagination
-          page={page}
-          total={filtered.length}
-          perPage={perPage}
-          onChange={setPage}
-        />
+        <AdminPagination page={page} total={filtered.length} perPage={perPage} onChange={setPage} />
       </div>
 
       {showAdd && (
@@ -169,9 +141,7 @@ export function Services() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-bold text-foreground">
-                Thêm dịch vụ mới
-              </h3>
+              <h3 className="text-lg font-bold text-foreground">Thêm dịch vụ mới</h3>
               <button
                 onClick={() => setShowAdd(false)}
                 className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center"
@@ -243,12 +213,8 @@ export function Services() {
           title="Xóa dịch vụ?"
           message={`Dịch vụ "${confirm.label}" sẽ bị xóa vĩnh viễn. Thao tác này không thể hoàn tác.`}
           confirmLabel="Xóa"
-          onConfirm={() =>
-            setConfirm({ show: false, id: null, label: "" })
-          }
-          onCancel={() =>
-            setConfirm({ show: false, id: null, label: "" })
-          }
+          onConfirm={() => setConfirm({ show: false, id: null, label: "" })}
+          onCancel={() => setConfirm({ show: false, id: null, label: "" })}
         />
       )}
     </div>

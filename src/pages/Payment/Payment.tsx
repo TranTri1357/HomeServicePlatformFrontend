@@ -1,21 +1,9 @@
 ﻿import { useState } from "react";
-import {
-  CheckCircle,
-  DollarSign,
-  Building2,
-  CreditCard,
-  Wallet,
-  Check,
-  Zap,
-} from "lucide-react";
+import { CheckCircle, DollarSign, Building2, CreditCard, Wallet, Check, Zap } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { TopBar } from "@/shared/ui";
 
-export function Payment({
-  onNavigate,
-}: {
-  onNavigate: (s: Screen, d?: object) => void;
-}) {
+export function Payment({ onNavigate }: { onNavigate: (s: Screen, d?: object) => void }) {
   const [method, setMethod] = useState("cash");
   const [success, setSuccess] = useState(false);
 
@@ -52,9 +40,7 @@ export function Payment({
         <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
           <CheckCircle className="w-12 h-12 text-green-600" />
         </div>
-        <h2 className="text-2xl font-extrabold text-foreground mb-2">
-          Đặt lịch thành công!
-        </h2>
+        <h2 className="text-2xl font-extrabold text-foreground mb-2">Đặt lịch thành công!</h2>
         <p className="text-muted-foreground text-center mb-2">
           Mã đặt lịch:{" "}
           <span className="font-bold text-foreground">
@@ -62,8 +48,8 @@ export function Payment({
           </span>
         </p>
         <p className="text-muted-foreground text-center text-sm mb-8">
-          Thợ sẽ liên hệ xác nhận trong 5 phút. Bạn có thể theo
-          dõi tiến trình trong Lịch sử đặt lịch.
+          Thợ sẽ liên hệ xác nhận trong 5 phút. Bạn có thể theo dõi tiến trình trong Lịch sử đặt
+          lịch.
         </p>
         <div className="w-full space-y-3">
           <button
@@ -85,30 +71,19 @@ export function Payment({
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar
-        title="Thanh toán"
-        onBack={() => onNavigate("booking")}
-      />
+      <TopBar title="Thanh toán" onBack={() => onNavigate("booking")} />
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Order Summary */}
         <div className="bg-white rounded-2xl p-4">
-          <h3 className="font-bold text-foreground mb-3">
-            Tóm tắt đơn hàng
-          </h3>
+          <h3 className="font-bold text-foreground mb-3">Tóm tắt đơn hàng</h3>
           <div className="flex items-start gap-3 pb-3 border-b border-border mb-3">
             <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
               <Zap className="w-6 h-6 text-amber-500" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-sm text-foreground">
-                Sửa chữa điện
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Thợ: Nguyễn Văn An
-              </p>
-              <p className="text-xs text-muted-foreground">
-                20/06/2026, 09:00 · 123 Lê Lợi, Q.1
-              </p>
+              <p className="font-semibold text-sm text-foreground">Sửa chữa điện</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Thợ: Nguyễn Văn An</p>
+              <p className="text-xs text-muted-foreground">20/06/2026, 09:00 · 123 Lê Lợi, Q.1</p>
             </div>
           </div>
           <div className="space-y-1.5">
@@ -117,37 +92,24 @@ export function Payment({
               ["Phí kiểm tra", "50,000đ"],
               ["Giảm giá", "-20,000đ"],
             ].map(([l, v]) => (
-              <div
-                key={l}
-                className="flex justify-between text-sm"
-              >
-                <span className="text-muted-foreground">
-                  {l}
-                </span>
-                <span
-                  className={`font-semibold ${v.startsWith("-") ? "text-green-600" : ""}`}
-                >
+              <div key={l} className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{l}</span>
+                <span className={`font-semibold ${v.startsWith("-") ? "text-green-600" : ""}`}>
                   {v}
                 </span>
               </div>
             ))}
             <div className="h-px bg-border mt-2 mb-2" />
             <div className="flex justify-between">
-              <span className="font-bold text-foreground">
-                Tổng thanh toán
-              </span>
-              <span className="font-extrabold text-blue-600 text-xl">
-                180,000đ
-              </span>
+              <span className="font-bold text-foreground">Tổng thanh toán</span>
+              <span className="font-extrabold text-blue-600 text-xl">180,000đ</span>
             </div>
           </div>
         </div>
 
         {/* Payment Methods */}
         <div className="bg-white rounded-2xl p-4">
-          <h3 className="font-bold text-foreground mb-3">
-            Phương thức thanh toán
-          </h3>
+          <h3 className="font-bold text-foreground mb-3">Phương thức thanh toán</h3>
           <div className="space-y-2">
             {methods.map((m) => (
               <button
@@ -168,13 +130,9 @@ export function Payment({
                   >
                     {m.label}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {m.desc}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{m.desc}</p>
                 </div>
-                {method === m.id && (
-                  <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                )}
+                {method === m.id && <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />}
               </button>
             ))}
           </div>
@@ -183,9 +141,7 @@ export function Payment({
         {/* Card Form */}
         {method === "card" && (
           <div className="bg-white rounded-2xl p-4 space-y-3">
-            <h3 className="font-bold text-foreground">
-              Thông tin thẻ
-            </h3>
+            <h3 className="font-bold text-foreground">Thông tin thẻ</h3>
             <input
               className="w-full bg-muted px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Số thẻ"
@@ -215,4 +171,3 @@ export function Payment({
     </div>
   );
 }
-

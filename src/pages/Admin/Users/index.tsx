@@ -5,10 +5,18 @@ import { AdminBadge, ConfirmModal, AdminPagination, AdminSearchBar } from "@/com
 import { useUsers } from "@/hooks/Admin/useUsers";
 
 export function Users() {
-  const { search, setSearch, statusFilter, setStatusFilter, page, setPage, filtered, paged, perPage } = useUsers();
-  const [selected, setSelected] = useState<
-    (typeof adminUsersList)[0] | null
-  >(null);
+  const {
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    page,
+    setPage,
+    filtered,
+    paged,
+    perPage,
+  } = useUsers();
+  const [selected, setSelected] = useState<(typeof adminUsersList)[0] | null>(null);
   const [confirm, setConfirm] = useState<{
     show: boolean;
     action: string;
@@ -19,9 +27,7 @@ export function Users() {
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Quản lý tài khoản
-          </h1>
+          <h1 className="text-2xl font-bold text-foreground">Quản lý tài khoản</h1>
           <p className="text-sm text-muted-foreground">
             Quản lý tài khoản khách hàng trong hệ thống
           </p>
@@ -43,41 +49,26 @@ export function Users() {
           },
           {
             label: "Đang hoạt động",
-            value: adminUsersList.filter(
-              (u) => u.status === "active",
-            ).length,
+            value: adminUsersList.filter((u) => u.status === "active").length,
             color: "text-green-600",
             bg: "bg-green-100",
             icon: CheckCircle,
           },
           {
             label: "Bị khóa",
-            value: adminUsersList.filter(
-              (u) => u.status === "blocked",
-            ).length,
+            value: adminUsersList.filter((u) => u.status === "blocked").length,
             color: "text-red-600",
             bg: "bg-red-100",
             icon: Ban,
           },
         ].map((s) => (
-          <div
-            key={s.label}
-            className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3"
-          >
-            <div
-              className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center`}
-            >
+          <div key={s.label} className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3">
+            <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center`}>
               <s.icon className={`w-5 h-5 ${s.color}`} />
             </div>
             <div>
-              <p
-                className={`text-xl font-extrabold ${s.color}`}
-              >
-                {s.value}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {s.label}
-              </p>
+              <p className={`text-xl font-extrabold ${s.color}`}>{s.value}</p>
+              <p className="text-xs text-muted-foreground">{s.label}</p>
             </div>
           </div>
         ))}
@@ -131,35 +122,20 @@ export function Users() {
             </thead>
             <tbody className="divide-y divide-border">
               {paged.map((u) => (
-                <tr
-                  key={u.id}
-                  className="hover:bg-muted/30 transition-colors"
-                >
+                <tr key={u.id} className="hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 text-xs font-bold flex-shrink-0">
                         {u.name[0]}
                       </div>
-                      <span className="text-sm font-semibold text-foreground">
-                        {u.name}
-                      </span>
+                      <span className="text-sm font-semibold text-foreground">{u.name}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">
-                    {u.email}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-foreground">
-                    {u.phone}
-                  </td>
-                  <td className="px-4 py-3 text-sm font-medium text-foreground">
-                    {u.orders}
-                  </td>
-                  <td className="px-4 py-3 text-sm font-bold text-green-600">
-                    {u.spent}đ
-                  </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {u.joined}
-                  </td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{u.email}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{u.phone}</td>
+                  <td className="px-4 py-3 text-sm font-medium text-foreground">{u.orders}</td>
+                  <td className="px-4 py-3 text-sm font-bold text-green-600">{u.spent}đ</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{u.joined}</td>
                   <td className="px-4 py-3">
                     <AdminBadge status={u.status} />
                   </td>
@@ -205,12 +181,7 @@ export function Users() {
             </tbody>
           </table>
         </div>
-        <AdminPagination
-          page={page}
-          total={filtered.length}
-          perPage={perPage}
-          onChange={setPage}
-        />
+        <AdminPagination page={page} total={filtered.length} perPage={perPage} onChange={setPage} />
       </div>
 
       {selected && (
@@ -237,9 +208,7 @@ export function Users() {
                   {selected.name[0]}
                 </div>
                 <div>
-                  <p className="font-bold text-lg">
-                    {selected.name}
-                  </p>
+                  <p className="font-bold text-lg">{selected.name}</p>
                   <AdminBadge status={selected.status} />
                 </div>
               </div>
@@ -254,12 +223,8 @@ export function Users() {
                   key={l}
                   className="flex justify-between py-2 border-b border-border last:border-0"
                 >
-                  <span className="text-sm text-muted-foreground">
-                    {l}
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {v}
-                  </span>
+                  <span className="text-sm text-muted-foreground">{l}</span>
+                  <span className="text-sm font-semibold">{v}</span>
                 </div>
               ))}
             </div>
@@ -268,22 +233,12 @@ export function Users() {
       )}
       {confirm.show && confirm.item && (
         <ConfirmModal
-          title={
-            confirm.action === "block"
-              ? "Khóa tài khoản?"
-              : "Mở khóa tài khoản?"
-          }
+          title={confirm.action === "block" ? "Khóa tài khoản?" : "Mở khóa tài khoản?"}
           message={`Tài khoản ${confirm.item.name} sẽ ${confirm.action === "block" ? "bị khóa và không thể đặt lịch." : "được mở khóa."}`}
-          confirmLabel={
-            confirm.action === "block" ? "Khóa" : "Mở khóa"
-          }
+          confirmLabel={confirm.action === "block" ? "Khóa" : "Mở khóa"}
           danger={confirm.action === "block"}
-          onConfirm={() =>
-            setConfirm({ show: false, action: "", item: null })
-          }
-          onCancel={() =>
-            setConfirm({ show: false, action: "", item: null })
-          }
+          onConfirm={() => setConfirm({ show: false, action: "", item: null })}
+          onCancel={() => setConfirm({ show: false, action: "", item: null })}
         />
       )}
     </div>

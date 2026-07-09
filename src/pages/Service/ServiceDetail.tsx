@@ -1,13 +1,5 @@
 ﻿import { useState } from "react";
-import {
-  ChevronLeft,
-  Heart,
-  Share2,
-  BookOpen,
-  CheckCircle,
-  Check,
-  Star,
-} from "lucide-react";
+import { ChevronLeft, Heart, Share2, BookOpen, CheckCircle, Check, Star } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import type { Service } from "@/shared/types";
 import { services } from "@/services/Service/service.data";
@@ -49,14 +41,10 @@ export function ServiceDetail({
           </button>
         </div>
         <div className="absolute bottom-4 left-4">
-          <h1 className="text-white text-2xl font-bold">
-            {svc.name}
-          </h1>
+          <h1 className="text-white text-2xl font-bold">{svc.name}</h1>
           <div className="flex items-center gap-2 mt-1">
             <BookOpen className="w-4 h-4 text-blue-200" />
-            <span className="text-white/90 text-sm">
-              {svc.reviews} lượt đặt
-            </span>
+            <span className="text-white/90 text-sm">{svc.reviews} lượt đặt</span>
           </div>
         </div>
       </div>
@@ -66,18 +54,12 @@ export function ServiceDetail({
         {/* Price highlight */}
         <div className="bg-white px-4 py-4 flex items-center justify-between border-b border-border">
           <div>
-            <span className="text-blue-600 text-2xl font-extrabold">
-              {svc.price}đ
-            </span>
-            <span className="text-muted-foreground text-sm">
-              /lượt
-            </span>
+            <span className="text-blue-600 text-2xl font-extrabold">{svc.price}đ</span>
+            <span className="text-muted-foreground text-sm">/lượt</span>
           </div>
           <div className="flex items-center gap-1.5 text-green-600">
             <CheckCircle className="w-4 h-4" />
-            <span className="text-sm font-semibold">
-              Còn chỗ hôm nay
-            </span>
+            <span className="text-sm font-semibold">Còn chỗ hôm nay</span>
           </div>
         </div>
 
@@ -89,11 +71,7 @@ export function ServiceDetail({
               onClick={() => setActiveTab(t)}
               className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === t ? "text-blue-600 border-b-2 border-blue-600" : "text-muted-foreground"}`}
             >
-              {t === "about"
-                ? "Về dịch vụ"
-                : t === "pricing"
-                  ? "Bảng giá"
-                  : "Đánh giá"}
+              {t === "about" ? "Về dịch vụ" : t === "pricing" ? "Bảng giá" : "Đánh giá"}
             </button>
           ))}
         </div>
@@ -102,20 +80,15 @@ export function ServiceDetail({
           {activeTab === "about" && (
             <>
               <div className="bg-white rounded-2xl p-4">
-                <h3 className="font-bold text-foreground mb-2">
-                  Mô tả dịch vụ
-                </h3>
+                <h3 className="font-bold text-foreground mb-2">Mô tả dịch vụ</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Dịch vụ {svc.name} chuyên nghiệp với đội ngũ
-                  thợ có chứng chỉ và kinh nghiệm. Chúng tôi cam
-                  kết chất lượng cao nhất, đúng giờ và bảo hành
-                  3 tháng sau khi hoàn thành.
+                  Dịch vụ {svc.name} chuyên nghiệp với đội ngũ thợ có chứng chỉ và kinh nghiệm.
+                  Chúng tôi cam kết chất lượng cao nhất, đúng giờ và bảo hành 3 tháng sau khi hoàn
+                  thành.
                 </p>
               </div>
               <div className="bg-white rounded-2xl p-4 space-y-3">
-                <h3 className="font-bold text-foreground">
-                  Bao gồm
-                </h3>
+                <h3 className="font-bold text-foreground">Bao gồm</h3>
                 {[
                   "Kiểm tra và chẩn đoán miễn phí",
                   "Thợ có chứng chỉ chuyên môn",
@@ -123,24 +96,17 @@ export function ServiceDetail({
                   "Vật tư chính hãng",
                   "Dọn dẹp sau khi sửa",
                 ].map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-center gap-2"
-                  >
+                  <div key={item} className="flex items-center gap-2">
                     <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
                       <Check className="w-3 h-3 text-green-600" />
                     </div>
-                    <span className="text-sm text-foreground">
-                      {item}
-                    </span>
+                    <span className="text-sm text-foreground">{item}</span>
                   </div>
                 ))}
               </div>
               {/* Nearby Techs */}
               <div className="bg-white rounded-2xl p-4">
-                <h3 className="font-bold text-foreground mb-3">
-                  Thợ có sẵn
-                </h3>
+                <h3 className="font-bold text-foreground mb-3">Thợ có sẵn</h3>
                 <div className="space-y-3">
                   {technicians
                     .filter((t) => t.status === "available")
@@ -156,27 +122,18 @@ export function ServiceDetail({
                         className="w-full flex items-center gap-3 p-3 bg-muted rounded-xl hover:bg-accent transition-colors"
                       >
                         <div className="relative">
-                          <Avatar
-                            src={tech.avatar}
-                            size={44}
-                            name={tech.name}
-                          />
+                          <Avatar src={tech.avatar} size={44} name={tech.name} />
                           <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                         </div>
                         <div className="flex-1 text-left">
-                          <p className="font-semibold text-sm text-foreground">
-                            {tech.name}
-                          </p>
+                          <p className="font-semibold text-sm text-foreground">{tech.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {tech.experience} kinh nghiệm ·{" "}
-                            {tech.distance}
+                            {tech.experience} kinh nghiệm · {tech.distance}
                           </p>
                         </div>
                         <div className="flex items-center gap-1">
                           <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                          <span className="text-sm font-bold">
-                            {tech.rating}
-                          </span>
+                          <span className="text-sm font-bold">{tech.rating}</span>
                         </div>
                       </button>
                     ))}
@@ -188,9 +145,7 @@ export function ServiceDetail({
           {activeTab === "pricing" && (
             <div className="bg-white rounded-2xl overflow-hidden">
               <div className="bg-blue-600 px-4 py-3">
-                <h3 className="font-bold text-white">
-                  Bảng giá dịch vụ
-                </h3>
+                <h3 className="font-bold text-white">Bảng giá dịch vụ</h3>
               </div>
               <div className="divide-y divide-border">
                 {[
@@ -206,16 +161,9 @@ export function ServiceDetail({
                     price: "200,000/lần",
                   },
                 ].map((item) => (
-                  <div
-                    key={item.name}
-                    className="flex justify-between items-center px-4 py-3"
-                  >
-                    <span className="text-sm text-foreground">
-                      {item.name}
-                    </span>
-                    <span className="text-sm font-bold text-blue-600">
-                      {item.price}đ
-                    </span>
+                  <div key={item.name} className="flex justify-between items-center px-4 py-3">
+                    <span className="text-sm text-foreground">{item.name}</span>
+                    <span className="text-sm font-bold text-blue-600">{item.price}đ</span>
                   </div>
                 ))}
               </div>
@@ -244,31 +192,20 @@ export function ServiceDetail({
                   text: "Excellent! Professional and quick.",
                 },
               ].map((r) => (
-                <div
-                  key={r.name}
-                  className="bg-white rounded-2xl p-4"
-                >
+                <div key={r.name} className="bg-white rounded-2xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 text-xs font-bold">
-                        {r.name[0]}
-                      </span>
+                      <span className="text-blue-600 text-xs font-bold">{r.name[0]}</span>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        {r.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {r.date}
-                      </p>
+                      <p className="text-sm font-semibold text-foreground">{r.name}</p>
+                      <p className="text-xs text-muted-foreground">{r.date}</p>
                     </div>
                     <div className="ml-auto">
                       <Stars rating={r.rating} />
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {r.text}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{r.text}</p>
                 </div>
               ))}
             </div>
@@ -285,9 +222,7 @@ export function ServiceDetail({
           Tìm thợ gần đây
         </button>
         <button
-          onClick={() =>
-            onNavigate("booking", { service: svc })
-          }
+          onClick={() => onNavigate("booking", { service: svc })}
           className="flex-1 py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
         >
           Đặt lịch ngay
@@ -296,4 +231,3 @@ export function ServiceDetail({
     </div>
   );
 }
-

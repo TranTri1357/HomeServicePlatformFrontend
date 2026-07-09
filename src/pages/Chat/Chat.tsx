@@ -1,12 +1,5 @@
 ﻿import { useState } from "react";
-import {
-  ChevronLeft,
-  Phone,
-  MapPin,
-  Paperclip,
-  Camera,
-  Send,
-} from "lucide-react";
+import { ChevronLeft, Phone, MapPin, Paperclip, Camera, Send } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { chatMessages } from "@/services/Chat/chat.data";
 import { technicians } from "@/services/Technician/technician.data";
@@ -46,11 +39,7 @@ export function Chat({
       {/* Header */}
       <div className="bg-white border-b border-border px-4 py-3 flex items-center gap-3">
         <button
-          onClick={() =>
-            onNavigate(
-              isProvider ? "providerDashboard" : "customerHome",
-            )
-          }
+          onClick={() => onNavigate(isProvider ? "providerDashboard" : "customerHome")}
           className="w-8 h-8 flex items-center justify-center"
         >
           <ChevronLeft className="w-5 h-5 text-foreground" />
@@ -58,15 +47,11 @@ export function Chat({
         <Avatar src={tech.avatar} size={40} name={tech.name} />
         <div className="flex-1">
           <p className="font-bold text-sm text-foreground">
-            {isProvider
-              ? "Hoàng Văn E (Khách hàng)"
-              : tech.name}
+            {isProvider ? "Hoàng Văn E (Khách hàng)" : tech.name}
           </p>
           <div className="flex items-center gap-1">
             <span className="w-2 h-2 bg-green-500 rounded-full" />
-            <span className="text-xs text-green-600 font-medium">
-              Đang online
-            </span>
+            <span className="text-xs text-green-600 font-medium">Đang online</span>
           </div>
         </div>
         <button className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center">
@@ -82,31 +67,16 @@ export function Chat({
         {/* Booking info banner */}
         <div className="flex justify-center">
           <div className="bg-white border border-border rounded-2xl px-4 py-2.5 text-center shadow-sm">
-            <p className="text-xs font-semibold text-foreground">
-              Đặt lịch #BK001 · Sửa điện
-            </p>
-            <p className="text-xs text-muted-foreground">
-              20/06/2026, 09:00 · Đang thực hiện
-            </p>
+            <p className="text-xs font-semibold text-foreground">Đặt lịch #BK001 · Sửa điện</p>
+            <p className="text-xs text-muted-foreground">20/06/2026, 09:00 · Đang thực hiện</p>
           </div>
         </div>
 
         {messages.map((msg) => {
-          const isMe = isProvider
-            ? msg.from === "tech"
-            : msg.from === "user";
+          const isMe = isProvider ? msg.from === "tech" : msg.from === "user";
           return (
-            <div
-              key={msg.id}
-              className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}
-            >
-              {!isMe && (
-                <Avatar
-                  src={tech.avatar}
-                  size={32}
-                  name={tech.name}
-                />
-              )}
+            <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
+              {!isMe && <Avatar src={tech.avatar} size={32} name={tech.name} />}
               <div
                 className={`max-w-[75%] ${isMe ? "items-end" : "items-start"} flex flex-col gap-1`}
               >
@@ -115,9 +85,7 @@ export function Chat({
                 >
                   {msg.text}
                 </div>
-                <span className="text-[10px] text-muted-foreground">
-                  {msg.time}
-                </span>
+                <span className="text-[10px] text-muted-foreground">{msg.time}</span>
               </div>
             </div>
           );
@@ -151,12 +119,9 @@ export function Chat({
           onClick={send}
           className={`w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 transition-colors ${input.trim() ? "bg-blue-600 hover:bg-blue-700" : "bg-muted"}`}
         >
-          <Send
-            className={`w-4 h-4 ${input.trim() ? "text-white" : "text-muted-foreground"}`}
-          />
+          <Send className={`w-4 h-4 ${input.trim() ? "text-white" : "text-muted-foreground"}`} />
         </button>
       </div>
     </div>
   );
 }
-

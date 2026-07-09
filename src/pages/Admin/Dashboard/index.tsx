@@ -1,23 +1,15 @@
-import {
-  DollarSign, FileText, Users, Wrench,
-} from "lucide-react";
+import { DollarSign, FileText, Users, Wrench } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { AdminBadge } from "@/components/Admin";
 import { useDashboard } from "@/hooks/Admin/useDashboard";
 
-export function Dashboard({
-  onNavigate,
-}: {
-  onNavigate: (s: Screen) => void;
-}) {
+export function Dashboard({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const { revenueChartData, maxRev, pendingProviders, recentOrders } = useDashboard();
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Dashboard
-        </h1>
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
           Tổng quan hoạt động hệ thống – Thứ Sáu, 20/06/2026
         </p>
@@ -63,14 +55,9 @@ export function Dashboard({
             up: false,
           },
         ].map((kpi) => (
-          <div
-            key={kpi.label}
-            className="bg-white rounded-2xl p-4 shadow-sm"
-          >
+          <div key={kpi.label} className="bg-white rounded-2xl p-4 shadow-sm">
             <div className="flex items-start justify-between mb-3">
-              <div
-                className={`w-10 h-10 ${kpi.bg} rounded-xl flex items-center justify-center`}
-              >
+              <div className={`w-10 h-10 ${kpi.bg} rounded-xl flex items-center justify-center`}>
                 <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
               </div>
               <span
@@ -79,12 +66,8 @@ export function Dashboard({
                 {kpi.change}
               </span>
             </div>
-            <p className="text-2xl font-extrabold text-foreground">
-              {kpi.value}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {kpi.label}
-            </p>
+            <p className="text-2xl font-extrabold text-foreground">{kpi.value}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{kpi.label}</p>
           </div>
         ))}
       </div>
@@ -94,12 +77,8 @@ export function Dashboard({
         <div className="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="font-bold text-foreground">
-                Doanh thu 7 ngày gần nhất
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Tổng: 37,100,000đ
-              </p>
+              <h3 className="font-bold text-foreground">Doanh thu 7 ngày gần nhất</h3>
+              <p className="text-xs text-muted-foreground">Tổng: 37,100,000đ</p>
             </div>
             <span className="text-xs bg-green-100 text-green-700 font-semibold px-2.5 py-1 rounded-full">
               +15% so với tuần trước
@@ -107,10 +86,7 @@ export function Dashboard({
           </div>
           <div className="flex items-end gap-2 h-36">
             {revenueChartData.map((d, i) => (
-              <div
-                key={i}
-                className="flex-1 flex flex-col items-center gap-1.5"
-              >
+              <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
                 <span className="text-[10px] text-muted-foreground font-medium">
                   {(d.value / 1000000).toFixed(1)}M
                 </span>
@@ -122,9 +98,7 @@ export function Dashboard({
                     }}
                   />
                 </div>
-                <span className="text-[10px] text-muted-foreground">
-                  {d.day}
-                </span>
+                <span className="text-[10px] text-muted-foreground">{d.day}</span>
               </div>
             ))}
           </div>
@@ -132,9 +106,7 @@ export function Dashboard({
 
         {/* Service breakdown */}
         <div className="bg-white rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-foreground mb-4">
-            Đơn hàng theo loại dịch vụ
-          </h3>
+          <h3 className="font-bold text-foreground mb-4">Đơn hàng theo loại dịch vụ</h3>
           <div className="space-y-3">
             {[
               {
@@ -170,12 +142,8 @@ export function Dashboard({
             ].map((item) => (
               <div key={item.name}>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="font-medium text-foreground">
-                    {item.name}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {item.count} đơn
-                  </span>
+                  <span className="font-medium text-foreground">{item.name}</span>
+                  <span className="text-muted-foreground">{item.count} đơn</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div
@@ -194,9 +162,7 @@ export function Dashboard({
         {/* Recent orders */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-            <h3 className="font-bold text-foreground">
-              Đơn hàng gần đây
-            </h3>
+            <h3 className="font-bold text-foreground">Đơn hàng gần đây</h3>
             <button
               onClick={() => onNavigate("adminOrders")}
               className="text-blue-600 text-xs font-semibold hover:underline"
@@ -206,22 +172,15 @@ export function Dashboard({
           </div>
           <div className="divide-y divide-border">
             {recentOrders.map((order) => (
-              <div
-                key={order.id}
-                className="px-5 py-3 flex items-center gap-3"
-              >
+              <div key={order.id} className="px-5 py-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">
-                    {order.service}
-                  </p>
+                  <p className="text-sm font-semibold text-foreground">{order.service}</p>
                   <p className="text-xs text-muted-foreground truncate">
                     {order.customer} → {order.provider}
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-bold text-foreground">
-                    {order.price}đ
-                  </p>
+                  <p className="text-sm font-bold text-foreground">{order.price}đ</p>
                   <AdminBadge status={order.status} />
                 </div>
               </div>
@@ -232,9 +191,7 @@ export function Dashboard({
         {/* Pending providers */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-            <h3 className="font-bold text-foreground">
-              Thợ chờ duyệt
-            </h3>
+            <h3 className="font-bold text-foreground">Thợ chờ duyệt</h3>
             <button
               onClick={() => onNavigate("adminProviders")}
               className="text-blue-600 text-xs font-semibold hover:underline"
@@ -244,19 +201,12 @@ export function Dashboard({
           </div>
           <div className="divide-y divide-border">
             {pendingProviders.map((p) => (
-              <div
-                key={p.id}
-                className="px-5 py-3 flex items-center gap-3"
-              >
+              <div key={p.id} className="px-5 py-3 flex items-center gap-3">
                 <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 text-xs font-bold">
-                    {p.name[0]}
-                  </span>
+                  <span className="text-blue-600 text-xs font-bold">{p.name[0]}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">
-                    {p.name}
-                  </p>
+                  <p className="text-sm font-semibold text-foreground">{p.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {p.skill} · {p.joined}
                   </p>

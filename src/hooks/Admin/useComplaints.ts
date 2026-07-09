@@ -21,5 +21,17 @@ export function useComplaints() {
   const updateStatus = (id: string, status: AdminComplaint["status"]) =>
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)));
 
-  return { search, setSearch, statusFilter, setStatusFilter, page, setPage, filtered, paged, perPage, items, updateStatus };
+  return {
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    page,
+    setPage,
+    filtered,
+    paged,
+    perPage,
+    items,
+    updateStatus,
+  };
 }

@@ -1,12 +1,4 @@
-﻿import {
-  ChevronLeft,
-  Shield,
-  Star,
-  Briefcase,
-  Award,
-  MessageCircle,
-  Phone,
-} from "lucide-react";
+﻿import { ChevronLeft, Shield, Star, Briefcase, Award, MessageCircle, Phone } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import type { Technician } from "@/shared/types";
 import { technicians } from "@/services/Technician/technician.data";
@@ -34,11 +26,7 @@ export function TechnicianDetail({
           </button>
           <div className="flex items-start gap-4">
             <div className="relative">
-              <Avatar
-                src={tech.avatar}
-                size={80}
-                name={tech.name}
-              />
+              <Avatar src={tech.avatar} size={80} name={tech.name} />
               {tech.status === "available" && (
                 <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
                   <span className="w-2 h-2 bg-white rounded-full" />
@@ -47,29 +35,17 @@ export function TechnicianDetail({
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h2 className="text-white text-xl font-bold">
-                  {tech.name}
-                </h2>
-                {tech.verified && (
-                  <Shield className="w-4 h-4 text-green-400" />
-                )}
+                <h2 className="text-white text-xl font-bold">{tech.name}</h2>
+                {tech.verified && <Shield className="w-4 h-4 text-green-400" />}
               </div>
-              <p className="text-blue-200 text-sm">
-                {tech.skill}
-              </p>
+              <p className="text-blue-200 text-sm">{tech.skill}</p>
               <div className="flex items-center gap-3 mt-2">
                 <div className="flex items-center gap-1">
                   <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  <span className="text-white font-bold text-sm">
-                    {tech.rating}
-                  </span>
+                  <span className="text-white font-bold text-sm">{tech.rating}</span>
                 </div>
-                <span className="text-blue-200 text-sm">
-                  {tech.jobs} công việc
-                </span>
-                <span className="text-blue-200 text-sm">
-                  {tech.experience}
-                </span>
+                <span className="text-blue-200 text-sm">{tech.jobs} công việc</span>
+                <span className="text-blue-200 text-sm">{tech.experience}</span>
               </div>
             </div>
           </div>
@@ -95,26 +71,17 @@ export function TechnicianDetail({
                 icon: Award,
               },
             ].map((stat) => (
-              <div
-                key={stat.label}
-                className="flex flex-col items-center gap-1 px-2"
-              >
+              <div key={stat.label} className="flex flex-col items-center gap-1 px-2">
                 <stat.icon className="w-4 h-4 text-blue-600" />
-                <span className="text-lg font-extrabold text-foreground">
-                  {stat.value}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {stat.label}
-                </span>
+                <span className="text-lg font-extrabold text-foreground">{stat.value}</span>
+                <span className="text-xs text-muted-foreground">{stat.label}</span>
               </div>
             ))}
           </div>
 
           {/* Skills */}
           <div className="bg-white rounded-2xl p-4">
-            <h3 className="font-bold text-foreground mb-3">
-              Kỹ năng chuyên môn
-            </h3>
+            <h3 className="font-bold text-foreground mb-3">Kỹ năng chuyên môn</h3>
             <div className="flex flex-wrap gap-2">
               {[
                 "Sửa điện dân dụng",
@@ -135,41 +102,27 @@ export function TechnicianDetail({
 
           {/* Certificates */}
           <div className="bg-white rounded-2xl p-4">
-            <h3 className="font-bold text-foreground mb-3">
-              Chứng chỉ
-            </h3>
+            <h3 className="font-bold text-foreground mb-3">Chứng chỉ</h3>
             <div className="space-y-2">
-              {[
-                "Chứng chỉ điện công nghiệp – Bộ LĐTBXH",
-                "Chứng nhận an toàn điện – VINASME",
-              ].map((cert) => (
-                <div
-                  key={cert}
-                  className="flex items-center gap-2"
-                >
-                  <Award className="w-4 h-4 text-amber-500" />
-                  <span className="text-sm text-foreground">
-                    {cert}
-                  </span>
-                </div>
-              ))}
+              {["Chứng chỉ điện công nghiệp – Bộ LĐTBXH", "Chứng nhận an toàn điện – VINASME"].map(
+                (cert) => (
+                  <div key={cert} className="flex items-center gap-2">
+                    <Award className="w-4 h-4 text-amber-500" />
+                    <span className="text-sm text-foreground">{cert}</span>
+                  </div>
+                ),
+              )}
             </div>
           </div>
 
           {/* Reviews */}
           <div className="bg-white rounded-2xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-foreground">
-                Đánh giá của khách hàng
-              </h3>
+              <h3 className="font-bold text-foreground">Đánh giá của khách hàng</h3>
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                <span className="font-bold text-foreground">
-                  {tech.rating}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  ({tech.jobs} đánh giá)
-                </span>
+                <span className="font-bold text-foreground">{tech.rating}</span>
+                <span className="text-xs text-muted-foreground">({tech.jobs} đánh giá)</span>
               </div>
             </div>
             {/* Rating bar */}
@@ -181,13 +134,8 @@ export function TechnicianDetail({
                 [2, 1],
                 [1, 1],
               ].map(([star, pct]) => (
-                <div
-                  key={star}
-                  className="flex items-center gap-2"
-                >
-                  <span className="text-xs text-muted-foreground w-3">
-                    {star}
-                  </span>
+                <div key={star} className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground w-3">{star}</span>
                   <Star className="w-3 h-3 fill-amber-400 text-amber-400 flex-shrink-0" />
                   <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
@@ -195,9 +143,7 @@ export function TechnicianDetail({
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <span className="text-[10px] text-muted-foreground w-7 text-right">
-                    {pct}%
-                  </span>
+                  <span className="text-[10px] text-muted-foreground w-7 text-right">{pct}%</span>
                 </div>
               ))}
             </div>
@@ -222,18 +168,13 @@ export function TechnicianDetail({
                   text: "Nhanh và gọn, giá cả hợp lý.",
                 },
               ].map((r) => (
-                <div
-                  key={r.name}
-                  className="border-t border-border pt-3 first:border-0 first:pt-0"
-                >
+                <div key={r.name} className="border-t border-border pt-3 first:border-0 first:pt-0">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xs font-bold">
                         {r.name[0]}
                       </div>
-                      <span className="text-sm font-semibold text-foreground">
-                        {r.name}
-                      </span>
+                      <span className="text-sm font-semibold text-foreground">{r.name}</span>
                     </div>
                     <div className="flex items-center gap-0.5">
                       {[1, 2, 3, 4, 5].map((s) => (
@@ -244,12 +185,8 @@ export function TechnicianDetail({
                       ))}
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {r.text}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    {r.date}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{r.text}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{r.date}</p>
                 </div>
               ))}
             </div>
@@ -278,4 +215,3 @@ export function TechnicianDetail({
     </div>
   );
 }
-

@@ -5,13 +5,12 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\""
   },
   "dependencies": {
-    "@emotion/react": "11.14.0",
-    "@emotion/styled": "11.14.1",
-    "@mui/icons-material": "7.3.5",
-    "@mui/material": "7.3.5",
     "@popperjs/core": "2.11.8",
     "@radix-ui/react-accordion": "1.2.3",
     "@radix-ui/react-alert-dialog": "1.1.6",
@@ -66,9 +65,20 @@
     "vaul": "1.1.2"
   },
   "devDependencies": {
+    "@eslint/js": "9.15.0",
     "@tailwindcss/vite": "4.1.12",
+    "@types/node": "22.9.0",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
     "@vitejs/plugin-react": "4.7.0",
+    "eslint": "9.15.0",
+    "eslint-plugin-react-hooks": "5.0.0",
+    "eslint-plugin-react-refresh": "0.4.14",
+    "globals": "15.12.0",
+    "prettier": "3.3.3",
     "tailwindcss": "4.1.12",
+    "typescript": "5.6.3",
+    "typescript-eslint": "8.15.0",
     "vite": "6.3.5"
   },
   "peerDependencies": {

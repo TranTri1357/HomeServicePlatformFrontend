@@ -4,22 +4,14 @@ import type { Screen } from "@/shared/types";
 import { districts, districtMapPositions } from "@/services/Provider/provider.data";
 import { TopBar } from "@/shared/ui";
 
-export function ProviderAreaRouting({
-  onNavigate,
-}: {
-  onNavigate: (s: Screen) => void;
-}) {
+export function ProviderAreaRouting({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const [areas, setAreas] = useState(districts);
   const [radius, setRadius] = useState(8);
   const [view, setView] = useState<"list" | "map">("map");
   const [saveMsg, setSaveMsg] = useState(false);
 
   const toggleArea = (id: number) =>
-    setAreas(
-      areas.map((a) =>
-        a.id === id ? { ...a, active: !a.active } : a,
-      ),
-    );
+    setAreas(areas.map((a) => (a.id === id ? { ...a, active: !a.active } : a)));
 
   const handleSave = () => {
     setSaveMsg(true);
@@ -46,29 +38,21 @@ export function ProviderAreaRouting({
       {saveMsg && (
         <div className="bg-green-500 px-4 py-2.5 flex items-center gap-2">
           <CheckCircle className="w-4 h-4 text-white" />
-          <span className="text-white text-sm font-semibold">
-            Đã lưu cài đặt khu vực!
-          </span>
+          <span className="text-white text-sm font-semibold">Đã lưu cài đặt khu vực!</span>
         </div>
       )}
 
       {/* Summary bar */}
       <div className="bg-white border-b border-border px-4 py-3 flex items-center gap-4">
         <div className="flex-1">
-          <p className="text-xs text-muted-foreground">
-            Khu vực đang hoạt động
-          </p>
+          <p className="text-xs text-muted-foreground">Khu vực đang hoạt động</p>
           <p className="text-lg font-extrabold text-blue-600">
             {activeCount} / {areas.length} quận/huyện
           </p>
         </div>
         <div className="flex-1">
-          <p className="text-xs text-muted-foreground">
-            Bán kính tối đa
-          </p>
-          <p className="text-lg font-extrabold text-foreground">
-            {radius} km
-          </p>
+          <p className="text-xs text-muted-foreground">Bán kính tối đa</p>
+          <p className="text-lg font-extrabold text-foreground">{radius} km</p>
         </div>
         <div className="flex gap-1 bg-muted rounded-xl p-1">
           {(["map", "list"] as const).map((v) => (
@@ -91,8 +75,7 @@ export function ProviderAreaRouting({
               <div
                 className="relative h-72"
                 style={{
-                  background:
-                    "linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)",
+                  background: "linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)",
                 }}
               >
                 {/* Grid lines */}
@@ -105,10 +88,7 @@ export function ProviderAreaRouting({
                   }}
                 />
                 {/* Road network SVG */}
-                <svg
-                  className="absolute inset-0 w-full h-full"
-                  preserveAspectRatio="none"
-                >
+                <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
                   <path
                     d="M0,180 Q150,170 300,185 T600,175"
                     stroke="white"
@@ -161,8 +141,7 @@ export function ProviderAreaRouting({
                     left: "50%",
                     top: "48%",
                     transform: "translate(-50%,-50%)",
-                    background:
-                      "radial-gradient(circle, rgba(37,99,235,0.07) 0%, transparent 70%)",
+                    background: "radial-gradient(circle, rgba(37,99,235,0.07) 0%, transparent 70%)",
                   }}
                 />
                 {/* Your location */}
@@ -205,9 +184,7 @@ export function ProviderAreaRouting({
             {/* Radius slider */}
             <div className="bg-white rounded-2xl p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-foreground">
-                  Bán kính hoạt động
-                </h3>
+                <h3 className="font-bold text-foreground">Bán kính hoạt động</h3>
                 <span className="bg-blue-100 text-blue-700 font-bold text-sm px-3 py-1 rounded-full">
                   {radius} km
                 </span>
@@ -217,9 +194,7 @@ export function ProviderAreaRouting({
                 min={2}
                 max={20}
                 value={radius}
-                onChange={(e) =>
-                  setRadius(Number(e.target.value))
-                }
+                onChange={(e) => setRadius(Number(e.target.value))}
                 className="w-full accent-blue-600"
               />
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
@@ -228,16 +203,14 @@ export function ProviderAreaRouting({
                 <span>20 km</span>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Bán kính càng lớn, bạn nhận được nhiều yêu cầu
-                hơn nhưng thời gian di chuyển sẽ tăng.
+                Bán kính càng lớn, bạn nhận được nhiều yêu cầu hơn nhưng thời gian di chuyển sẽ
+                tăng.
               </p>
             </div>
 
             {/* Active zones summary */}
             <div className="bg-white rounded-2xl p-4 shadow-sm">
-              <h3 className="font-bold text-foreground mb-3">
-                Khu vực đang bật
-              </h3>
+              <h3 className="font-bold text-foreground mb-3">Khu vực đang bật</h3>
               <div className="flex flex-wrap gap-2">
                 {areas
                   .filter((a) => a.active)
@@ -257,9 +230,7 @@ export function ProviderAreaRouting({
                     </span>
                   ))}
                 {areas.filter((a) => a.active).length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    Chưa chọn khu vực nào
-                  </p>
+                  <p className="text-sm text-muted-foreground">Chưa chọn khu vực nào</p>
                 )}
               </div>
             </div>
@@ -269,21 +240,13 @@ export function ProviderAreaRouting({
             {/* Quick actions */}
             <div className="flex gap-2">
               <button
-                onClick={() =>
-                  setAreas(
-                    areas.map((a) => ({ ...a, active: true })),
-                  )
-                }
+                onClick={() => setAreas(areas.map((a) => ({ ...a, active: true })))}
                 className="flex-1 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors"
               >
                 Bật tất cả
               </button>
               <button
-                onClick={() =>
-                  setAreas(
-                    areas.map((a) => ({ ...a, active: false })),
-                  )
-                }
+                onClick={() => setAreas(areas.map((a) => ({ ...a, active: false })))}
                 className="flex-1 py-2 bg-muted text-foreground rounded-xl text-xs font-bold hover:bg-accent transition-colors"
               >
                 Tắt tất cả
@@ -310,12 +273,8 @@ export function ProviderAreaRouting({
                       {area.name}
                     </p>
                     <div className="flex items-center gap-3 mt-0.5">
-                      <span className="text-xs text-muted-foreground">
-                        {area.distance}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {area.jobs} công việc
-                      </span>
+                      <span className="text-xs text-muted-foreground">{area.distance}</span>
+                      <span className="text-xs text-muted-foreground">{area.jobs} công việc</span>
                     </div>
                   </div>
                   <button
@@ -337,13 +296,10 @@ export function ProviderAreaRouting({
                   <Route className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="font-bold text-sm text-blue-800">
-                    Gợi ý tối ưu tuyến đường
-                  </p>
+                  <p className="font-bold text-sm text-blue-800">Gợi ý tối ưu tuyến đường</p>
                   <p className="text-xs text-blue-600 mt-1 leading-relaxed">
-                    Với {activeCount} khu vực đang bật, thợ có
-                    thể tối ưu lộ trình di chuyển để giảm 30%
-                    thời gian giữa các công việc.
+                    Với {activeCount} khu vực đang bật, thợ có thể tối ưu lộ trình di chuyển để giảm
+                    30% thời gian giữa các công việc.
                   </p>
                 </div>
               </div>
@@ -363,4 +319,3 @@ export function ProviderAreaRouting({
     </div>
   );
 }
-

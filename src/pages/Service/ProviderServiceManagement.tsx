@@ -1,23 +1,10 @@
 ﻿import { useState } from "react";
-import {
-  Search,
-  X,
-  Plus,
-  Edit3,
-  Trash2,
-  Star,
-  Package,
-  ImageIcon,
-} from "lucide-react";
+import { Search, X, Plus, Edit3, Trash2, Star, Package, ImageIcon } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { providerServices } from "@/services/Provider/provider.data";
 import { TopBar } from "@/shared/ui";
 
-export function ProviderServiceManagement({
-  onNavigate,
-}: {
-  onNavigate: (s: Screen) => void;
-}) {
+export function ProviderServiceManagement({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [items, setItems] = useState(providerServices);
@@ -32,20 +19,13 @@ export function ProviderServiceManagement({
       s.name.toLowerCase().includes(search.toLowerCase()) ||
       s.category.toLowerCase().includes(search.toLowerCase());
     const matchFilter =
-      filter === "all" ||
-      (filter === "active" && s.active) ||
-      (filter === "inactive" && !s.active);
+      filter === "all" || (filter === "active" && s.active) || (filter === "inactive" && !s.active);
     return matchSearch && matchFilter;
   });
 
   const toggleActive = (id: number) =>
-    setItems(
-      items.map((s) =>
-        s.id === id ? { ...s, active: !s.active } : s,
-      ),
-    );
-  const deleteItem = (id: number) =>
-    setItems(items.filter((s) => s.id !== id));
+    setItems(items.map((s) => (s.id === id ? { ...s, active: !s.active } : s)));
+  const deleteItem = (id: number) => setItems(items.filter((s) => s.id !== id));
   const addService = () => {
     if (!newName.trim() || !newPrice.trim()) return;
     setItems([
@@ -138,14 +118,8 @@ export function ProviderServiceManagement({
           },
         ].map((stat) => (
           <div key={stat.label} className="flex-1 text-center">
-            <p
-              className={`text-xl font-extrabold ${stat.color}`}
-            >
-              {stat.value}
-            </p>
-            <p className="text-[10px] text-muted-foreground">
-              {stat.label}
-            </p>
+            <p className={`text-xl font-extrabold ${stat.color}`}>{stat.value}</p>
+            <p className="text-[10px] text-muted-foreground">{stat.label}</p>
           </div>
         ))}
       </div>
@@ -155,12 +129,8 @@ export function ProviderServiceManagement({
         {filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <Package className="w-12 h-12 mb-3 opacity-30" />
-            <p className="text-sm font-medium">
-              Không tìm thấy dịch vụ
-            </p>
-            <p className="text-xs mt-1">
-              Thử từ khóa khác hoặc thêm dịch vụ mới
-            </p>
+            <p className="text-sm font-medium">Không tìm thấy dịch vụ</p>
+            <p className="text-xs mt-1">Thử từ khóa khác hoặc thêm dịch vụ mới</p>
           </div>
         )}
         {filtered.map((svc) => (
@@ -177,18 +147,14 @@ export function ProviderServiceManagement({
                 />
                 {!svc.active && (
                   <div className="absolute inset-0 bg-white/60 rounded-xl flex items-center justify-center">
-                    <span className="text-[10px] font-bold text-muted-foreground">
-                      Tắt
-                    </span>
+                    <span className="text-[10px] font-bold text-muted-foreground">Tắt</span>
                   </div>
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm text-foreground truncate">
-                      {svc.name}
-                    </p>
+                    <p className="font-bold text-sm text-foreground truncate">{svc.name}</p>
                     <span className="inline-block bg-accent text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5">
                       {svc.category}
                     </span>
@@ -206,21 +172,15 @@ export function ProviderServiceManagement({
                 <div className="flex items-center gap-3 mt-1.5">
                   <span className="text-blue-600 font-extrabold text-sm">
                     {svc.price}đ
-                    <span className="text-muted-foreground font-normal text-xs">
-                      /{svc.unit}
-                    </span>
+                    <span className="text-muted-foreground font-normal text-xs">/{svc.unit}</span>
                   </span>
                   {svc.rating > 0 && (
                     <div className="flex items-center gap-0.5">
                       <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                      <span className="text-xs font-semibold">
-                        {svc.rating}
-                      </span>
+                      <span className="text-xs font-semibold">{svc.rating}</span>
                     </div>
                   )}
-                  <span className="text-xs text-muted-foreground">
-                    {svc.bookings} đặt lịch
-                  </span>
+                  <span className="text-xs text-muted-foreground">{svc.bookings} đặt lịch</span>
                 </div>
                 <div className="flex gap-2 mt-2">
                   <button
@@ -255,9 +215,7 @@ export function ProviderServiceManagement({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-foreground">
-                Thêm dịch vụ mới
-              </h3>
+              <h3 className="text-lg font-bold text-foreground">Thêm dịch vụ mới</h3>
               <button
                 onClick={() => setShowAdd(false)}
                 className="w-8 h-8 bg-muted rounded-full flex items-center justify-center"
@@ -284,9 +242,7 @@ export function ProviderServiceManagement({
                   </label>
                   <input
                     value={newPrice}
-                    onChange={(e) =>
-                      setNewPrice(e.target.value)
-                    }
+                    onChange={(e) => setNewPrice(e.target.value)}
                     className="w-full bg-muted px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="150,000"
                   />
@@ -300,14 +256,7 @@ export function ProviderServiceManagement({
                     onChange={(e) => setNewCat(e.target.value)}
                     className="w-full bg-muted px-3 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   >
-                    {[
-                      "Điện",
-                      "Nước",
-                      "Điều hòa",
-                      "Dọn dẹp",
-                      "Sơn",
-                      "Thiết bị",
-                    ].map((c) => (
+                    {["Điện", "Nước", "Điều hòa", "Dọn dẹp", "Sơn", "Thiết bị"].map((c) => (
                       <option key={c}>{c}</option>
                     ))}
                   </select>
@@ -339,9 +288,7 @@ export function ProviderServiceManagement({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-foreground">
-                Chỉnh sửa dịch vụ
-              </h3>
+              <h3 className="text-lg font-bold text-foreground">Chỉnh sửa dịch vụ</h3>
               <button
                 onClick={() => setEditId(null)}
                 className="w-8 h-8 bg-muted rounded-full flex items-center justify-center"
@@ -397,4 +344,3 @@ export function ProviderServiceManagement({
     </div>
   );
 }
-
