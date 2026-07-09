@@ -1,5 +1,6 @@
 ﻿export * as authApi from "./auth.api";
 export * as categoryApi from "./category.api";
+export * as customerApi from "./customer.api";
 export * as serviceApi from "./service.api";
 export * as taskerApi from "./tasker.api";
 export * as technicianApi from "./technician.api";

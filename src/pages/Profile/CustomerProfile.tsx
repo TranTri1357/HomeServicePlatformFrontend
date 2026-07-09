@@ -13,8 +13,36 @@ import {
   ChevronRight,
 } from "lucide-react";
 import type { Screen } from "@/shared/types";
+import { customerApi } from "@/services/api";
+import { useApi } from "@/shared/hooks";
+import { useAuth } from "@/app/providers";
+import { getAvatarUrl } from "@/shared/lib";
 
 export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  const { user, logout } = useAuth();
+  const { data: profile, loading, error } = useApi(() => customerApi.getCustomerProfile());
+
+  // Graceful fallbacks: show the auth name immediately, real data once loaded.
+  const name = profile?.fullName || user?.fullName || "Khách hàng";
+  const email = profile?.email || "";
+  const phone = profile?.phone || "";
+  const address = profile?.defaultAddress || "Chưa cập nhật địa chỉ";
+
+  const infoItems = [
+    { label: "Họ tên", value: name, icon: User },
+    { label: "Điện thoại", value: phone || "—", icon: Phone },
+    { label: "Email", value: email || "—", icon: MessageCircle },
+    { label: "Địa chỉ", value: address, icon: MapPin },
+  ];
+
+  const menuItems = [
+    { label: "Lịch sử đặt lịch", icon: BookOpen, onClick: () => onNavigate("bookingManagement") },
+    { label: "Địa chỉ đã lưu", icon: MapPin, onClick: () => {} },
+    { label: "Thông báo", icon: Bell, onClick: () => onNavigate("notifications") },
+    { label: "Bảo mật", icon: Shield, onClick: () => {} },
+    { label: "Hỗ trợ khách hàng", icon: MessageCircle, onClick: () => {} },
+  ];
+
   return (
     <div className="flex flex-col h-full">
       <div className="overflow-y-auto flex-1">
@@ -29,36 +57,43 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
           <div className="flex items-center gap-4">
             <div className="relative">
               <img
-                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&auto=format"
-                alt="avatar"
-                className="w-20 h-20 rounded-2xl object-cover border-4 border-white/30"
+                src={getAvatarUrl(name, 100)}
+                alt={name}
+                className="w-20 h-20 rounded-2xl object-cover border-4 border-white/30 bg-white/20"
               />
               <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-white rounded-lg flex items-center justify-center shadow">
                 <Camera className="w-3.5 h-3.5 text-blue-600" />
               </button>
             </div>
-            <div>
-              <h3 className="text-white text-xl font-bold">Trần Minh Khoa</h3>
-              <p className="text-blue-200 text-sm">khoa.tran@email.com</p>
-              <p className="text-blue-200 text-sm">0901 234 567</p>
+            <div className="min-w-0">
+              <h3 className="text-white text-xl font-bold truncate">{name}</h3>
+              {email && <p className="text-blue-200 text-sm truncate">{email}</p>}
+              {phone && <p className="text-blue-200 text-sm">{phone}</p>}
             </div>
           </div>
         </div>
 
         <div className="px-4 -mt-6 space-y-4 pb-6">
           {/* Stats */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm grid grid-cols-3 divide-x divide-border">
+          <div className="bg-white rounded-2xl p-4 shadow-sm grid grid-cols-2 divide-x divide-border">
             {[
-              ["12", "Đã đặt"],
-              ["10", "Hoàn thành"],
-              ["4.8", "Điểm TB"],
+              [profile?.totalBookingsCount, "Đã đặt"],
+              [profile?.completedBookingsCount, "Hoàn thành"],
             ].map(([val, label]) => (
               <div key={label} className="flex flex-col items-center gap-1 px-3">
-                <span className="text-2xl font-extrabold text-blue-600">{val}</span>
+                <span className="text-2xl font-extrabold text-blue-600">
+                  {loading && val == null ? "…" : (val ?? 0)}
+                </span>
                 <span className="text-xs text-muted-foreground text-center">{label}</span>
               </div>
             ))}
           </div>
+
+          {error && (
+            <div className="bg-amber-50 border border-amber-100 text-amber-700 text-xs rounded-xl px-4 py-2.5">
+              Không tải được hồ sơ mới nhất, đang hiển thị thông tin cơ bản.
+            </div>
+          )}
 
           {/* Personal Info */}
           <div className="bg-white rounded-2xl overflow-hidden">
@@ -69,28 +104,7 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
                 Chỉnh sửa
               </button>
             </div>
-            {[
-              {
-                label: "Họ tên",
-                value: "Trần Minh Khoa",
-                icon: User,
-              },
-              {
-                label: "Điện thoại",
-                value: "0901 234 567",
-                icon: Phone,
-              },
-              {
-                label: "Email",
-                value: "khoa.tran@email.com",
-                icon: MessageCircle,
-              },
-              {
-                label: "Địa chỉ",
-                value: "123 Lê Lợi, Quận 1, TP.HCM",
-                icon: MapPin,
-              },
-            ].map((item) => (
+            {infoItems.map((item) => (
               <div
                 key={item.label}
                 className="px-4 py-3 flex items-center gap-3 border-b border-border last:border-0"
@@ -98,42 +112,16 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
                 <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
                   <item.icon className="w-4 h-4 text-blue-600" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">{item.label}</p>
-                  <p className="text-sm font-medium text-foreground">{item.value}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{item.value}</p>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Menu Items */}
-          {[
-            {
-              label: "Lịch sử đặt lịch",
-              icon: BookOpen,
-              onClick: () => onNavigate("bookingManagement"),
-            },
-            {
-              label: "Địa chỉ đã lưu",
-              icon: MapPin,
-              onClick: () => {},
-            },
-            {
-              label: "Thông báo",
-              icon: Bell,
-              onClick: () => onNavigate("notifications"),
-            },
-            {
-              label: "Bảo mật",
-              icon: Shield,
-              onClick: () => {},
-            },
-            {
-              label: "Hỗ trợ khách hàng",
-              icon: MessageCircle,
-              onClick: () => {},
-            },
-          ].map((item) => (
+          {menuItems.map((item) => (
             <button
               key={item.label}
               onClick={item.onClick}
@@ -149,7 +137,10 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
             </button>
           ))}
 
-          <button className="w-full bg-red-50 rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:bg-red-100 transition-colors">
+          <button
+            onClick={logout}
+            className="w-full bg-red-50 rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:bg-red-100 transition-colors"
+          >
             <div className="w-9 h-9 bg-red-100 rounded-xl flex items-center justify-center">
               <LogOut className="w-4 h-4 text-red-600" />
             </div>

@@ -18,12 +18,12 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
 }
 
 /**
- * PUT /api/tasker/bookings/{id}/cancel — cancel a booking with a reason.
- * NOTE: the backend restricts this endpoint to the Tasker role, so calling it
- * with a Customer token returns 403.
+ * PUT /api/customer/bookings/{id}/cancel — the customer cancels their own booking.
+ * Requires the Customer role; only Pending bookings can be cancelled. BookingId
+ * comes from the route and CustomerId from the JWT, so only cancelReason is sent.
  */
 export async function cancelBooking(bookingId: number, cancelReason: string): Promise<boolean> {
-  const response = await put<ApiResponse<boolean>>(`/tasker/bookings/${bookingId}/cancel`, {
+  const response = await put<ApiResponse<boolean>>(`/customer/bookings/${bookingId}/cancel`, {
     cancelReason,
   });
   return unwrap(response);

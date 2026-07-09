@@ -25,8 +25,8 @@ const TABS: { key: string; label: string; statuses: number[] | null }[] = [
   { key: "cancelled", label: "Hủy", statuses: [5, 6] },
 ];
 
-// A booking can be cancelled before the tasker starts working.
-const CANCELLABLE = [0, 1];
+// Backend allows a customer to cancel only while the booking is still Pending.
+const CANCELLABLE = [0];
 
 function formatDateTime(iso: string): string {
   const d = new Date(iso);
