@@ -1,54 +1,235 @@
-﻿import { useState } from "react";
-import { Zap, MapPin, Star } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Wrench, Star, AlertCircle, Check, Loader2 } from "lucide-react";
 import type { Screen } from "@/shared/types";
-import { technicians } from "@/services/Technician/technician.data";
+import { serviceApi, bookingApi } from "@/services/api";
+import { useApi } from "@/shared/hooks";
+import { useAuth } from "@/app/providers";
 import { TopBar, Avatar } from "@/shared/ui";
+import { formatVnd, notify, getErrorMessage } from "@/shared/lib";
 
-export function Booking({ onNavigate }: { onNavigate: (s: Screen, d?: object) => void }) {
-  const [date, setDate] = useState("20");
+const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+const TIME_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
+const PHONE_REGEX = /^(03|05|07|08|09)\d{8}$/;
+
+export function Booking({
+  onNavigate,
+  data,
+}: {
+  onNavigate: (s: Screen, d?: object) => void;
+  data?: { serviceId?: number };
+}) {
+  const serviceId = data?.serviceId;
+  const { user } = useAuth();
+
+  const {
+    data: detail,
+    loading,
+    error,
+    refetch,
+  } = useApi(() => serviceApi.getServiceDetail(serviceId!), {
+    immediate: Boolean(serviceId),
+  });
+
+  // Next 7 days starting today.
+  const dateOptions = useMemo(() => {
+    const today = new Date();
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() + i);
+      return d;
+    });
+  }, []);
+
+  const [dateIdx, setDateIdx] = useState(0);
   const [time, setTime] = useState("09:00");
-  const [notes, setNotes] = useState("");
-  const [selectedTech] = useState(technicians[0]);
-  const dates = ["19", "20", "21", "22", "23", "24", "25"];
-  const days = ["T5", "T6", "T7", "CN", "T2", "T3", "T4"];
-  const times = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
+  const [taskerId, setTaskerId] = useState<number | undefined>(undefined);
+  const [fullName, setFullName] = useState(user?.fullName ?? "");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [note, setNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // ── Guards ────────────────────────────────────────────────────────────────
+  if (!serviceId) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
+        <AlertCircle className="w-10 h-10 text-red-400" />
+        <p className="text-sm text-muted-foreground">Không xác định được dịch vụ cần đặt.</p>
+        <button
+          onClick={() => onNavigate("serviceList")}
+          className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
+        >
+          Chọn dịch vụ
+        </button>
+      </div>
+    );
+  }
+
+  if (loading && !detail) {
+    return (
+      <div className="flex flex-col h-full">
+        <TopBar title="Đặt lịch dịch vụ" onBack={() => onNavigate("serviceDetail", { serviceId })} />
+        <div className="p-4 space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-24 bg-slate-200 rounded-2xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if ((error && !detail) || !detail) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
+        <AlertCircle className="w-10 h-10 text-red-400" />
+        <p className="text-sm text-muted-foreground">{error ?? "Không tải được dịch vụ."}</p>
+        <button
+          onClick={() => void refetch()}
+          className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
+
+  const taskers = detail.suggestedTaskers ?? [];
+  const selectedTasker = taskers.find((t) => t.taskerId === taskerId);
+  const unitPrice =
+    selectedTasker && selectedTasker.currentPrice > 0
+      ? selectedTasker.currentPrice
+      : detail.startingPrice;
+
+  const buildStartAt = () => {
+    const d = new Date(dateOptions[dateIdx]);
+    const [h, m] = time.split(":").map(Number);
+    d.setHours(h, m, 0, 0);
+    return d;
+  };
+
+  const handleSubmit = async () => {
+    setFormError(null);
+
+    if (!fullName.trim()) return setFormError("Vui lòng nhập tên người nhận.");
+    if (!PHONE_REGEX.test(phone.trim()))
+      return setFormError("Số điện thoại không đúng định dạng di động Việt Nam (10 số).");
+    if (!address.trim()) return setFormError("Vui lòng nhập địa chỉ chi tiết.");
+
+    const startAt = buildStartAt();
+    if (startAt.getTime() <= Date.now())
+      return setFormError("Vui lòng chọn thời gian hẹn trong tương lai.");
+    const endAt = new Date(startAt.getTime() + (detail.durationMinutes || 60) * 60_000);
+
+    setSubmitting(true);
+    try {
+      const res = await bookingApi.createBooking({
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        addressLine: address.trim(),
+        note: note.trim() || undefined,
+        bookingItems: [
+          {
+            serviceId: detail.serviceId,
+            taskerId: taskerId ?? null,
+            startAt: startAt.toISOString(),
+            endAt: endAt.toISOString(),
+            unitPrice,
+            quantity: 1,
+          },
+        ],
+      });
+      notify.success(res.message || "Đặt lịch thành công");
+      onNavigate("payment", { bookingId: res.bookingId, finalAmount: res.finalAmount });
+    } catch (err) {
+      notify.error(err);
+      setFormError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar title="Đặt lịch dịch vụ" onBack={() => onNavigate("serviceDetail")} />
+      <TopBar title="Đặt lịch dịch vụ" onBack={() => onNavigate("serviceDetail", { serviceId })} />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Selected Service */}
+        {/* Selected service */}
         <div className="bg-white rounded-2xl p-4 flex gap-3">
-          <div className="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Zap className="w-7 h-7 text-amber-500" />
+          <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Wrench className="w-7 h-7 text-blue-600" />
           </div>
-          <div className="flex-1">
-            <p className="font-bold text-foreground">Sửa chữa điện</p>
-            <p className="text-sm text-muted-foreground mt-0.5">Kiểm tra + sửa chữa cơ bản</p>
-            <p className="text-blue-600 font-bold text-sm mt-1">150,000đ – 350,000đ</p>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-foreground">{detail.name}</p>
+            {detail.description && (
+              <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
+                {detail.description}
+              </p>
+            )}
+            <p className="text-blue-600 font-bold text-sm mt-1">
+              từ {formatVnd(detail.startingPrice)}đ · ~{detail.durationMinutes} phút
+            </p>
           </div>
-          <button className="text-blue-600 text-xs font-semibold">Đổi</button>
+          <button
+            onClick={() => onNavigate("serviceList")}
+            className="text-blue-600 text-xs font-semibold flex-shrink-0"
+          >
+            Đổi
+          </button>
         </div>
 
-        {/* Selected Technician (read-only) */}
+        {/* Tasker selection */}
         <div className="bg-white rounded-2xl p-4">
-          <h3 className="font-bold text-foreground mb-3">Thợ được chọn</h3>
-          <div className="flex items-center gap-3 p-3 bg-accent rounded-xl border-2 border-blue-600">
-            <div className="relative">
-              <Avatar src={selectedTech.avatar} size={44} name={selectedTech.name} />
-              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-sm text-foreground">{selectedTech.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {selectedTech.skill} · {selectedTech.distance}
-              </p>
-            </div>
-            <div className="flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span className="text-sm font-bold">{selectedTech.rating}</span>
-            </div>
+          <h3 className="font-bold text-foreground mb-3">Chọn thợ</h3>
+          <div className="space-y-2">
+            <button
+              onClick={() => setTaskerId(undefined)}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${
+                taskerId === undefined ? "border-blue-600 bg-accent" : "border-transparent bg-muted"
+              }`}
+            >
+              <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <Wrench className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-semibold text-sm text-foreground">Để hệ thống chọn thợ</p>
+                <p className="text-xs text-muted-foreground">Tự động tìm thợ phù hợp nhất</p>
+              </div>
+              {taskerId === undefined && <Check className="w-4 h-4 text-blue-600" />}
+            </button>
+
+            {taskers.map((t) => (
+              <button
+                key={t.taskerId}
+                onClick={() => setTaskerId(t.taskerId)}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${
+                  taskerId === t.taskerId ? "border-blue-600 bg-accent" : "border-transparent bg-muted"
+                }`}
+              >
+                {t.avatarUrl ? (
+                  <img
+                    src={t.avatarUrl}
+                    alt={t.fullName}
+                    className="rounded-full object-cover"
+                    style={{ width: 44, height: 44 }}
+                  />
+                ) : (
+                  <Avatar size={44} name={t.fullName} />
+                )}
+                <div className="flex-1 text-left">
+                  <p className="font-semibold text-sm text-foreground">{t.fullName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t.experienceYears} năm KN
+                    {t.currentPrice > 0 && <> · {formatVnd(t.currentPrice)}đ</>}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span className="text-sm font-bold">{t.ratingAvg}</span>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
 
@@ -56,22 +237,22 @@ export function Booking({ onNavigate }: { onNavigate: (s: Screen, d?: object) =>
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Chọn ngày</h3>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {dates.map((d, i) => (
+            {dateOptions.map((d, i) => (
               <button
-                key={d}
-                onClick={() => setDate(d)}
-                className={`flex-shrink-0 flex flex-col items-center gap-1 w-14 py-3 rounded-xl transition-colors ${date === d ? "bg-blue-600 text-white" : "bg-muted text-foreground"}`}
+                key={i}
+                onClick={() => setDateIdx(i)}
+                className={`flex-shrink-0 flex flex-col items-center gap-1 w-14 py-3 rounded-xl transition-colors ${dateIdx === i ? "bg-blue-600 text-white" : "bg-muted text-foreground"}`}
               >
                 <span
-                  className={`text-[11px] font-medium ${date === d ? "text-blue-200" : "text-muted-foreground"}`}
+                  className={`text-[11px] font-medium ${dateIdx === i ? "text-blue-200" : "text-muted-foreground"}`}
                 >
-                  {days[i]}
+                  {WEEKDAYS[d.getDay()]}
                 </span>
-                <span className="text-base font-bold">{d}</span>
+                <span className="text-base font-bold">{d.getDate()}</span>
                 <span
-                  className={`text-[10px] ${date === d ? "text-blue-200" : "text-muted-foreground"}`}
+                  className={`text-[10px] ${dateIdx === i ? "text-blue-200" : "text-muted-foreground"}`}
                 >
-                  Th6
+                  Th{d.getMonth() + 1}
                 </span>
               </button>
             ))}
@@ -82,7 +263,7 @@ export function Booking({ onNavigate }: { onNavigate: (s: Screen, d?: object) =>
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Chọn giờ</h3>
           <div className="grid grid-cols-4 gap-2">
-            {times.map((t) => (
+            {TIME_SLOTS.map((t) => (
               <button
                 key={t}
                 onClick={() => setTime(t)}
@@ -94,13 +275,36 @@ export function Booking({ onNavigate }: { onNavigate: (s: Screen, d?: object) =>
           </div>
         </div>
 
-        {/* Address */}
-        <div className="bg-white rounded-2xl p-4">
-          <h3 className="font-bold text-foreground mb-3">Địa chỉ</h3>
-          <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
-            <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0" />
-            <span className="text-sm text-foreground flex-1">123 Lê Lợi, Quận 1, TP.HCM</span>
-            <button className="text-blue-600 text-xs font-semibold">Đổi</button>
+        {/* Contact & address (required by backend) */}
+        <div className="bg-white rounded-2xl p-4 space-y-3">
+          <h3 className="font-bold text-foreground">Thông tin liên hệ</h3>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-muted-foreground">Người nhận</label>
+            <input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Nguyễn Văn A"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-muted-foreground">Số điện thoại</label>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              inputMode="tel"
+              className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="0901234567"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-muted-foreground">Địa chỉ chi tiết</label>
+            <input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="123 Lê Lợi, Quận 1, TP.HCM"
+            />
           </div>
         </div>
 
@@ -108,53 +312,51 @@ export function Booking({ onNavigate }: { onNavigate: (s: Screen, d?: object) =>
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-2">Ghi chú cho thợ</h3>
           <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="w-full bg-muted rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            className="w-full bg-muted rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             rows={3}
             placeholder="VD: Chuông cửa tầng 3, ưu tiên đến trước 10h..."
           />
         </div>
 
-        {/* Cost Summary */}
+        {/* Cost summary */}
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Tóm tắt chi phí</h3>
           <div className="space-y-2">
-            {[
-              {
-                label: "Phí dịch vụ cơ bản",
-                value: "150,000đ",
-              },
-              { label: "Phí kiểm tra", value: "50,000đ" },
-              {
-                label: "Giảm giá thành viên",
-                value: "-20,000đ",
-              },
-            ].map((item) => (
-              <div key={item.label} className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{item.label}</span>
-                <span
-                  className={`font-semibold ${item.value.startsWith("-") ? "text-green-600" : "text-foreground"}`}
-                >
-                  {item.value}
-                </span>
-              </div>
-            ))}
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Đơn giá dịch vụ</span>
+              <span className="font-semibold text-foreground">{formatVnd(unitPrice)}đ</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Số lượng</span>
+              <span className="font-semibold text-foreground">1</span>
+            </div>
             <div className="h-px bg-border my-1" />
             <div className="flex justify-between">
-              <span className="font-bold text-foreground">Tổng cộng</span>
-              <span className="font-extrabold text-blue-600 text-lg">180,000đ</span>
+              <span className="font-bold text-foreground">Tạm tính</span>
+              <span className="font-extrabold text-blue-600 text-lg">{formatVnd(unitPrice)}đ</span>
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              Tổng cuối cùng sẽ được xác nhận sau khi hệ thống xử lý đơn.
+            </p>
           </div>
         </div>
       </div>
 
       <div className="bg-white border-t border-border px-4 py-4">
+        {formError && (
+          <div className="mb-3 p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">
+            {formError}
+          </div>
+        )}
         <button
-          onClick={() => onNavigate("payment")}
-          className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-base hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 active:scale-[0.98]"
+          onClick={handleSubmit}
+          disabled={submitting}
+          className="w-full py-4 bg-blue-600 disabled:opacity-70 text-white rounded-xl font-bold text-base hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 active:scale-[0.98] flex items-center justify-center gap-2"
         >
-          Xác nhận đặt lịch →
+          {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
+          {submitting ? "Đang đặt lịch..." : "Xác nhận đặt lịch →"}
         </button>
       </div>
     </div>

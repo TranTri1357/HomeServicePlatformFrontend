@@ -43,7 +43,7 @@ export function renderScreen(
     case "technicianDetail":
       return <TechnicianDetail onNavigate={navigate} data={screenData as { tech?: Technician }} />;
     case "booking":
-      return <Booking onNavigate={navigate} />;
+      return <Booking onNavigate={navigate} data={screenData as { serviceId?: number }} />;
     case "payment":
       return <Payment onNavigate={navigate} />;
     case "chat":
