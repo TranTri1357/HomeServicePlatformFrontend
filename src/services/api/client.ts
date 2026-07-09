@@ -62,6 +62,33 @@ export class ApiError extends Error {
   }
 }
 
+// ─── Standard backend envelope ───────────────────────────────────────────────
+/** Every backend endpoint replies with this shape: the data lives under `data`. */
+export interface ApiResponse<T> {
+  succeeded: boolean;
+  statusCode: number;
+  message: string;
+  data: T | null;
+  errors: unknown[] | null;
+}
+
+/**
+ * Unwrap an ApiResponse<T>: return `data` on success, or throw an ApiError
+ * carrying the backend message on failure. Use this in every *.api.ts function
+ * so components receive the payload directly, never the envelope.
+ */
+export function unwrap<T>(response: ApiResponse<T>): T {
+  if (!response?.succeeded || response.data == null) {
+    const joinedErrors =
+      Array.isArray(response?.errors) && response.errors.length > 0
+        ? response.errors.map((e) => String(e ?? "")).filter(Boolean).join(". ")
+        : "";
+    const message = joinedErrors || response?.message || "Yêu cầu thất bại";
+    throw new ApiError(message, response?.statusCode ?? 0, response);
+  }
+  return response.data;
+}
+
 interface RequestOptions extends RequestInit {
   params?: Record<string, unknown>;
   skipAuth?: boolean;
