@@ -16,5 +16,15 @@ export function useOrders() {
   );
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
-  return { search, setSearch, statusFilter, setStatusFilter, page, setPage, filtered, paged, perPage };
+  return {
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    page,
+    setPage,
+    filtered,
+    paged,
+    perPage,
+  };
 }

@@ -1,19 +1,28 @@
-﻿import { useState } from "react";
-import { Wrench, Eye, EyeOff, Shield } from "lucide-react";
-import type { UserMode } from "@/shared/types";
+import { useState, type FormEvent } from "react";
+import { Wrench, Eye, EyeOff } from "lucide-react";
 import { authApi } from "@/services/api";
+import type { LoginResult } from "@/services/api/auth.api";
+import { parseApiErrors, type FieldErrors, type FieldKey } from "@/services/api/authErrors";
 
-export function AuthScreen({
-  onLogin,
-}: {
-  onLogin: (mode: UserMode) => void;
-}) {
+function inputClass(hasError: boolean) {
+  return [
+    "w-full px-4 py-3 bg-slate-50 rounded-xl text-sm transition-colors focus:outline-none",
+    hasError
+      ? "border border-red-500 focus:border-red-500 focus:bg-white"
+      : "border border-transparent focus:border-blue-600 focus:bg-white",
+  ].join(" ");
+}
+
+export function AuthScreen({ onLogin }: { onLogin: (result: LoginResult) => void }) {
   const [tab, setTab] = useState<"login" | "register">("login");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [generalError, setGeneralError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Form states
+  // roleId: 2 = Customer, 3 = Provider
+  const [roleId, setRoleId] = useState<2 | 3>(2);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -21,44 +30,79 @@ export function AuthScreen({
   const [email, setEmail] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const handleSubmit = async () => {
-    setError(null);
+  const clearFieldError = (key: FieldKey) => {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setGeneralError(null);
+    setFieldErrors({});
+    setSuccessMessage(null);
     setLoading(true);
 
     try {
       if (tab === "login") {
-        if (!identifier || !password) {
-          throw new Error("Vui lòng nhập đầy đủ thông tin");
+        const localErrors: FieldErrors = {};
+        if (!identifier) localErrors.identifier = "Vui lòng nhập email hoặc số điện thoại";
+        if (!password) localErrors.password = "Vui lòng nhập mật khẩu";
+        if (Object.keys(localErrors).length > 0) {
+          setFieldErrors(localErrors);
+          return;
         }
-        
-        // Mock fallback mode switch for UI flow without actual backend yet
-        // In real app: const res = await authApi.login({ identifier, password });
-        // onLogin(res.user.role);
-        
-        // Simulate network delay
-        await new Promise(r => setTimeout(r, 800));
-        
-        // Temporary mock logic
-        if (identifier.includes("admin")) onLogin("admin");
-        else if (identifier.includes("tho")) onLogin("provider");
-        else onLogin("customer");
 
-      } else {
-        if (!fullName || !phone || !email || !password || !confirmPassword) {
-          throw new Error("Vui lòng nhập đầy đủ thông tin");
-        }
-        if (password !== confirmPassword) {
-          throw new Error("Mật khẩu xác nhận không khớp");
-        }
-        
-        // In real app: const res = await authApi.register({ fullName, phone, email, password, role: "customer" });
-        // onLogin(res.user.role);
-        
-        await new Promise(r => setTimeout(r, 800));
-        onLogin("customer");
+        const res = await authApi.login({ identifier, password });
+        onLogin(res);
+        return;
       }
-    } catch (err: any) {
-      setError(err.message || "Đã có lỗi xảy ra");
+
+      const localErrors: FieldErrors = {};
+      if (!fullName) localErrors.fullName = "Họ và tên không được để trống";
+      if (!phone) localErrors.phone = "Số điện thoại không được để trống";
+      if (!email) localErrors.email = "Email không được để trống";
+      if (!password) localErrors.password = "Mật khẩu không được để trống";
+      if (!confirmPassword) localErrors.confirmPassword = "Vui lòng xác nhận mật khẩu";
+      if (password && confirmPassword && password !== confirmPassword) {
+        localErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
+      }
+
+      if (Object.keys(localErrors).length > 0) {
+        setFieldErrors(localErrors);
+        return;
+      }
+
+      const result = await authApi.register({
+        roleId,
+        fullName,
+        email,
+        phone,
+        password,
+        confirmPassword,
+      });
+
+      setSuccessMessage(result.message || "Đăng ký tài khoản thành công");
+      setIdentifier(email);
+      setPassword("");
+      setConfirmPassword("");
+
+      // Auto switch to Login tab after successful register.
+      window.setTimeout(() => {
+        setTab("login");
+        setSuccessMessage("Đăng ký thành công. Vui lòng đăng nhập.");
+        setFieldErrors({});
+        setGeneralError(null);
+      }, 1200);
+    } catch (err) {
+      const parsed = parseApiErrors(err);
+      setFieldErrors(parsed.fieldErrors);
+      setGeneralError(parsed.generalError);
     } finally {
       setLoading(false);
     }
@@ -81,10 +125,13 @@ export function AuthScreen({
           <div className="flex border-b border-border">
             {(["login", "register"] as const).map((t) => (
               <button
+                type="button"
                 key={t}
                 onClick={() => {
                   setTab(t);
-                  setError(null);
+                  setGeneralError(null);
+                  setFieldErrors({});
+                  setSuccessMessage(null);
                 }}
                 className={`flex-1 py-4 text-sm font-semibold transition-colors ${tab === t ? "text-blue-600 border-b-2 border-blue-600 bg-accent" : "text-muted-foreground"}`}
               >
@@ -93,10 +140,56 @@ export function AuthScreen({
             ))}
           </div>
 
-          <div className="p-6 space-y-4">
-            {error && (
+          <form onSubmit={handleSubmit} autoComplete="off" className="p-6 space-y-4" noValidate>
+            {/* Banner chỉ dùng cho lỗi hệ thống / lỗi không gắn field */}
+            {generalError && (
               <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">
-                {error}
+                {generalError}
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="p-3 bg-green-50 text-green-700 text-sm rounded-xl border border-green-100">
+                {successMessage}
+              </div>
+            )}
+
+            {tab === "register" && (
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-foreground">Vai trò</label>
+                <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRoleId(2);
+                      clearFieldError("roleId");
+                    }}
+                    className={`py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                      roleId === 2
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-slate-600 hover:bg-white"
+                    }`}
+                  >
+                    Khách hàng
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRoleId(3);
+                      clearFieldError("roleId");
+                    }}
+                    className={`py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                      roleId === 3
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-slate-600 hover:bg-white"
+                    }`}
+                  >
+                    Thợ (Đối tác)
+                  </button>
+                </div>
+                {fieldErrors.roleId && (
+                  <p className="text-sm text-red-500 mt-1">{fieldErrors.roleId}</p>
+                )}
               </div>
             )}
 
@@ -104,11 +197,19 @@ export function AuthScreen({
               <div className="space-y-1">
                 <label className="text-sm font-semibold text-foreground">Họ và tên</label>
                 <input
+                  name="fullName"
+                  autoComplete="off"
                   value={fullName}
-                  onChange={e => setFullName(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm border border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-colors"
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    clearFieldError("fullName");
+                  }}
+                  className={inputClass(Boolean(fieldErrors.fullName))}
                   placeholder="Nguyễn Văn A"
                 />
+                {fieldErrors.fullName && (
+                  <p className="text-sm text-red-500 mt-1">{fieldErrors.fullName}</p>
+                )}
               </div>
             )}
 
@@ -117,31 +218,58 @@ export function AuthScreen({
                 <div className="space-y-1">
                   <label className="text-sm font-semibold text-foreground">Số điện thoại</label>
                   <input
+                    name="phone"
+                    autoComplete="off"
                     value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm border border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-colors"
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      clearFieldError("phone");
+                    }}
+                    className={inputClass(Boolean(fieldErrors.phone))}
                     placeholder="0901 234 567"
                   />
+                  {fieldErrors.phone && (
+                    <p className="text-sm text-red-500 mt-1">{fieldErrors.phone}</p>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm font-semibold text-foreground">Email</label>
                   <input
+                    name="email"
+                    type="email"
+                    autoComplete="off"
                     value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm border border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-colors"
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      clearFieldError("email");
+                    }}
+                    className={inputClass(Boolean(fieldErrors.email))}
                     placeholder="email@example.com"
                   />
+                  {fieldErrors.email && (
+                    <p className="text-sm text-red-500 mt-1">{fieldErrors.email}</p>
+                  )}
                 </div>
               </>
             ) : (
               <div className="space-y-1">
-                <label className="text-sm font-semibold text-foreground">Email hoặc Số điện thoại</label>
+                <label className="text-sm font-semibold text-foreground">
+                  Email hoặc Số điện thoại
+                </label>
                 <input
+                  name="identifier"
+                  autoComplete="username"
                   value={identifier}
-                  onChange={e => setIdentifier(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm border border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-colors"
-                  placeholder="Nhập 'admin' hoặc 'tho' để test quyền"
+                  onChange={(e) => {
+                    setIdentifier(e.target.value);
+                    clearFieldError("identifier");
+                  }}
+                  className={inputClass(Boolean(fieldErrors.identifier))}
+                  placeholder="string@gmail.com"
                 />
+                {fieldErrors.identifier && (
+                  <p className="text-sm text-red-500 mt-1">{fieldErrors.identifier}</p>
+                )}
               </div>
             )}
 
@@ -149,37 +277,54 @@ export function AuthScreen({
               <label className="text-sm font-semibold text-foreground">Mật khẩu</label>
               <div className="relative">
                 <input
+                  name="password"
                   type={showPass ? "text" : "password"}
+                  autoComplete={tab === "login" ? "current-password" : "new-password"}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm border border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-colors pr-12"
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    clearFieldError("password");
+                  }}
+                  className={`${inputClass(Boolean(fieldErrors.password))} pr-12`}
                   placeholder="••••••••"
                 />
                 <button
+                  type="button"
                   onClick={() => setShowPass(!showPass)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 >
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {fieldErrors.password && (
+                <p className="text-sm text-red-500 mt-1">{fieldErrors.password}</p>
+              )}
             </div>
 
             {tab === "register" && (
               <div className="space-y-1">
                 <label className="text-sm font-semibold text-foreground">Xác nhận mật khẩu</label>
                 <input
+                  name="confirmPassword"
                   type="password"
+                  autoComplete="new-password"
                   value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm border border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-colors"
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    clearFieldError("confirmPassword");
+                  }}
+                  className={inputClass(Boolean(fieldErrors.confirmPassword))}
                   placeholder="••••••••"
                 />
+                {fieldErrors.confirmPassword && (
+                  <p className="text-sm text-red-500 mt-1">{fieldErrors.confirmPassword}</p>
+                )}
               </div>
             )}
 
             <button
+              type="submit"
               disabled={loading}
-              onClick={handleSubmit}
               className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-70 text-white rounded-xl font-semibold text-sm transition-colors shadow-lg shadow-blue-200 active:scale-[0.98] flex justify-center items-center"
             >
               {loading ? "Đang xử lý..." : tab === "login" ? "Đăng nhập" : "Tạo tài khoản"}
@@ -187,44 +332,19 @@ export function AuthScreen({
 
             {tab === "login" && (
               <p className="text-center text-xs text-muted-foreground">
-                Quên mật khẩu? <span className="text-blue-600 font-semibold cursor-pointer hover:underline">Khôi phục ngay</span>
+                Quên mật khẩu?{" "}
+                <span className="text-blue-600 font-semibold cursor-pointer hover:underline">
+                  Khôi phục ngay
+                </span>
               </p>
             )}
-
-            <div className="relative flex items-center gap-3">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-xs text-muted-foreground">hoặc</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {["Google", "Facebook"].map((p) => (
-                <button
-                  key={p}
-                  className="flex items-center justify-center gap-2 py-3 border border-border rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
-                >
-                  <span>{p === "Google" ? "🇬" : "🇫"}</span>
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
+          </form>
         </div>
 
         <p className="text-center text-blue-200 text-xs mt-6">
-          Bằng cách tiếp tục, bạn đồng ý với <span className="text-white font-medium cursor-pointer">Điều khoản dịch vụ</span>
+          Bằng cách tiếp tục, bạn đồng ý với{" "}
+          <span className="text-white font-medium cursor-pointer">Điều khoản dịch vụ</span>
         </p>
-
-        {/* Admin portal link */}
-        <div className="text-center mt-4">
-          <button
-            onClick={() => onLogin("admin")}
-            className="flex items-center gap-2 mx-auto text-blue-200 hover:text-white text-xs font-medium transition-colors px-4 py-2 border border-white/20 rounded-xl hover:border-white/40 hover:bg-white/10"
-          >
-            <Shield className="w-3.5 h-3.5" />
-            Truy cập Admin Portal
-          </button>
-        </div>
       </div>
     </div>
   );

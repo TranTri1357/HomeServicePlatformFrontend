@@ -13,23 +13,15 @@ export function ServiceCategories() {
     label: string;
   } | null>(null);
 
-  const filtered = items.filter((t) =>
-    t.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = items.filter((t) => t.name.toLowerCase().includes(search.toLowerCase()));
   const toggleActive = (id: number) =>
-    setItems(
-      items.map((t) =>
-        t.id === id ? { ...t, active: !t.active } : t,
-      ),
-    );
+    setItems(items.map((t) => (t.id === id ? { ...t, active: !t.active } : t)));
 
   return (
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Quản lý loại dịch vụ
-          </h1>
+          <h1 className="text-2xl font-bold text-foreground">Quản lý loại dịch vụ</h1>
           <p className="text-sm text-muted-foreground">
             Quản lý các danh mục dịch vụ trong hệ thống
           </p>
@@ -45,11 +37,7 @@ export function ServiceCategories() {
 
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div className="p-4 border-b border-border">
-          <AdminSearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Tìm loại dịch vụ..."
-          />
+          <AdminSearchBar value={search} onChange={setSearch} placeholder="Tìm loại dịch vụ..." />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -75,25 +63,12 @@ export function ServiceCategories() {
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map((t) => (
-                <tr
-                  key={t.id}
-                  className="hover:bg-muted/30 transition-colors"
-                >
-                  <td className="px-4 py-3 text-2xl">
-                    {t.icon}
-                  </td>
-                  <td className="px-4 py-3 text-sm font-bold text-foreground">
-                    {t.name}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-foreground">
-                    {t.services}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-foreground">
-                    {t.providers}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-foreground">
-                    {t.orders}
-                  </td>
+                <tr key={t.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3 text-2xl">{t.icon}</td>
+                  <td className="px-4 py-3 text-sm font-bold text-foreground">{t.name}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{t.services}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{t.providers}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{t.orders}</td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => toggleActive(t.id)}
@@ -142,9 +117,7 @@ export function ServiceCategories() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold">
-                Thêm loại dịch vụ
-              </h3>
+              <h3 className="text-lg font-bold">Thêm loại dịch vụ</h3>
               <button
                 onClick={() => setShowAdd(false)}
                 className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center"

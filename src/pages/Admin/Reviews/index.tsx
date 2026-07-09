@@ -5,7 +5,17 @@ import { AdminBadge, ConfirmModal, AdminPagination, AdminSearchBar } from "@/com
 import { useReviews } from "@/hooks/Admin/useReviews";
 
 export function Reviews() {
-  const { search, setSearch, statusFilter, setStatusFilter, page, setPage, filtered, paged, perPage } = useReviews();
+  const {
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    page,
+    setPage,
+    filtered,
+    paged,
+    perPage,
+  } = useReviews();
   const [confirm, setConfirm] = useState<{
     show: boolean;
     action: string;
@@ -15,9 +25,7 @@ export function Reviews() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Quản lý đánh giá
-        </h1>
+        <h1 className="text-2xl font-bold text-foreground">Quản lý đánh giá</h1>
         <p className="text-sm text-muted-foreground">
           Kiểm duyệt và xử lý các đánh giá từ khách hàng
         </p>
@@ -32,29 +40,18 @@ export function Reviews() {
           },
           {
             label: "Đã đăng",
-            value: adminReviewsList.filter(
-              (r) => r.status === "published",
-            ).length,
+            value: adminReviewsList.filter((r) => r.status === "published").length,
             color: "text-green-600",
           },
           {
             label: "Vi phạm",
-            value: adminReviewsList.filter(
-              (r) => r.status === "flagged",
-            ).length,
+            value: adminReviewsList.filter((r) => r.status === "flagged").length,
             color: "text-red-600",
           },
         ].map((s) => (
-          <div
-            key={s.label}
-            className="bg-white rounded-2xl p-4 shadow-sm text-center"
-          >
-            <p className={`text-2xl font-extrabold ${s.color}`}>
-              {s.value}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {s.label}
-            </p>
+          <div key={s.label} className="bg-white rounded-2xl p-4 shadow-sm text-center">
+            <p className={`text-2xl font-extrabold ${s.color}`}>{s.value}</p>
+            <p className="text-xs text-muted-foreground">{s.label}</p>
           </div>
         ))}
       </div>
@@ -111,15 +108,9 @@ export function Reviews() {
                   key={r.id}
                   className={`hover:bg-muted/30 transition-colors ${r.status === "flagged" ? "bg-red-50/30" : ""}`}
                 >
-                  <td className="px-4 py-3 text-sm font-medium text-foreground">
-                    {r.customer}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-foreground">
-                    {r.provider}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">
-                    {r.service}
-                  </td>
+                  <td className="px-4 py-3 text-sm font-medium text-foreground">{r.customer}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{r.provider}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{r.service}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-0.5">
                       {[1, 2, 3, 4, 5].map((s) => (
@@ -133,9 +124,7 @@ export function Reviews() {
                   <td className="px-4 py-3 text-xs text-muted-foreground max-w-[180px] truncate">
                     {r.comment}
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {r.date}
-                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{r.date}</td>
                   <td className="px-4 py-3">
                     <AdminBadge status={r.status} />
                   </td>
@@ -175,36 +164,21 @@ export function Reviews() {
             </tbody>
           </table>
         </div>
-        <AdminPagination
-          page={page}
-          total={filtered.length}
-          perPage={perPage}
-          onChange={setPage}
-        />
+        <AdminPagination page={page} total={filtered.length} perPage={perPage} onChange={setPage} />
       </div>
 
       {confirm.show && confirm.item && (
         <ConfirmModal
-          title={
-            confirm.action === "delete"
-              ? "Xóa đánh giá?"
-              : "Khôi phục đánh giá?"
-          }
+          title={confirm.action === "delete" ? "Xóa đánh giá?" : "Khôi phục đánh giá?"}
           message={
             confirm.action === "delete"
               ? `Đánh giá của ${confirm.item.customer} sẽ bị xóa vĩnh viễn.`
               : `Đánh giá của ${confirm.item.customer} sẽ được đăng lại.`
           }
-          confirmLabel={
-            confirm.action === "delete" ? "Xóa" : "Khôi phục"
-          }
+          confirmLabel={confirm.action === "delete" ? "Xóa" : "Khôi phục"}
           danger={confirm.action === "delete"}
-          onConfirm={() =>
-            setConfirm({ show: false, action: "", item: null })
-          }
-          onCancel={() =>
-            setConfirm({ show: false, action: "", item: null })
-          }
+          onConfirm={() => setConfirm({ show: false, action: "", item: null })}
+          onCancel={() => setConfirm({ show: false, action: "", item: null })}
         />
       )}
     </div>

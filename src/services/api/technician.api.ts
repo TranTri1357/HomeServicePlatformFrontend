@@ -1,13 +1,13 @@
 ﻿import { get } from "./client";
 import type { Technician } from "@/shared/types";
 
-export interface TechnicianListParams {
+export type TechnicianListParams = {
   search?: string;
   serviceId?: number | string;
   status?: Technician["status"];
   minRating?: number;
   maxDistanceKm?: number;
-}
+};
 
 export async function getTechnicians(params?: TechnicianListParams): Promise<Technician[]> {
   return get<Technician[]>("/technicians", { params });

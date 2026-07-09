@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { adminProvidersList } from "@/services/Admin/technician.data";
-import type { AdminTechnician } from "@/shared/types";
 
 export function useTechnicians() {
   const [search, setSearch] = useState("");
@@ -17,5 +16,15 @@ export function useTechnicians() {
   );
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
-  return { search, setSearch, statusFilter, setStatusFilter, page, setPage, filtered, paged, perPage };
+  return {
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    page,
+    setPage,
+    filtered,
+    paged,
+    perPage,
+  };
 }

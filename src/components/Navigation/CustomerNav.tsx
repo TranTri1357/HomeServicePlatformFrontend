@@ -7,10 +7,10 @@ interface CustomerNavProps {
 }
 
 const ITEMS = [
-  { screen: "customerHome" as Screen, icon: Home,     label: "Trang chủ" },
-  { screen: "serviceList"  as Screen, icon: Search,   label: "Dịch vụ"   },
-  { screen: "bookingManagement" as Screen, icon: Calendar, label: "Lịch đặt"  },
-  { screen: "customerProfile"   as Screen, icon: User,     label: "Hồ sơ"     },
+  { screen: "customerHome" as Screen, icon: Home, label: "Trang chủ" },
+  { screen: "serviceList" as Screen, icon: Search, label: "Dịch vụ" },
+  { screen: "bookingManagement" as Screen, icon: Calendar, label: "Lịch đặt" },
+  { screen: "customerProfile" as Screen, icon: User, label: "Hồ sơ" },
 ];
 
 const HOME_ADJACENT: Screen[] = ["serviceDetail", "technicianMap", "technicianDetail"];
@@ -28,8 +28,12 @@ export function CustomerNav({ current, onNavigate }: CustomerNavProps) {
             onClick={() => onNavigate(item.screen)}
             className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-colors ${active ? "text-blue-600" : "text-muted-foreground"}`}
           >
-            <item.icon className={`w-5 h-5 ${active ? "text-blue-600" : "text-muted-foreground"}`} />
-            <span className={`text-[10px] font-semibold ${active ? "text-blue-600" : "text-muted-foreground"}`}>
+            <item.icon
+              className={`w-5 h-5 ${active ? "text-blue-600" : "text-muted-foreground"}`}
+            />
+            <span
+              className={`text-[10px] font-semibold ${active ? "text-blue-600" : "text-muted-foreground"}`}
+            >
               {item.label}
             </span>
           </button>

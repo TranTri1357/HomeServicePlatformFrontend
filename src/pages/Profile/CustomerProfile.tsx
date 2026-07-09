@@ -14,20 +14,14 @@ import {
 } from "lucide-react";
 import type { Screen } from "@/shared/types";
 
-export function CustomerProfile({
-  onNavigate,
-}: {
-  onNavigate: (s: Screen) => void;
-}) {
+export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   return (
     <div className="flex flex-col h-full">
       <div className="overflow-y-auto flex-1">
         {/* Header */}
         <div className="bg-gradient-to-br from-blue-600 to-blue-800 px-4 pt-6 pb-12">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white text-xl font-bold">
-              Hồ sơ của tôi
-            </h2>
+            <h2 className="text-white text-xl font-bold">Hồ sơ của tôi</h2>
             <button className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
               <Settings className="w-4 h-4 text-white" />
             </button>
@@ -44,15 +38,9 @@ export function CustomerProfile({
               </button>
             </div>
             <div>
-              <h3 className="text-white text-xl font-bold">
-                Trần Minh Khoa
-              </h3>
-              <p className="text-blue-200 text-sm">
-                khoa.tran@email.com
-              </p>
-              <p className="text-blue-200 text-sm">
-                0901 234 567
-              </p>
+              <h3 className="text-white text-xl font-bold">Trần Minh Khoa</h3>
+              <p className="text-blue-200 text-sm">khoa.tran@email.com</p>
+              <p className="text-blue-200 text-sm">0901 234 567</p>
             </div>
           </div>
         </div>
@@ -65,16 +53,9 @@ export function CustomerProfile({
               ["10", "Hoàn thành"],
               ["4.8", "Điểm TB"],
             ].map(([val, label]) => (
-              <div
-                key={label}
-                className="flex flex-col items-center gap-1 px-3"
-              >
-                <span className="text-2xl font-extrabold text-blue-600">
-                  {val}
-                </span>
-                <span className="text-xs text-muted-foreground text-center">
-                  {label}
-                </span>
+              <div key={label} className="flex flex-col items-center gap-1 px-3">
+                <span className="text-2xl font-extrabold text-blue-600">{val}</span>
+                <span className="text-xs text-muted-foreground text-center">{label}</span>
               </div>
             ))}
           </div>
@@ -82,9 +63,7 @@ export function CustomerProfile({
           {/* Personal Info */}
           <div className="bg-white rounded-2xl overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <h3 className="font-bold text-foreground">
-                Thông tin cá nhân
-              </h3>
+              <h3 className="font-bold text-foreground">Thông tin cá nhân</h3>
               <button className="text-blue-600 text-xs font-semibold flex items-center gap-1">
                 <Edit3 className="w-3 h-3" />
                 Chỉnh sửa
@@ -120,12 +99,8 @@ export function CustomerProfile({
                   <item.icon className="w-4 h-4 text-blue-600" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-muted-foreground">
-                    {item.label}
-                  </p>
-                  <p className="text-sm font-medium text-foreground">
-                    {item.value}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                  <p className="text-sm font-medium text-foreground">{item.value}</p>
                 </div>
               </div>
             ))}
@@ -178,9 +153,7 @@ export function CustomerProfile({
             <div className="w-9 h-9 bg-red-100 rounded-xl flex items-center justify-center">
               <LogOut className="w-4 h-4 text-red-600" />
             </div>
-            <span className="text-sm font-semibold text-red-600">
-              Đăng xuất
-            </span>
+            <span className="text-sm font-semibold text-red-600">Đăng xuất</span>
           </button>
         </div>
       </div>

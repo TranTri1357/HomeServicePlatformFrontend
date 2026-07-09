@@ -1,24 +1,12 @@
 ﻿import { useState } from "react";
-import {
-  AlertCircle,
-  MapPin,
-  Phone,
-  X,
-  Check,
-  MessageCircle,
-  Navigation,
-} from "lucide-react";
+import { AlertCircle, MapPin, Phone, X, Check, MessageCircle, Navigation } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import type { BookingStatus } from "@/shared/types";
 import { providerJobs } from "@/services/Provider/provider.data";
 import { bookings } from "@/services/Booking/booking.data";
 import { Badge, TopBar } from "@/shared/ui";
 
-export function ProviderJobManagement({
-  onNavigate,
-}: {
-  onNavigate: (s: Screen) => void;
-}) {
+export function ProviderJobManagement({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const [activeTab, setActiveTab] = useState("incoming");
 
   const incomingRequests = [
@@ -46,10 +34,7 @@ export function ProviderJobManagement({
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar
-        title="Quản lý công việc"
-        onBack={() => onNavigate("providerDashboard")}
-      />
+      <TopBar title="Quản lý công việc" onBack={() => onNavigate("providerDashboard")} />
 
       <div className="flex border-b border-border bg-white">
         {["incoming", "active", "history"].map((t) => (
@@ -58,11 +43,7 @@ export function ProviderJobManagement({
             onClick={() => setActiveTab(t)}
             className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === t ? "text-blue-600 border-b-2 border-blue-600" : "text-muted-foreground"}`}
           >
-            {t === "incoming"
-              ? "Yêu cầu mới"
-              : t === "active"
-                ? "Đang làm"
-                : "Lịch sử"}
+            {t === "incoming" ? "Yêu cầu mới" : t === "active" ? "Đang làm" : "Lịch sử"}
           </button>
         ))}
       </div>
@@ -77,24 +58,18 @@ export function ProviderJobManagement({
               {req.urgent && (
                 <div className="bg-red-500 px-4 py-1.5 flex items-center gap-1.5">
                   <AlertCircle className="w-3.5 h-3.5 text-white" />
-                  <span className="text-white text-xs font-bold">
-                    KHẨN CẤP
-                  </span>
+                  <span className="text-white text-xs font-bold">KHẨN CẤP</span>
                 </div>
               )}
               <div className="p-4 space-y-3">
                 <div className="flex justify-between">
                   <div>
-                    <p className="font-bold text-foreground">
-                      {req.service}
-                    </p>
+                    <p className="font-bold text-foreground">{req.service}</p>
                     <p className="text-sm text-muted-foreground mt-0.5">
                       {req.customer} · {req.time}
                     </p>
                   </div>
-                  <span className="text-green-600 font-bold text-sm">
-                    {req.price}đ
-                  </span>
+                  <span className="text-green-600 font-bold text-sm">{req.price}đ</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MapPin className="w-3.5 h-3.5" />
@@ -110,9 +85,7 @@ export function ProviderJobManagement({
                     Từ chối
                   </button>
                   <button
-                    onClick={() =>
-                      onNavigate("providerJobSheet")
-                    }
+                    onClick={() => onNavigate("providerJobSheet")}
                     className="flex-1 py-2.5 bg-green-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1"
                   >
                     <Check className="w-4 h-4" />
@@ -125,24 +98,15 @@ export function ProviderJobManagement({
 
         {activeTab === "active" &&
           providerJobs.map((job) => (
-            <div
-              key={job.id}
-              className="bg-white rounded-2xl p-4 shadow-sm space-y-3"
-            >
+            <div key={job.id} className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="font-bold text-foreground">
-                    {job.service}
-                  </p>
+                  <p className="font-bold text-foreground">{job.service}</p>
                   <p className="text-sm text-muted-foreground">
                     {job.customer} · {job.time}
                   </p>
                 </div>
-                <Badge
-                  status={
-                    job.status as BookingStatus
-                  }
-                />
+                <Badge status={job.status as BookingStatus} />
               </div>
               <div className="text-sm text-muted-foreground flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5" />
@@ -168,23 +132,16 @@ export function ProviderJobManagement({
           bookings
             .filter((b) => b.status === "completed")
             .map((bk) => (
-              <div
-                key={bk.id}
-                className="bg-white rounded-2xl p-4 shadow-sm"
-              >
+              <div key={bk.id} className="bg-white rounded-2xl p-4 shadow-sm">
                 <div className="flex justify-between">
                   <div>
-                    <p className="font-bold text-sm">
-                      {bk.service}
-                    </p>
+                    <p className="font-bold text-sm">{bk.service}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {bk.date} · {bk.address}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-green-600">
-                      {bk.price}đ
-                    </p>
+                    <p className="font-bold text-green-600">{bk.price}đ</p>
                     <Badge status="completed" />
                   </div>
                 </div>
@@ -194,4 +151,3 @@ export function ProviderJobManagement({
     </div>
   );
 }
-

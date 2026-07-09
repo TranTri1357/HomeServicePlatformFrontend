@@ -13,37 +13,22 @@ import {
 } from "lucide-react";
 import type { Screen } from "@/shared/types";
 
-export function ProviderJobSheet({
-  onNavigate,
-}: {
-  onNavigate: (s: Screen) => void;
-}) {
+export function ProviderJobSheet({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const [countdown, setCountdown] = useState(30);
-  const [accepted, setAccepted] = useState<boolean | null>(
-    null,
-  );
+  const [accepted, setAccepted] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (accepted !== null || countdown <= 0) return;
-    const timer = setInterval(
-      () => setCountdown((c) => c - 1),
-      1000,
-    );
+    const timer = setInterval(() => setCountdown((c) => c - 1), 1000);
     return () => clearInterval(timer);
   }, [countdown, accepted]);
 
   useEffect(() => {
-    if (countdown === 0 && accepted === null)
-      setAccepted(false);
+    if (countdown === 0 && accepted === null) setAccepted(false);
   }, [countdown, accepted]);
 
   const progress = (countdown / 30) * 100;
-  const color =
-    countdown > 15
-      ? "#2563EB"
-      : countdown > 7
-        ? "#F59E0B"
-        : "#EF4444";
+  const color = countdown > 15 ? "#2563EB" : countdown > 7 ? "#F59E0B" : "#EF4444";
 
   if (accepted === true) {
     return (
@@ -51,35 +36,22 @@ export function ProviderJobSheet({
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
           <CheckCircle className="w-10 h-10 text-green-600" />
         </div>
-        <h2 className="text-xl font-extrabold text-foreground">
-          Đã nhận công việc!
-        </h2>
+        <h2 className="text-xl font-extrabold text-foreground">Đã nhận công việc!</h2>
         <p className="text-muted-foreground text-center text-sm">
-          Vui lòng đến địa chỉ khách hàng trong thời gian sớm
-          nhất.
+          Vui lòng đến địa chỉ khách hàng trong thời gian sớm nhất.
         </p>
         <div className="w-full bg-white rounded-2xl p-4 shadow-sm space-y-2">
           <p className="font-semibold text-sm">
-            <span className="text-muted-foreground">
-              Khách hàng:
-            </span>{" "}
-            Hoàng Văn E
+            <span className="text-muted-foreground">Khách hàng:</span> Hoàng Văn E
           </p>
           <p className="font-semibold text-sm">
-            <span className="text-muted-foreground">
-              Dịch vụ:
-            </span>{" "}
-            Sửa điện khẩn cấp
+            <span className="text-muted-foreground">Dịch vụ:</span> Sửa điện khẩn cấp
           </p>
           <p className="font-semibold text-sm">
-            <span className="text-muted-foreground">
-              Địa chỉ:
-            </span>{" "}
-            123 Lê Lợi, Q.1
+            <span className="text-muted-foreground">Địa chỉ:</span> 123 Lê Lợi, Q.1
           </p>
           <p className="font-semibold text-sm">
-            <span className="text-muted-foreground">SĐT:</span>{" "}
-            0901 234 567
+            <span className="text-muted-foreground">SĐT:</span> 0901 234 567
           </p>
         </div>
         <div className="w-full grid grid-cols-2 gap-3">
@@ -111,9 +83,7 @@ export function ProviderJobSheet({
         <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
           <X className="w-10 h-10 text-red-500" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">
-          Đã từ chối / Hết thời gian
-        </h2>
+        <h2 className="text-xl font-bold text-foreground">Đã từ chối / Hết thời gian</h2>
         <button
           onClick={() => onNavigate("providerDashboard")}
           className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold"
@@ -129,30 +99,16 @@ export function ProviderJobSheet({
       {/* Urgent header */}
       <div className="bg-red-600 px-4 py-3 flex items-center gap-2">
         <AlertCircle className="w-5 h-5 text-white animate-pulse" />
-        <span className="text-white font-bold text-sm">
-          YÊU CẦU KHẨN CẤP MỚI!
-        </span>
+        <span className="text-white font-bold text-sm">YÊU CẦU KHẨN CẤP MỚI!</span>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Countdown */}
         <div className="bg-white rounded-2xl p-6 flex flex-col items-center shadow-sm">
-          <p className="text-muted-foreground text-sm mb-4 font-medium">
-            Thời gian phản hồi
-          </p>
+          <p className="text-muted-foreground text-sm mb-4 font-medium">Thời gian phản hồi</p>
           <div className="relative w-36 h-36">
-            <svg
-              className="w-full h-full -rotate-90"
-              viewBox="0 0 100 100"
-            >
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                fill="none"
-                stroke="#E2E8F0"
-                strokeWidth="8"
-              />
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="45" fill="none" stroke="#E2E8F0" strokeWidth="8" />
               <circle
                 cx="50"
                 cy="50"
@@ -167,15 +123,10 @@ export function ProviderJobSheet({
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span
-                className="text-5xl font-extrabold"
-                style={{ color }}
-              >
+              <span className="text-5xl font-extrabold" style={{ color }}>
                 {countdown}
               </span>
-              <span className="text-xs text-muted-foreground font-medium">
-                giây
-              </span>
+              <span className="text-xs text-muted-foreground font-medium">giây</span>
             </div>
           </div>
           <p className="text-sm text-muted-foreground mt-4 text-center">
@@ -189,12 +140,8 @@ export function ProviderJobSheet({
             <span className="text-white text-xs font-bold bg-white/20 px-2 py-1 rounded-full">
               KHẨN CẤP
             </span>
-            <h3 className="text-white text-lg font-extrabold mt-1">
-              Sửa điện khẩn cấp
-            </h3>
-            <p className="text-white/80 text-sm">
-              Mất điện toàn bộ tầng 3
-            </p>
+            <h3 className="text-white text-lg font-extrabold mt-1">Sửa điện khẩn cấp</h3>
+            <p className="text-white/80 text-sm">Mất điện toàn bộ tầng 3</p>
           </div>
           <div className="p-4 space-y-3">
             <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
@@ -206,12 +153,8 @@ export function ProviderJobSheet({
                 />
               </div>
               <div>
-                <p className="font-bold text-sm text-foreground">
-                  Hoàng Văn E
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Khách hàng xác minh ⭐4.8
-                </p>
+                <p className="font-bold text-sm text-foreground">Hoàng Văn E</p>
+                <p className="text-xs text-muted-foreground">Khách hàng xác minh ⭐4.8</p>
               </div>
             </div>
 
@@ -219,8 +162,7 @@ export function ProviderJobSheet({
               {
                 icon: MapPin,
                 label: "Địa chỉ",
-                value:
-                  "123 Lê Lợi, Phường Bến Nghé, Q.1, TP.HCM",
+                value: "123 Lê Lợi, Phường Bến Nghé, Q.1, TP.HCM",
               },
               {
                 icon: Phone,
@@ -243,20 +185,13 @@ export function ProviderJobSheet({
                 value: "0.8 km · ~5 phút lái xe",
               },
             ].map((item) => (
-              <div
-                key={item.label}
-                className="flex items-start gap-3"
-              >
+              <div key={item.label} className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
                   <item.icon className="w-4 h-4 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">
-                    {item.label}
-                  </p>
-                  <p className="text-sm font-semibold text-foreground">
-                    {item.value}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                  <p className="text-sm font-semibold text-foreground">{item.value}</p>
                 </div>
               </div>
             ))}
@@ -274,22 +209,9 @@ export function ProviderJobSheet({
               backgroundColor: "#EEF2FF",
             }}
           />
-          <svg
-            className="absolute inset-0 w-full h-full"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="M0,60 Q100,55 200,65 T400,60"
-              stroke="white"
-              strokeWidth="8"
-              fill="none"
-            />
-            <path
-              d="M180,0 Q185,60 175,120"
-              stroke="white"
-              strokeWidth="6"
-              fill="none"
-            />
+          <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+            <path d="M0,60 Q100,55 200,65 T400,60" stroke="white" strokeWidth="8" fill="none" />
+            <path d="M180,0 Q185,60 175,120" stroke="white" strokeWidth="6" fill="none" />
           </svg>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
             <div className="w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow" />

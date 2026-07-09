@@ -1,15 +1,30 @@
-﻿import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AuthScreen } from "@/pages/Auth";
-import type { UserMode } from "@/shared/types";
-import { getPathForScreen } from "./screenPaths";
+import type { LoginResult } from "@/services/api/auth.api";
+import { useAuth } from "@/app/providers";
+import { getHomePathByRole } from "@/shared/auth/roles";
+
+interface LocationState {
+  from?: { pathname?: string };
+}
 
 export function AuthLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleLogin = (mode: UserMode) => {
-    if (mode === "customer") navigate(getPathForScreen("customerHome"), { replace: true });
-    else if (mode === "provider") navigate(getPathForScreen("providerDashboard"), { replace: true });
-    else if (mode === "admin") navigate(getPathForScreen("adminDashboard"), { replace: true });
+  const { setSession } = useAuth();
+
+  const handleLogin = ({ user, mode }: LoginResult) => {
+    setSession({
+      userId: user.userId,
+      fullName: user.fullName,
+      roles: user.roles,
+      mode,
+    });
+    // Return the user to the page they were bounced from, if any.
+    // ProtectedRoute still guards it, so a role-mismatch falls back to home.
+    const from = (location.state as LocationState | null)?.from?.pathname;
+    navigate(from || getHomePathByRole(mode), { replace: true });
   };
 
   return (

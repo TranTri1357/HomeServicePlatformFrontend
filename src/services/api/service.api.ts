@@ -1,13 +1,13 @@
 ﻿import { get } from "./client";
 import type { Service } from "@/shared/types";
 
-export interface ServiceListParams {
+export type ServiceListParams = {
   search?: string;
   category?: string;
   minRating?: number;
   minPrice?: number;
   maxPrice?: number;
-}
+};
 
 export async function getServices(params?: ServiceListParams): Promise<Service[]> {
   return get<Service[]>("/services", { params });

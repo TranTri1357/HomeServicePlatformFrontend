@@ -14,9 +14,15 @@ import { ProviderDashboard, ProviderJobSheet, ProviderJobManagement } from "@/pa
 import { ProviderSchedule } from "@/pages/Calendar";
 import { ProviderAreaRouting } from "@/pages/Area";
 import {
-  AdminDashboard, AdminOrders, AdminProviders, AdminServices,
-  AdminServiceTypes, AdminAccounts, AdminReviews,
-  AdminCommissions, AdminComplaints,
+  AdminDashboard,
+  AdminOrders,
+  AdminProviders,
+  AdminServices,
+  AdminServiceTypes,
+  AdminAccounts,
+  AdminReviews,
+  AdminCommissions,
+  AdminComplaints,
 } from "@/pages/Admin";
 
 type NavigateFn = (s: Screen, data?: object) => void;
@@ -27,34 +33,63 @@ export function renderScreen(
   navigate: NavigateFn,
 ): React.ReactNode {
   switch (screen) {
-    case "customerHome":      return <CustomerHome onNavigate={navigate} />;
-    case "serviceList":       return <ServiceList onNavigate={navigate} />;
-    case "serviceDetail":     return <ServiceDetail onNavigate={navigate} data={screenData as { service?: Service }} />;
-    case "technicianMap":     return <TechnicianMap onNavigate={navigate} />;
-    case "technicianDetail":  return <TechnicianDetail onNavigate={navigate} data={screenData as { tech?: Technician }} />;
-    case "booking":           return <Booking onNavigate={navigate} />;
-    case "payment":           return <Payment onNavigate={navigate} />;
-    case "chat":              return <Chat onNavigate={navigate} />;
-    case "customerProfile":   return <CustomerProfile onNavigate={navigate} />;
-    case "bookingManagement": return <BookingManagement onNavigate={navigate} />;
-    case "notifications":     return <Notifications onNavigate={navigate} />;
-    case "providerDashboard":         return <ProviderDashboard onNavigate={navigate} />;
-    case "providerJobSheet":          return <ProviderJobSheet onNavigate={navigate} />;
-    case "providerSchedule":          return <ProviderSchedule onNavigate={navigate} />;
-    case "providerChat":              return <Chat onNavigate={(s) => navigate(s)} isProvider />;
-    case "providerProfile":           return <ProviderProfile onNavigate={navigate} />;
-    case "providerJobManagement":     return <ProviderJobManagement onNavigate={navigate} />;
-    case "providerServiceManagement": return <ProviderServiceManagement onNavigate={navigate} />;
-    case "providerAreaRouting":       return <ProviderAreaRouting onNavigate={navigate} />;
-    case "adminDashboard":    return <AdminDashboard onNavigate={navigate} />;
-    case "adminOrders":       return <AdminOrders />;
-    case "adminProviders":    return <AdminProviders />;
-    case "adminServices":     return <AdminServices />;
-    case "adminServiceTypes": return <AdminServiceTypes />;
-    case "adminAccounts":     return <AdminAccounts />;
-    case "adminReviews":      return <AdminReviews />;
-    case "adminCommissions":  return <AdminCommissions />;
-    case "adminComplaints":   return <AdminComplaints />;
-    default:                  return <CustomerHome onNavigate={navigate} />;
+    case "customerHome":
+      return <CustomerHome onNavigate={navigate} />;
+    case "serviceList":
+      return <ServiceList onNavigate={navigate} />;
+    case "serviceDetail":
+      return <ServiceDetail onNavigate={navigate} data={screenData as { service?: Service }} />;
+    case "technicianMap":
+      return <TechnicianMap onNavigate={navigate} />;
+    case "technicianDetail":
+      return <TechnicianDetail onNavigate={navigate} data={screenData as { tech?: Technician }} />;
+    case "booking":
+      return <Booking onNavigate={navigate} />;
+    case "payment":
+      return <Payment onNavigate={navigate} />;
+    case "chat":
+      return <Chat onNavigate={navigate} />;
+    case "customerProfile":
+      return <CustomerProfile onNavigate={navigate} />;
+    case "bookingManagement":
+      return <BookingManagement onNavigate={navigate} />;
+    case "notifications":
+      return <Notifications onNavigate={navigate} />;
+    case "providerDashboard":
+      return <ProviderDashboard onNavigate={navigate} />;
+    case "providerJobSheet":
+      return <ProviderJobSheet onNavigate={navigate} />;
+    case "providerSchedule":
+      return <ProviderSchedule onNavigate={navigate} />;
+    case "providerChat":
+      return <Chat onNavigate={(s) => navigate(s)} isProvider />;
+    case "providerProfile":
+      return <ProviderProfile onNavigate={navigate} />;
+    case "providerJobManagement":
+      return <ProviderJobManagement onNavigate={navigate} />;
+    case "providerServiceManagement":
+      return <ProviderServiceManagement onNavigate={navigate} />;
+    case "providerAreaRouting":
+      return <ProviderAreaRouting onNavigate={navigate} />;
+    case "adminDashboard":
+      return <AdminDashboard onNavigate={navigate} />;
+    case "adminOrders":
+      return <AdminOrders />;
+    case "adminProviders":
+      return <AdminProviders />;
+    case "adminServices":
+      return <AdminServices />;
+    case "adminServiceTypes":
+      return <AdminServiceTypes />;
+    case "adminAccounts":
+      return <AdminAccounts />;
+    case "adminReviews":
+      return <AdminReviews />;
+    case "adminCommissions":
+      return <AdminCommissions />;
+    case "adminComplaints":
+      return <AdminComplaints />;
+    default:
+      return <CustomerHome onNavigate={navigate} />;
   }
 }

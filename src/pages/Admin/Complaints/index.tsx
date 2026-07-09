@@ -5,7 +5,19 @@ import { useComplaints } from "@/hooks/Admin/useComplaints";
 import type { AdminComplaint } from "@/shared/types";
 
 export function Complaints() {
-  const { search, setSearch, statusFilter, setStatusFilter, page, setPage, filtered, paged, perPage, items, updateStatus } = useComplaints();
+  const {
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    page,
+    setPage,
+    filtered,
+    paged,
+    perPage,
+    items,
+    updateStatus,
+  } = useComplaints();
   const [selected, setSelected] = useState<AdminComplaint | null>(null);
   const [confirm, setConfirm] = useState<{
     show: boolean;
@@ -16,57 +28,38 @@ export function Complaints() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Quản lý khiếu nại
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Tiếp nhận và xử lý khiếu nại từ người dùng
-        </p>
+        <h1 className="text-2xl font-bold text-foreground">Quản lý khiếu nại</h1>
+        <p className="text-sm text-muted-foreground">Tiếp nhận và xử lý khiếu nại từ người dùng</p>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         {[
           {
             label: "Khiếu nại mới",
-            value: items.filter((c) => c.status === "open")
-              .length,
+            value: items.filter((c) => c.status === "open").length,
             color: "text-red-600",
             bg: "bg-red-100",
           },
           {
             label: "Đang xử lý",
-            value: items.filter(
-              (c) => c.status === "processing",
-            ).length,
+            value: items.filter((c) => c.status === "processing").length,
             color: "text-amber-600",
             bg: "bg-amber-100",
           },
           {
             label: "Đã giải quyết",
-            value: items.filter((c) => c.status === "resolved")
-              .length,
+            value: items.filter((c) => c.status === "resolved").length,
             color: "text-green-600",
             bg: "bg-green-100",
           },
         ].map((s) => (
-          <div
-            key={s.label}
-            className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3"
-          >
-            <div
-              className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center`}
-            >
+          <div key={s.label} className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3">
+            <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center`}>
               <Flag className={`w-5 h-5 ${s.color}`} />
             </div>
             <div>
-              <p
-                className={`text-xl font-extrabold ${s.color}`}
-              >
-                {s.value}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {s.label}
-              </p>
+              <p className={`text-xl font-extrabold ${s.color}`}>{s.value}</p>
+              <p className="text-xs text-muted-foreground">{s.label}</p>
             </div>
           </div>
         ))}
@@ -126,15 +119,9 @@ export function Complaints() {
                   key={c.id}
                   className={`hover:bg-muted/30 transition-colors ${c.priority === "high" && c.status === "open" ? "bg-red-50/40" : ""}`}
                 >
-                  <td className="px-4 py-3 text-sm font-bold text-blue-600">
-                    {c.id}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-foreground">
-                    {c.customer}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-foreground">
-                    {c.provider}
-                  </td>
+                  <td className="px-4 py-3 text-sm font-bold text-blue-600">{c.id}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{c.customer}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{c.provider}</td>
                   <td className="px-4 py-3">
                     <span className="bg-accent text-blue-600 text-xs font-semibold px-2 py-0.5 rounded-full">
                       {c.type}
@@ -149,9 +136,7 @@ export function Complaints() {
                   <td className="px-4 py-3">
                     <AdminBadge status={c.status} />
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {c.date}
-                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{c.date}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
                       <button
@@ -195,12 +180,7 @@ export function Complaints() {
             </tbody>
           </table>
         </div>
-        <AdminPagination
-          page={page}
-          total={filtered.length}
-          perPage={perPage}
-          onChange={setPage}
-        />
+        <AdminPagination page={page} total={filtered.length} perPage={perPage} onChange={setPage} />
       </div>
 
       {selected && (
@@ -213,9 +193,7 @@ export function Complaints() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 bg-white border-b border-border px-5 py-4 flex items-center justify-between">
-              <h3 className="font-bold">
-                Chi tiết khiếu nại {selected.id}
-              </h3>
+              <h3 className="font-bold">Chi tiết khiếu nại {selected.id}</h3>
               <button
                 onClick={() => setSelected(null)}
                 className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center"
@@ -246,12 +224,8 @@ export function Complaints() {
                   key={l}
                   className="flex justify-between py-2 border-b border-border last:border-0"
                 >
-                  <span className="text-sm text-muted-foreground">
-                    {l}
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {v}
-                  </span>
+                  <span className="text-sm text-muted-foreground">{l}</span>
+                  <span className="text-sm font-semibold">{v}</span>
                 </div>
               ))}
               <div>
@@ -285,17 +259,9 @@ export function Complaints() {
       )}
       {confirm.show && confirm.item && (
         <ConfirmModal
-          title={
-            confirm.action === "process"
-              ? "Nhận xử lý khiếu nại?"
-              : "Đóng khiếu nại?"
-          }
+          title={confirm.action === "process" ? "Nhận xử lý khiếu nại?" : "Đóng khiếu nại?"}
           message={`Khiếu nại ${confirm.item.id} từ ${confirm.item.customer} sẽ ${confirm.action === "process" ? "được chuyển sang trạng thái đang xử lý." : "được đánh dấu đã giải quyết."}`}
-          confirmLabel={
-            confirm.action === "process"
-              ? "Nhận xử lý"
-              : "Đóng khiếu nại"
-          }
+          confirmLabel={confirm.action === "process" ? "Nhận xử lý" : "Đóng khiếu nại"}
           danger={false}
           onConfirm={() => {
             updateStatus(
@@ -304,9 +270,7 @@ export function Complaints() {
             );
             setConfirm({ show: false, action: "", item: null });
           }}
-          onCancel={() =>
-            setConfirm({ show: false, action: "", item: null })
-          }
+          onCancel={() => setConfirm({ show: false, action: "", item: null })}
         />
       )}
     </div>

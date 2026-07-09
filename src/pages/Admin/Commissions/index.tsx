@@ -15,11 +15,7 @@ export function Commissions() {
   };
   const handleSave = () => {
     if (editId !== null)
-      setItems(
-        items.map((i) =>
-          i.id === editId ? { ...i, rate: editRate } : i,
-        ),
-      );
+      setItems(items.map((i) => (i.id === editId ? { ...i, rate: editRate } : i)));
     setEditId(null);
     setSaveMsg(true);
     setTimeout(() => setSaveMsg(false), 2500);
@@ -28,9 +24,7 @@ export function Commissions() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Quản lý hoa hồng
-        </h1>
+        <h1 className="text-2xl font-bold text-foreground">Quản lý hoa hồng</h1>
         <p className="text-sm text-muted-foreground">
           Thiết lập tỷ lệ hoa hồng theo từng loại dịch vụ
         </p>
@@ -39,17 +33,13 @@ export function Commissions() {
       {saveMsg && (
         <div className="bg-green-500 text-white px-4 py-3 rounded-2xl flex items-center gap-2">
           <CheckCircle className="w-4 h-4" />
-          <span className="text-sm font-semibold">
-            Đã lưu cài đặt hoa hồng!
-          </span>
+          <span className="text-sm font-semibold">Đã lưu cài đặt hoa hồng!</span>
         </div>
       )}
 
       {/* Global rate */}
       <div className="bg-white rounded-2xl p-5 shadow-sm">
-        <h3 className="font-bold text-foreground mb-1">
-          Tỷ lệ hoa hồng mặc định toàn hệ thống
-        </h3>
+        <h3 className="font-bold text-foreground mb-1">Tỷ lệ hoa hồng mặc định toàn hệ thống</h3>
         <p className="text-xs text-muted-foreground mb-4">
           Áp dụng khi không có cài đặt riêng cho từng danh mục
         </p>
@@ -60,9 +50,7 @@ export function Commissions() {
               min={5}
               max={30}
               value={globalRate}
-              onChange={(e) =>
-                setGlobalRate(Number(e.target.value))
-              }
+              onChange={(e) => setGlobalRate(Number(e.target.value))}
               className="w-full accent-blue-600"
             />
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
@@ -72,9 +60,7 @@ export function Commissions() {
             </div>
           </div>
           <div className="w-20 text-center">
-            <span className="text-3xl font-extrabold text-blue-600">
-              {globalRate}%
-            </span>
+            <span className="text-3xl font-extrabold text-blue-600">{globalRate}%</span>
           </div>
         </div>
       </div>
@@ -82,9 +68,7 @@ export function Commissions() {
       {/* Per-category table */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-          <h3 className="font-bold text-foreground">
-            Cài đặt theo loại dịch vụ
-          </h3>
+          <h3 className="font-bold text-foreground">Cài đặt theo loại dịch vụ</h3>
           <button
             onClick={handleSave}
             className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
@@ -115,14 +99,9 @@ export function Commissions() {
             </thead>
             <tbody className="divide-y divide-border">
               {items.map((item) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-muted/30 transition-colors"
-                >
+                <tr key={item.id} className="hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3">
-                    <span className="font-semibold text-sm text-foreground">
-                      {item.category}
-                    </span>
+                    <span className="font-semibold text-sm text-foreground">{item.category}</span>
                   </td>
                   <td className="px-4 py-3">
                     {editId === item.id ? (
@@ -132,14 +111,10 @@ export function Commissions() {
                           min={1}
                           max={50}
                           value={editRate}
-                          onChange={(e) =>
-                            setEditRate(Number(e.target.value))
-                          }
+                          onChange={(e) => setEditRate(Number(e.target.value))}
                           className="w-20 bg-muted border border-blue-400 px-2 py-1 rounded-lg text-sm focus:outline-none"
                         />
-                        <span className="text-muted-foreground text-sm">
-                          %
-                        </span>
+                        <span className="text-muted-foreground text-sm">%</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
@@ -151,18 +126,12 @@ export function Commissions() {
                             }}
                           />
                         </div>
-                        <span className="text-sm font-bold text-blue-600">
-                          {item.rate}%
-                        </span>
+                        <span className="text-sm font-bold text-blue-600">{item.rate}%</span>
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-sm text-foreground">
-                    {item.minFee}đ
-                  </td>
-                  <td className="px-4 py-3 text-sm text-foreground">
-                    {item.maxFee}đ
-                  </td>
+                  <td className="px-4 py-3 text-sm text-foreground">{item.minFee}đ</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{item.maxFee}đ</td>
                   <td className="px-4 py-3 text-sm font-bold text-green-600">
                     {item.monthlyRevenue}đ
                   </td>
@@ -176,9 +145,7 @@ export function Commissions() {
                       </button>
                     ) : (
                       <button
-                        onClick={() =>
-                          handleEdit(item.id, item.rate)
-                        }
+                        onClick={() => handleEdit(item.id, item.rate)}
                         className="px-3 py-1 bg-muted hover:bg-accent rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
                       >
                         <Edit3 className="w-3 h-3" />

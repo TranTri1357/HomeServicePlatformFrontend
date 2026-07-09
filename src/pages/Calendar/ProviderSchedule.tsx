@@ -5,39 +5,20 @@ import type { BookingStatus } from "@/shared/types";
 import { providerJobs } from "@/services/Provider/provider.data";
 import { Badge, TopBar } from "@/shared/ui";
 
-export function ProviderSchedule({
-  onNavigate,
-}: {
-  onNavigate: (s: Screen) => void;
-}) {
+export function ProviderSchedule({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const days = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
   const [selected, setSelected] = useState(3);
-  const slots = [
-    "08:00",
-    "09:00",
-    "10:00",
-    "11:00",
-    "13:00",
-    "14:00",
-    "15:00",
-    "16:00",
-    "17:00",
-  ];
+  const slots = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
   const booked = ["09:00", "10:00", "14:00"];
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar
-        title="Lịch làm việc"
-        onBack={() => onNavigate("providerDashboard")}
-      />
+      <TopBar title="Lịch làm việc" onBack={() => onNavigate("providerDashboard")} />
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Calendar header */}
         <div className="bg-white rounded-2xl p-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-foreground">
-              Tháng 6, 2026
-            </h3>
+            <h3 className="font-bold text-foreground">Tháng 6, 2026</h3>
             <div className="flex gap-1">
               <button className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
                 <ChevronLeft className="w-4 h-4" />
@@ -76,9 +57,7 @@ export function ProviderSchedule({
 
         {/* Time Slots */}
         <div className="bg-white rounded-2xl p-4">
-          <h3 className="font-bold text-foreground mb-3">
-            Khung giờ ngày {18 + selected}/06
-          </h3>
+          <h3 className="font-bold text-foreground mb-3">Khung giờ ngày {18 + selected}/06</h3>
           <div className="grid grid-cols-3 gap-2">
             {slots.map((slot) => {
               const isBooked = booked.includes(slot);
@@ -88,11 +67,7 @@ export function ProviderSchedule({
                   className={`py-3 rounded-xl text-sm font-semibold text-center ${isBooked ? "bg-blue-600 text-white" : "bg-green-50 text-green-700 border border-green-200"}`}
                 >
                   {slot}
-                  {isBooked && (
-                    <p className="text-[10px] text-blue-200 mt-0.5">
-                      Đã đặt
-                    </p>
-                  )}
+                  {isBooked && <p className="text-[10px] text-blue-200 mt-0.5">Đã đặt</p>}
                 </div>
               );
             })}
@@ -112,9 +87,7 @@ export function ProviderSchedule({
         {/* Upcoming */}
         <div className="bg-white rounded-2xl overflow-hidden">
           <div className="px-4 py-3 border-b border-border">
-            <h3 className="font-bold text-foreground">
-              Lịch sắp tới
-            </h3>
+            <h3 className="font-bold text-foreground">Lịch sắp tới</h3>
           </div>
           {providerJobs.map((job) => (
             <div
@@ -132,9 +105,7 @@ export function ProviderSchedule({
                   {job.time} · {job.address}
                 </p>
               </div>
-              <Badge
-                status={job.status as BookingStatus}
-              />
+              <Badge status={job.status as BookingStatus} />
             </div>
           ))}
         </div>
@@ -142,4 +113,3 @@ export function ProviderSchedule({
     </div>
   );
 }
-
