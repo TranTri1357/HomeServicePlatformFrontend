@@ -1,5 +1,4 @@
 import type { Screen } from "@/shared/types";
-import type { Service } from "@/shared/types";
 import type { Technician } from "@/shared/types";
 
 import { CustomerHome } from "@/pages/Customer";
@@ -38,7 +37,7 @@ export function renderScreen(
     case "serviceList":
       return <ServiceList onNavigate={navigate} />;
     case "serviceDetail":
-      return <ServiceDetail onNavigate={navigate} data={screenData as { service?: Service }} />;
+      return <ServiceDetail onNavigate={navigate} data={screenData as { serviceId?: number }} />;
     case "technicianMap":
       return <TechnicianMap onNavigate={navigate} />;
     case "technicianDetail":

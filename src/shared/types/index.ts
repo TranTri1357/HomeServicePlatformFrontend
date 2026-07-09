@@ -5,6 +5,7 @@ export * from "@/types/category";
 export * from "@/types/chat";
 export * from "@/types/navigation";
 export * from "@/types/notification";
+export * from "@/types/pagination";
 export * from "@/types/provider";
 export * from "@/types/service";
 export * from "@/types/tasker";
