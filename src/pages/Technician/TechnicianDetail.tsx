@@ -1,17 +1,106 @@
-﻿import { ChevronLeft, Shield, Star, Briefcase, Award, MessageCircle, Phone } from "lucide-react";
+import {
+  ChevronLeft,
+  Shield,
+  Star,
+  Briefcase,
+  Award,
+  MessageCircle,
+  Phone,
+  AlertCircle,
+} from "lucide-react";
 import type { Screen } from "@/shared/types";
-import type { Technician } from "@/shared/types";
-import { technicians } from "@/services/Technician/technician.data";
+import { taskerApi } from "@/services/api";
+import { useApi } from "@/shared/hooks";
 import { Avatar } from "@/shared/ui";
+import { getApiAssetUrl, formatDateVn } from "@/shared/lib";
 
 export function TechnicianDetail({
   onNavigate,
   data,
 }: {
   onNavigate: (s: Screen, d?: object) => void;
-  data?: { tech?: Technician };
+  data?: { taskerId?: number };
 }) {
-  const tech = data?.tech ?? technicians[0];
+  const taskerId = data?.taskerId;
+
+  const {
+    data: tech,
+    loading,
+    error,
+    refetch,
+  } = useApi(() => taskerApi.getTaskerDetail(taskerId!), {
+    immediate: Boolean(taskerId),
+  });
+
+  // ── Guards ──────────────────────────────────────────────────────────────
+  if (!taskerId) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
+        <AlertCircle className="w-10 h-10 text-red-400" />
+        <p className="text-sm text-muted-foreground">Không xác định được thợ.</p>
+        <button
+          onClick={() => onNavigate("customerHome")}
+          className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
+        >
+          Về trang chủ
+        </button>
+      </div>
+    );
+  }
+
+  if (loading && !tech) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="h-40 bg-slate-200 animate-pulse" />
+        <div className="p-4 space-y-4">
+          <div className="h-20 bg-slate-200 rounded-2xl animate-pulse" />
+          <div className="h-28 bg-slate-200 rounded-2xl animate-pulse" />
+          <div className="h-40 bg-slate-200 rounded-2xl animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !tech) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
+        <AlertCircle className="w-10 h-10 text-red-400" />
+        <p className="text-sm text-muted-foreground">{error}</p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => void refetch()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
+          >
+            Thử lại
+          </button>
+          <button
+            onClick={() => onNavigate("customerHome")}
+            className="px-4 py-2 border border-border rounded-xl text-sm font-semibold"
+          >
+            Quay lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tech) return null;
+
+  const avatarUrl = tech.avatarUrl ? getApiAssetUrl(tech.avatarUrl) : undefined;
+  const subtitle = tech.skills[0] ?? "Thợ dịch vụ";
+  const firstName = tech.fullName.split(" ").slice(-1)[0];
+
+  // Rating distribution (percent per star) from the review summary.
+  const s = tech.reviewSummary;
+  const totalRatings =
+    s.fiveStarCount + s.fourStarCount + s.threeStarCount + s.twoStarCount + s.oneStarCount;
+  const ratingBars: [number, number][] = [
+    [5, s.fiveStarCount],
+    [4, s.fourStarCount],
+    [3, s.threeStarCount],
+    [2, s.twoStarCount],
+    [1, s.oneStarCount],
+  ].map(([star, count]) => [star, totalRatings > 0 ? Math.round((count / totalRatings) * 100) : 0]);
 
   return (
     <div className="flex flex-col h-full">
@@ -25,27 +114,20 @@ export function TechnicianDetail({
             <ChevronLeft className="w-5 h-5 text-white" />
           </button>
           <div className="flex items-start gap-4">
-            <div className="relative">
-              <Avatar src={tech.avatar} size={80} name={tech.name} />
-              {tech.status === "available" && (
-                <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                  <span className="w-2 h-2 bg-white rounded-full" />
-                </span>
-              )}
-            </div>
+            <Avatar src={avatarUrl} size={80} name={tech.fullName} />
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h2 className="text-white text-xl font-bold">{tech.name}</h2>
-                {tech.verified && <Shield className="w-4 h-4 text-green-400" />}
+                <h2 className="text-white text-xl font-bold">{tech.fullName}</h2>
+                {tech.isVerified && <Shield className="w-4 h-4 text-green-400" />}
               </div>
-              <p className="text-blue-200 text-sm">{tech.skill}</p>
+              <p className="text-blue-200 text-sm">{subtitle}</p>
               <div className="flex items-center gap-3 mt-2">
                 <div className="flex items-center gap-1">
                   <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  <span className="text-white font-bold text-sm">{tech.rating}</span>
+                  <span className="text-white font-bold text-sm">{tech.ratingAvg}</span>
                 </div>
-                <span className="text-blue-200 text-sm">{tech.jobs} công việc</span>
-                <span className="text-blue-200 text-sm">{tech.experience}</span>
+                <span className="text-blue-200 text-sm">{tech.totalJobs} công việc</span>
+                <span className="text-blue-200 text-sm">{tech.experienceYears} năm KN</span>
               </div>
             </div>
           </div>
@@ -55,19 +137,11 @@ export function TechnicianDetail({
           {/* Quick Stats */}
           <div className="bg-white rounded-2xl p-4 shadow-sm grid grid-cols-3 divide-x divide-border">
             {[
-              {
-                label: "Đánh giá",
-                value: tech.rating.toString(),
-                icon: Star,
-              },
-              {
-                label: "Công việc",
-                value: tech.jobs.toString(),
-                icon: Briefcase,
-              },
+              { label: "Đánh giá", value: `${tech.ratingAvg}`, icon: Star },
+              { label: "Công việc", value: `${tech.totalJobs}`, icon: Briefcase },
               {
                 label: "Kinh nghiệm",
-                value: tech.experience,
+                value: `${tech.experienceYears} năm`,
                 icon: Award,
               },
             ].map((stat) => (
@@ -79,41 +153,47 @@ export function TechnicianDetail({
             ))}
           </div>
 
+          {/* Bio */}
+          {tech.bio?.trim() && (
+            <div className="bg-white rounded-2xl p-4">
+              <h3 className="font-bold text-foreground mb-2">Giới thiệu</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{tech.bio}</p>
+            </div>
+          )}
+
           {/* Skills */}
           <div className="bg-white rounded-2xl p-4">
             <h3 className="font-bold text-foreground mb-3">Kỹ năng chuyên môn</h3>
-            <div className="flex flex-wrap gap-2">
-              {[
-                "Sửa điện dân dụng",
-                "Đấu nối bảng điện",
-                "Sửa chữa thiết bị điện",
-                "Lắp đặt điều hòa",
-                "Chống sét lan truyền",
-              ].map((s) => (
-                <span
-                  key={s}
-                  className="bg-accent text-blue-600 text-xs font-semibold px-3 py-1.5 rounded-full"
-                >
-                  {s}
-                </span>
-              ))}
-            </div>
+            {tech.skills.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Chưa cập nhật kỹ năng.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {tech.skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="bg-accent text-blue-600 text-xs font-semibold px-3 py-1.5 rounded-full"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Certificates */}
-          <div className="bg-white rounded-2xl p-4">
-            <h3 className="font-bold text-foreground mb-3">Chứng chỉ</h3>
-            <div className="space-y-2">
-              {["Chứng chỉ điện công nghiệp – Bộ LĐTBXH", "Chứng nhận an toàn điện – VINASME"].map(
-                (cert) => (
+          {tech.certificates.length > 0 && (
+            <div className="bg-white rounded-2xl p-4">
+              <h3 className="font-bold text-foreground mb-3">Chứng chỉ</h3>
+              <div className="space-y-2">
+                {tech.certificates.map((cert) => (
                   <div key={cert} className="flex items-center gap-2">
                     <Award className="w-4 h-4 text-amber-500" />
                     <span className="text-sm text-foreground">{cert}</span>
                   </div>
-                ),
-              )}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Reviews */}
           <div className="bg-white rounded-2xl p-4">
@@ -121,75 +201,64 @@ export function TechnicianDetail({
               <h3 className="font-bold text-foreground">Đánh giá của khách hàng</h3>
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                <span className="font-bold text-foreground">{tech.rating}</span>
-                <span className="text-xs text-muted-foreground">({tech.jobs} đánh giá)</span>
+                <span className="font-bold text-foreground">{tech.ratingAvg}</span>
+                <span className="text-xs text-muted-foreground">({tech.totalReviews} đánh giá)</span>
               </div>
             </div>
-            {/* Rating bar */}
-            <div className="space-y-1.5 mb-4">
-              {[
-                [5, 78],
-                [4, 15],
-                [3, 5],
-                [2, 1],
-                [1, 1],
-              ].map(([star, pct]) => (
-                <div key={star} className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground w-3">{star}</span>
-                  <Star className="w-3 h-3 fill-amber-400 text-amber-400 flex-shrink-0" />
-                  <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-amber-400 rounded-full"
-                      style={{ width: `${pct}%` }}
-                    />
+
+            {totalRatings > 0 && (
+              <div className="space-y-1.5 mb-4">
+                {ratingBars.map(([star, pct]) => (
+                  <div key={star} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground w-3">{star}</span>
+                    <Star className="w-3 h-3 fill-amber-400 text-amber-400 flex-shrink-0" />
+                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-amber-400 rounded-full"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground w-7 text-right">{pct}%</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground w-7 text-right">{pct}%</span>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-3">
-              {[
-                {
-                  name: "Hoàng Văn A",
-                  rating: 5,
-                  date: "15/06/2026",
-                  text: "Thợ đến đúng giờ, làm việc chuyên nghiệp, dọn sạch sau khi xong. Rất hài lòng!",
-                },
-                {
-                  name: "Nguyễn Thị B",
-                  rating: 4,
-                  date: "10/06/2026",
-                  text: "Kỹ thuật tốt, giải thích rõ ràng nguyên nhân hỏng hóc. Sẽ gọi lại.",
-                },
-                {
-                  name: "Lê Minh C",
-                  rating: 5,
-                  date: "05/06/2026",
-                  text: "Nhanh và gọn, giá cả hợp lý.",
-                },
-              ].map((r) => (
-                <div key={r.name} className="border-t border-border pt-3 first:border-0 first:pt-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xs font-bold">
-                        {r.name[0]}
+                ))}
+              </div>
+            )}
+
+            {tech.recentReviews.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Chưa có đánh giá nào.</p>
+            ) : (
+              <div className="space-y-3">
+                {tech.recentReviews.map((r) => (
+                  <div
+                    key={r.reviewId}
+                    className="border-t border-border pt-3 first:border-0 first:pt-0"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xs font-bold">
+                          {r.customerName.charAt(0)}
+                        </div>
+                        <span className="text-sm font-semibold text-foreground">
+                          {r.customerName}
+                        </span>
                       </div>
-                      <span className="text-sm font-semibold text-foreground">{r.name}</span>
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-3 h-3 ${star <= r.rating ? "fill-amber-400 text-amber-400" : "text-gray-200 fill-gray-200"}`}
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-0.5">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <Star
-                          key={s}
-                          className={`w-3 h-3 ${s <= r.rating ? "fill-amber-400 text-amber-400" : "text-gray-200 fill-gray-200"}`}
-                        />
-                      ))}
-                    </div>
+                    {r.comment && <p className="text-xs text-muted-foreground">{r.comment}</p>}
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      {formatDateVn(r.createdAt)}
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">{r.text}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">{r.date}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -206,10 +275,10 @@ export function TechnicianDetail({
           <Phone className="w-5 h-5 text-green-600" />
         </button>
         <button
-          onClick={() => onNavigate("booking", { tech })}
+          onClick={() => onNavigate("booking", { taskerId: tech.taskerId })}
           className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
         >
-          Đặt lịch với {tech.name.split(" ").slice(-1)[0]}
+          Đặt lịch với {firstName}
         </button>
       </div>
     </div>

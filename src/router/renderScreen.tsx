@@ -1,5 +1,4 @@
 import type { Screen } from "@/shared/types";
-import type { Technician } from "@/shared/types";
 
 import { CustomerHome } from "@/pages/Customer";
 import { CustomerProfile, ProviderProfile } from "@/pages/Profile";
@@ -39,9 +38,11 @@ export function renderScreen(
     case "serviceDetail":
       return <ServiceDetail onNavigate={navigate} data={screenData as { serviceId?: number }} />;
     case "technicianMap":
-      return <TechnicianMap onNavigate={navigate} />;
+      return <TechnicianMap onNavigate={navigate} data={screenData as { serviceId?: number }} />;
     case "technicianDetail":
-      return <TechnicianDetail onNavigate={navigate} data={screenData as { tech?: Technician }} />;
+      return (
+        <TechnicianDetail onNavigate={navigate} data={screenData as { taskerId?: number }} />
+      );
     case "booking":
       return <Booking onNavigate={navigate} data={screenData as { serviceId?: number }} />;
     case "payment":
