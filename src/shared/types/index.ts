@@ -3,6 +3,7 @@ export * from "@/types/auth";
 export * from "@/types/booking";
 export * from "@/types/category";
 export * from "@/types/chat";
+export * from "@/types/customer";
 export * from "@/types/navigation";
 export * from "@/types/notification";
 export * from "@/types/pagination";
