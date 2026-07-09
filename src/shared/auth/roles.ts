@@ -1,20 +1,45 @@
 // ─── Role mapping & helpers ────────────────────────────────────────────────────
 
 /** Backend role names from login response */
-export type BackendRole = "Admin" | "Customer" | "Provider" | "Worker";
+export type BackendRole = "Admin" | "Customer" | "Provider" | "Worker" | "Tasker";
 
 /** Frontend normalized role */
 export type FrontendRole = "admin" | "customer" | "provider";
 
-/** Map backend role → frontend role */
+/**
+ * Map a backend role name → frontend role.
+ *
+ * Case-insensitive and keyword-based so it survives backend naming differences
+ * (Provider / Worker / Tasker / Partner / Thợ all resolve to the provider area).
+ * Unknown names are logged and default to "customer".
+ */
 export function normalizeRole(role: string): FrontendRole {
-  const map: Record<string, FrontendRole> = {
-    Admin: "admin",
-    Customer: "customer",
-    Provider: "provider",
-    Worker: "provider", // Worker maps to provider area
-  };
-  return map[role] ?? "customer";
+  const key = (role ?? "").trim().toLowerCase();
+  if (!key) return "customer";
+
+  if (key.includes("admin") || key.includes("quản trị")) return "admin";
+
+  if (
+    key.includes("provider") ||
+    key.includes("worker") ||
+    key.includes("tasker") ||
+    key.includes("partner") ||
+    key.includes("technician") ||
+    key.includes("thợ") ||
+    key.includes("đối tác") ||
+    key.includes("kythuat")
+  ) {
+    return "provider";
+  }
+
+  if (key.includes("customer") || key.includes("khách") || key.includes("khach") || key.includes("client")) {
+    return "customer";
+  }
+
+  if (typeof console !== "undefined") {
+    console.warn(`[roles] Vai trò backend chưa nhận diện: "${role}" → tạm coi là customer`);
+  }
+  return "customer";
 }
 
 /** Get home path for a given frontend role */
@@ -111,6 +136,7 @@ export function getBackendRoleLabel(role: BackendRole): string {
     Customer: "Khách hàng",
     Provider: "Đối tác dịch vụ",
     Worker: "Kỹ thuật viên",
+    Tasker: "Thợ",
   };
   return labels[role];
 }

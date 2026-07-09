@@ -11,3 +11,12 @@ export interface Service {
   reviews: number;
   image: string;
 }
+
+/** Popular service returned by GET /api/Services/popular. */
+export interface PopularService {
+  serviceId: number;
+  name: string;
+  totalBookings: number;
+  /** Lowest effective tasker price for this service, in VND. */
+  startingPrice: number;
+}

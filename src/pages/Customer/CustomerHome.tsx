@@ -1,24 +1,57 @@
-﻿import { MapPin, Search, Star, ChevronDown, ChevronRight, BookOpen } from "lucide-react";
+﻿import { useState } from "react";
+import {
+  MapPin,
+  Search,
+  Star,
+  ChevronDown,
+  ChevronRight,
+  BookOpen,
+  LayoutGrid,
+  BadgeCheck,
+  Sparkles,
+} from "lucide-react";
 import type { Screen } from "@/shared/types";
-import { serviceApi, technicianApi } from "@/services/api";
+import { categoryApi, serviceApi, taskerApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
 import { Avatar } from "@/shared/ui";
-import { getUnsplashUrl } from "@/shared/lib";
+import { getApiAssetUrl, getUnsplashUrl, formatVnd } from "@/shared/lib";
 
 // Mock fallback so the UI keeps rendering while backend endpoints are wired up.
-import { services as mockServices } from "@/services/Service/service.data";
-import { technicians as mockTechnicians } from "@/services/Technician/technician.data";
+import { categories as mockCategories } from "@/services/Service/category.data";
+import { topTaskers as mockTopTaskers } from "@/services/Technician/tasker.data";
+import { popularServices as mockPopularServices } from "@/services/Service/popular.data";
+
+/** Category thumbnail with a graceful fallback when the image is missing/broken. */
+function CategoryIcon({ iconUrl, name }: { iconUrl: string; name: string }) {
+  const [broken, setBroken] = useState(false);
+  const url = iconUrl ? getApiAssetUrl(iconUrl) : "";
+  if (!url || broken) {
+    return <LayoutGrid className="w-6 h-6 text-blue-600" />;
+  }
+  return (
+    <img src={url} alt={name} className="w-7 h-7 object-contain" onError={() => setBroken(true)} />
+  );
+}
 
 export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: object) => void }) {
   // Reference example for teammates: fetch each resource through `useApi`.
   // `initialData` seeds the mock so the screen never flashes empty, and on an
   // API error the hook keeps the last value (the mock) while exposing `error`.
-  const { data: services = mockServices, loading } = useApi(() => serviceApi.getServices(), {
-    initialData: mockServices,
-  });
-  const { data: technicians = mockTechnicians } = useApi(
-    () => technicianApi.getTechnicians({ status: "available" }),
-    { initialData: mockTechnicians },
+  //
+  // Service categories — GET /api/Categories/active (real endpoint).
+  const { data: categories = mockCategories, loading: loadingCategories } = useApi(
+    () => categoryApi.getActiveCategories(),
+    { initialData: mockCategories },
+  );
+  // Featured taskers — GET /api/Taskers/top (real endpoint).
+  const { data: taskers = mockTopTaskers, loading: loadingTaskers } = useApi(
+    () => taskerApi.getTopTaskers({ limit: 10 }),
+    { initialData: mockTopTaskers },
+  );
+  // Popular services — GET /api/Services/popular (real endpoint).
+  const { data: popularServices = mockPopularServices, loading: loadingPopular } = useApi(
+    () => serviceApi.getPopularServices({ limit: 5 }),
+    { initialData: mockPopularServices },
   );
 
   return (
@@ -91,7 +124,7 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
             </button>
           </div>
 
-          {loading ? (
+          {loadingCategories ? (
             <div className="grid grid-cols-3 gap-3">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
@@ -105,20 +138,17 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-3">
-              {services.map((svc) => (
+              {categories.map((cat) => (
                 <button
-                  key={svc.id}
-                  onClick={() => onNavigate("serviceDetail", { service: svc })}
+                  key={cat.categoryId}
+                  onClick={() => onNavigate("serviceList", { categorySlug: cat.slug })}
                   className="bg-white rounded-2xl p-3 flex flex-col items-center gap-2 shadow-sm hover:shadow-md transition-shadow active:scale-95"
                 >
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: svc.bg }}
-                  >
-                    <svc.icon className="w-6 h-6" style={{ color: svc.color }} />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-50 overflow-hidden">
+                    <CategoryIcon iconUrl={cat.iconUrl} name={cat.name} />
                   </div>
                   <span className="text-xs font-semibold text-foreground text-center leading-tight">
-                    {svc.name}
+                    {cat.name}
                   </span>
                 </button>
               ))}
@@ -126,20 +156,20 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
           )}
         </div>
 
-        {/* Nearby Technicians */}
+        {/* Popular Taskers */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-foreground">Thợ gần bạn</h3>
+            <h3 className="font-bold text-foreground">Thợ phổ biến</h3>
             <button
               onClick={() => onNavigate("technicianMap")}
               className="text-blue-600 text-sm font-semibold hover:underline"
             >
-              Xem bản đồ
+              Xem tất cả
             </button>
           </div>
 
           <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
-            {loading
+            {loadingTaskers
               ? [1, 2, 3].map((i) => (
                   <div
                     key={i}
@@ -150,29 +180,42 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
                     <div className="h-2.5 w-16 bg-slate-200 rounded" />
                   </div>
                 ))
-              : technicians
-                  .filter((t) => t.status === "available")
-                  .map((tech) => (
-                    <button
-                      key={tech.id}
-                      onClick={() => onNavigate("technicianDetail", { tech })}
-                      className="flex-shrink-0 w-36 bg-white rounded-2xl p-3 shadow-sm hover:shadow-md transition-shadow text-left"
-                    >
-                      <div className="relative mb-2 inline-block">
-                        <Avatar src={tech.avatar} size={52} name={tech.name} />
-                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white" />
-                      </div>
-                      <p className="text-xs font-bold text-foreground truncate">{tech.name}</p>
-                      <p className="text-[11px] text-muted-foreground truncate">{tech.skill}</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                        <span className="text-xs font-semibold text-foreground">{tech.rating}</span>
-                      </div>
-                      <p className="text-[11px] text-blue-600 font-semibold mt-0.5">
-                        {tech.distance}
-                      </p>
-                    </button>
-                  ))}
+              : taskers.map((t) => (
+                  <button
+                    key={t.taskerId}
+                    onClick={() => onNavigate("technicianDetail", { taskerId: t.taskerId })}
+                    className="flex-shrink-0 w-36 bg-white rounded-2xl p-3 shadow-sm hover:shadow-md transition-shadow text-left"
+                  >
+                    <div className="relative mb-2 inline-block">
+                      {t.avatarUrl ? (
+                        <img
+                          src={getApiAssetUrl(t.avatarUrl)}
+                          alt={t.fullName}
+                          className="rounded-full object-cover"
+                          style={{ width: 52, height: 52 }}
+                        />
+                      ) : (
+                        <Avatar size={52} name={t.fullName} />
+                      )}
+                      {t.isVerified && (
+                        <span className="absolute -bottom-0.5 -right-0.5 bg-white rounded-full">
+                          <BadgeCheck className="w-4 h-4 text-blue-600" />
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs font-bold text-foreground truncate">{t.fullName}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {t.mainSkill ?? "Thợ dịch vụ"}
+                    </p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <span className="text-xs font-semibold text-foreground">{t.ratingAvg}</span>
+                    </div>
+                    <p className="text-[11px] text-blue-600 font-semibold mt-0.5">
+                      {t.totalReviews} đánh giá
+                    </p>
+                  </button>
+                ))}
           </div>
         </div>
 
@@ -182,7 +225,7 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
             <h3 className="font-bold text-foreground">Dịch vụ phổ biến</h3>
           </div>
           <div className="space-y-3">
-            {loading
+            {loadingPopular
               ? [1, 2, 3].map((i) => (
                   <div
                     key={i}
@@ -196,26 +239,26 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
                     </div>
                   </div>
                 ))
-              : services.slice(0, 3).map((svc) => (
+              : popularServices.map((svc) => (
                   <button
-                    key={svc.id}
-                    onClick={() => onNavigate("serviceDetail", { service: svc })}
+                    key={svc.serviceId}
+                    onClick={() => onNavigate("serviceDetail", { serviceId: svc.serviceId })}
                     className="w-full flex items-center gap-3 bg-white rounded-2xl p-3 shadow-sm hover:shadow-md transition-shadow text-left"
                   >
-                    <img
-                      src={getUnsplashUrl(svc.image, 80, 80)}
-                      alt={svc.name}
-                      className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
-                    />
+                    <div className="w-16 h-16 rounded-xl flex-shrink-0 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                      <Sparkles className="w-7 h-7 text-white" />
+                    </div>
                     <div className="flex-1">
                       <p className="font-bold text-sm text-foreground">{svc.name}</p>
                       <div className="flex items-center gap-1 mt-0.5">
                         <BookOpen className="w-3 h-3 text-blue-500" />
                         <span className="text-xs text-muted-foreground">
-                          {svc.reviews} lượt đặt
+                          {svc.totalBookings} lượt đặt
                         </span>
                       </div>
-                      <p className="text-blue-600 font-bold text-sm mt-1">từ {svc.price}đ</p>
+                      <p className="text-blue-600 font-bold text-sm mt-1">
+                        từ {formatVnd(svc.startingPrice)}đ
+                      </p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                   </button>
