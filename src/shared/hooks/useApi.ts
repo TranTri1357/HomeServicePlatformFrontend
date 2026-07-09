@@ -24,7 +24,7 @@ export interface UseApiOptions<T> {
  *
  * Example:
  *   const { data, loading, error, refetch } = useApi(
- *     () => serviceApi.getServices(),
+ *     () => serviceApi.getPopularServices(),
  *     { initialData: [] },
  *   );
  *

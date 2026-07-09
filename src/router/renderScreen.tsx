@@ -1,11 +1,11 @@
-import type { Screen } from "@/shared/types";
+import type { Screen, CreateBookingInput } from "@/shared/types";
 
 import { CustomerHome } from "@/pages/Customer";
 import { CustomerProfile, ProviderProfile } from "@/pages/Profile";
 import { ServiceList, ServiceDetail, ProviderServiceManagement } from "@/pages/Service";
 import { TechnicianMap, TechnicianDetail } from "@/pages/Technician";
 import { Booking, BookingManagement } from "@/pages/Booking";
-import { Payment } from "@/pages/Payment";
+import { Payment, MockGateway } from "@/pages/Payment";
 import { Chat } from "@/pages/Chat";
 import { Notifications } from "@/pages/Notification";
 import { ProviderDashboard, ProviderJobSheet, ProviderJobManagement } from "@/pages/Provider";
@@ -46,7 +46,33 @@ export function renderScreen(
     case "booking":
       return <Booking onNavigate={navigate} data={screenData as { serviceId?: number }} />;
     case "payment":
-      return <Payment onNavigate={navigate} />;
+      return (
+        <Payment
+          onNavigate={navigate}
+          data={
+            screenData as {
+              draft?: CreateBookingInput;
+              estimatedAmount?: number;
+              bookingId?: number;
+              finalAmount?: number;
+            }
+          }
+        />
+      );
+    case "mockGateway":
+      return (
+        <MockGateway
+          onNavigate={navigate}
+          data={
+            screenData as {
+              paymentId?: number;
+              bookingId?: number;
+              amount?: number;
+              provider?: "momo" | "zalopay";
+            }
+          }
+        />
+      );
     case "chat":
       return <Chat onNavigate={navigate} />;
     case "customerProfile":

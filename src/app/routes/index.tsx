@@ -28,6 +28,7 @@ export function AppRouter() {
               <Route path="technician/detail" element={<RouteScreen screen="technicianDetail" />} />
               <Route path="booking" element={<RouteScreen screen="booking" />} />
               <Route path="payment" element={<RouteScreen screen="payment" />} />
+              <Route path="payment/gateway" element={<RouteScreen screen="mockGateway" />} />
               <Route path="chat" element={<RouteScreen screen="chat" />} />
               <Route path="profile" element={<RouteScreen screen="customerProfile" />} />
               <Route path="bookings" element={<RouteScreen screen="bookingManagement" />} />
