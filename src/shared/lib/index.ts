@@ -2,4 +2,4 @@
 export { getUnsplashUrl, getAvatarUrl, getApiAssetUrl } from "./image";
 export { getErrorMessage } from "./errors";
 export { notify } from "./toast";
-export { formatVnd } from "./format";
+export { formatVnd, formatDateVn } from "./format";

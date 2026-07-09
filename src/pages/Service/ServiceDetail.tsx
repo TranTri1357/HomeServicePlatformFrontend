@@ -272,7 +272,7 @@ export function ServiceDetail({
       {/* CTA */}
       <div className="bg-white border-t border-border px-4 py-4 flex gap-3">
         <button
-          onClick={() => onNavigate("technicianMap")}
+          onClick={() => onNavigate("technicianMap", { serviceId: detail.serviceId })}
           className="flex-1 py-3.5 border-2 border-blue-600 text-blue-600 rounded-xl font-bold text-sm hover:bg-accent transition-colors"
         >
           Tìm thợ gần đây
