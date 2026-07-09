@@ -1,0 +1,11 @@
+import { Zap, Droplets, Wind, Brush, Wrench } from "lucide-react";
+import type { Service } from "@/shared/types";
+
+export const services: Service[] = [
+  { id: 1, name: "Electrical Repair", icon: Zap,      color: "#F59E0B", bg: "#FEF3C7", price: "150,000", rating: 4.8, reviews: 234, image: "photo-1621905251189-08b1489462be" },
+  { id: 2, name: "Plumbing",          icon: Droplets,  color: "#2563EB", bg: "#EEF2FF", price: "120,000", rating: 4.7, reviews: 189, image: "photo-1558618666-fcd25c85cd64" },
+  { id: 3, name: "Air Conditioner",   icon: Wind,      color: "#06B6D4", bg: "#ECFEFF", price: "200,000", rating: 4.9, reviews: 312, image: "photo-1621905252472-943a4b1b39e8" },
+  { id: 4, name: "Cleaning",          icon: Brush,     color: "#10B981", bg: "#D1FAE5", price: "80,000",  rating: 4.6, reviews: 421, image: "photo-1581578731548-c64695cc6952" },
+  { id: 5, name: "Painting",          icon: Brush,     color: "#8B5CF6", bg: "#EDE9FE", price: "300,000", rating: 4.5, reviews: 98,  image: "photo-1562259949-e8e7689d7828" },
+  { id: 6, name: "Appliance Repair",  icon: Wrench,    color: "#EF4444", bg: "#FEE2E2", price: "180,000", rating: 4.7, reviews: 156, image: "photo-1585771724684-38269d6639fd" },
+];

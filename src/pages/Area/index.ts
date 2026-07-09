@@ -1,0 +1,1 @@
+export { ProviderAreaRouting } from "./ProviderAreaRouting";
