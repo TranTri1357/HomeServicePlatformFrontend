@@ -1,58 +1,125 @@
-﻿import { useState } from "react";
-import { ChevronLeft, Phone, MapPin, Paperclip, Camera, Send } from "lucide-react";
-import type { Screen } from "@/shared/types";
-import { chatMessages } from "@/services/Chat/chat.data";
-import { technicians } from "@/services/Technician/technician.data";
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, Phone, MapPin, Send, AlertCircle, Loader2 } from "lucide-react";
+import type { Screen, ConversationMessage } from "@/shared/types";
+import { chatApi } from "@/services/api";
+import { connectChat } from "@/services/realtime/chatHub";
+import { useApi } from "@/shared/hooks";
+import { useAuth } from "@/app/providers";
 import { Avatar } from "@/shared/ui";
+import { notify } from "@/shared/lib";
+
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+}
 
 export function Chat({
   onNavigate,
   isProvider = false,
+  data,
 }: {
-  onNavigate: (s: Screen) => void;
+  onNavigate: (s: Screen, d?: object) => void;
   isProvider?: boolean;
+  data?: { bookingId?: number };
 }) {
-  const [messages, setMessages] = useState(chatMessages);
-  const [input, setInput] = useState("");
+  const { user } = useAuth();
+  const myId = user?.userId;
+  const bookingId = data?.bookingId;
+  const backTarget: Screen = isProvider ? "providerDashboard" : "bookingManagement";
 
-  const send = () => {
-    if (!input.trim()) return;
-    setMessages([
-      ...messages,
-      {
-        id: Date.now(),
-        from: isProvider ? "tech" : "user",
-        text: input,
-        time: new Date().toLocaleTimeString("vi", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      },
-    ]);
+  const { data: initial, loading, error, refetch } = useApi(
+    () => chatApi.getConversation(bookingId!),
+    { immediate: Boolean(bookingId) },
+  );
+
+  const [messages, setMessages] = useState<ConversationMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const addMessage = (msg: ConversationMessage) =>
+    setMessages((prev) => (prev.some((m) => m.messageId === msg.messageId) ? prev : [...prev, msg]));
+
+  // Seed from the initial REST load.
+  useEffect(() => {
+    if (initial) setMessages(initial);
+  }, [initial]);
+
+  // Realtime: join the booking group and append incoming messages.
+  useEffect(() => {
+    if (!bookingId) return;
+    let dispose = () => {};
+    connectChat(bookingId, addMessage)
+      .then((d) => {
+        dispose = d;
+      })
+      .catch(() => {
+        /* fall back to REST-only if the hub can't connect */
+      });
+    return () => dispose();
+  }, [bookingId]);
+
+  // Mark the other party's messages as read whenever the thread changes.
+  useEffect(() => {
+    if (bookingId) void chatApi.markConversationRead(bookingId).catch(() => {});
+  }, [bookingId, messages.length]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length]);
+
+  // ── No booking context ──────────────────────────────────────────────────
+  if (!bookingId) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
+        <AlertCircle className="w-10 h-10 text-blue-400" />
+        <p className="text-sm text-muted-foreground">
+          Hãy mở cuộc trò chuyện từ một đơn đặt lịch cụ thể.
+        </p>
+        <button
+          onClick={() => onNavigate(backTarget)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
+        >
+          Về danh sách đơn
+        </button>
+      </div>
+    );
+  }
+
+  const send = async () => {
+    const text = input.trim();
+    if (!text || sending) return;
     setInput("");
+    setSending(true);
+    try {
+      const msg = await chatApi.sendMessage(bookingId, text);
+      addMessage(msg); // hub echo is deduped by messageId
+    } catch (err) {
+      notify.error(err);
+      setInput(text);
+    } finally {
+      setSending(false);
+    }
   };
 
-  const tech = technicians[0];
+  const otherName =
+    messages.find((m) => m.senderId !== myId)?.senderName ?? (isProvider ? "Khách hàng" : "Thợ");
 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="bg-white border-b border-border px-4 py-3 flex items-center gap-3">
         <button
-          onClick={() => onNavigate(isProvider ? "providerDashboard" : "customerHome")}
+          onClick={() => onNavigate(backTarget)}
           className="w-8 h-8 flex items-center justify-center"
         >
           <ChevronLeft className="w-5 h-5 text-foreground" />
         </button>
-        <Avatar src={tech.avatar} size={40} name={tech.name} />
-        <div className="flex-1">
-          <p className="font-bold text-sm text-foreground">
-            {isProvider ? "Hoàng Văn E (Khách hàng)" : tech.name}
-          </p>
-          <div className="flex items-center gap-1">
-            <span className="w-2 h-2 bg-green-500 rounded-full" />
-            <span className="text-xs text-green-600 font-medium">Đang online</span>
-          </div>
+        <Avatar size={40} name={otherName} />
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-sm text-foreground truncate">{otherName}</p>
+          <p className="text-xs text-muted-foreground">Đơn BK{bookingId}</p>
         </div>
         <button className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center">
           <Phone className="w-4 h-4 text-green-600" />
@@ -64,42 +131,48 @@ export function Chat({
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-background">
-        {/* Booking info banner */}
-        <div className="flex justify-center">
-          <div className="bg-white border border-border rounded-2xl px-4 py-2.5 text-center shadow-sm">
-            <p className="text-xs font-semibold text-foreground">Đặt lịch #BK001 · Sửa điện</p>
-            <p className="text-xs text-muted-foreground">20/06/2026, 09:00 · Đang thực hiện</p>
+        {loading && messages.length === 0 ? (
+          <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" /> Đang tải hội thoại...
           </div>
-        </div>
-
-        {messages.map((msg) => {
-          const isMe = isProvider ? msg.from === "tech" : msg.from === "user";
-          return (
-            <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
-              {!isMe && <Avatar src={tech.avatar} size={32} name={tech.name} />}
-              <div
-                className={`max-w-[75%] ${isMe ? "items-end" : "items-start"} flex flex-col gap-1`}
-              >
-                <div
-                  className={`px-4 py-2.5 rounded-2xl text-sm ${isMe ? "bg-blue-600 text-white rounded-tr-sm" : "bg-white text-foreground rounded-tl-sm shadow-sm"}`}
-                >
-                  {msg.text}
+        ) : error && messages.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <AlertCircle className="w-8 h-8 text-red-400" />
+            <p className="text-sm text-muted-foreground">{error}</p>
+            <button
+              onClick={() => void refetch()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
+            >
+              Thử lại
+            </button>
+          </div>
+        ) : messages.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-10">
+            Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện!
+          </p>
+        ) : (
+          messages.map((msg) => {
+            const isMe = msg.senderId === myId;
+            return (
+              <div key={msg.messageId} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
+                {!isMe && <Avatar size={32} name={msg.senderName} />}
+                <div className={`max-w-[75%] flex flex-col gap-1 ${isMe ? "items-end" : "items-start"}`}>
+                  <div
+                    className={`px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words ${isMe ? "bg-blue-600 text-white rounded-tr-sm" : "bg-white text-foreground rounded-tl-sm shadow-sm"}`}
+                  >
+                    {msg.content}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">{formatTime(msg.createdAt)}</span>
                 </div>
-                <span className="text-[10px] text-muted-foreground">{msg.time}</span>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
+        <div ref={bottomRef} />
       </div>
 
       {/* Input */}
       <div className="bg-white border-t border-border px-4 py-3 flex items-end gap-2">
-        <button className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-muted transition-colors flex-shrink-0">
-          <Paperclip className="w-4 h-4 text-muted-foreground" />
-        </button>
-        <button className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-muted transition-colors flex-shrink-0">
-          <Camera className="w-4 h-4 text-muted-foreground" />
-        </button>
         <div className="flex-1 flex items-end bg-muted rounded-2xl px-3 py-2">
           <textarea
             value={input}
@@ -107,7 +180,7 @@ export function Chat({
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                send();
+                void send();
               }
             }}
             className="flex-1 bg-transparent text-sm focus:outline-none resize-none max-h-24"
@@ -116,10 +189,15 @@ export function Chat({
           />
         </div>
         <button
-          onClick={send}
-          className={`w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 transition-colors ${input.trim() ? "bg-blue-600 hover:bg-blue-700" : "bg-muted"}`}
+          onClick={() => void send()}
+          disabled={!input.trim() || sending}
+          className={`w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 transition-colors ${input.trim() && !sending ? "bg-blue-600 hover:bg-blue-700" : "bg-muted"}`}
         >
-          <Send className={`w-4 h-4 ${input.trim() ? "text-white" : "text-muted-foreground"}`} />
+          {sending ? (
+            <Loader2 className="w-4 h-4 text-white animate-spin" />
+          ) : (
+            <Send className={`w-4 h-4 ${input.trim() ? "text-white" : "text-muted-foreground"}`} />
+          )}
         </button>
       </div>
     </div>

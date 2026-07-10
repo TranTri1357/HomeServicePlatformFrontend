@@ -12,6 +12,8 @@ export type Screen =
   | "mockGateway"
   | "chat"
   | "customerProfile"
+  | "customerWallet"
+  | "customerAddresses"
   | "bookingManagement"
   | "notifications"
   | "providerDashboard"

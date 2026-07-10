@@ -225,7 +225,7 @@ export function BookingManagement({
                   </span>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => onNavigate("chat")}
+                      onClick={() => onNavigate("chat", { bookingId: bk.bookingId })}
                       className="px-3 py-1.5 bg-muted rounded-lg text-xs font-semibold flex items-center gap-1 hover:bg-accent transition-colors"
                     >
                       <MessageCircle className="w-3.5 h-3.5" />
