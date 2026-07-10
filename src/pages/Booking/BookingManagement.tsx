@@ -37,8 +37,8 @@ const TABS: { key: string; label: string; statuses: number[] | null }[] = [
 
 // Backend allows a customer to cancel only while the booking is still Pending.
 const CANCELLABLE = [0];
-// A complaint makes sense once a tasker is engaged (on the way / working / done).
-const DISPUTABLE = [2, 3, 4];
+// Chỉ cho khiếu nại khi đơn đã Hoàn thành (đánh giá chất lượng sau khi xong việc).
+const DISPUTABLE = [4];
 const MIN_DISPUTE_LEN = 10;
 
 function formatDateTime(iso: string): string {

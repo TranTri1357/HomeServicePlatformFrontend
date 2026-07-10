@@ -84,7 +84,7 @@ export function DesktopTopNav({ screen, currentNavItems, onNavigate }: DesktopTo
       <div className="flex items-center gap-2 flex-shrink-0 ml-4">
         {/* Bell */}
         <button
-          onClick={() => onNavigate(isCustomer ? "notifications" : "providerJobManagement")}
+          onClick={() => onNavigate(isCustomer ? "notifications" : "providerNotifications")}
           className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
             isProviderScreen ? "hover:bg-slate-800" : "hover:bg-muted"
           }`}

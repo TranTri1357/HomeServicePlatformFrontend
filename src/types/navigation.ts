@@ -21,6 +21,7 @@ export type Screen =
   | "providerSchedule"
   | "providerChat"
   | "providerProfile"
+  | "providerNotifications"
   | "providerJobManagement"
   | "technicianDetail"
   | "providerServiceManagement"

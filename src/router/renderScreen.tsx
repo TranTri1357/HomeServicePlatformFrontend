@@ -103,6 +103,8 @@ export function renderScreen(
       );
     case "providerProfile":
       return <ProviderProfile onNavigate={navigate} />;
+    case "providerNotifications":
+      return <Notifications onNavigate={navigate} variant="provider" />;
     case "providerJobManagement":
       return <ProviderJobManagement onNavigate={navigate} />;
     case "providerServiceManagement":

@@ -26,11 +26,25 @@ function parsePayload(payload: string | null): { title: string; body: string } {
   }
 }
 
-export function Notifications({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+export function Notifications({
+  onNavigate,
+  variant = "customer",
+}: {
+  onNavigate: (s: Screen) => void;
+  variant?: "customer" | "provider";
+}) {
+  const isProvider = variant === "provider";
+  // Pick the endpoints matching the current role (same UI, different route).
+  const fetchList = isProvider
+    ? notificationApi.getTaskerNotifications
+    : notificationApi.getMyNotifications;
+  const markRead = isProvider
+    ? notificationApi.markTaskerNotificationRead
+    : notificationApi.markNotificationRead;
+  const backTarget: Screen = isProvider ? "providerDashboard" : "customerHome";
+
   // Backend giới hạn pageSize tối đa 20 mỗi lần tải.
-  const { data: paged, loading, error, refetch } = useApi(() =>
-    notificationApi.getMyNotifications(1, 20),
-  );
+  const { data: paged, loading, error, refetch } = useApi(() => fetchList(1, 20));
 
   const items: AppNotification[] = paged?.items ?? [];
   const hasUnread = items.some((n) => !n.isRead);
@@ -38,7 +52,7 @@ export function Notifications({ onNavigate }: { onNavigate: (s: Screen) => void 
   const markOne = async (n: AppNotification) => {
     if (n.isRead) return;
     try {
-      await notificationApi.markNotificationRead(n.notificationId);
+      await markRead(n.notificationId);
       void refetch();
     } catch (err) {
       notify.error(err);
@@ -49,7 +63,7 @@ export function Notifications({ onNavigate }: { onNavigate: (s: Screen) => void 
     const unread = items.filter((n) => !n.isRead);
     if (unread.length === 0) return;
     try {
-      await Promise.all(unread.map((n) => notificationApi.markNotificationRead(n.notificationId)));
+      await Promise.all(unread.map((n) => markRead(n.notificationId)));
       notify.success("Đã đánh dấu tất cả là đã đọc");
       void refetch();
     } catch (err) {
@@ -61,7 +75,7 @@ export function Notifications({ onNavigate }: { onNavigate: (s: Screen) => void 
     <div className="flex flex-col h-full">
       <TopBar
         title="Thông báo"
-        onBack={() => onNavigate("customerHome")}
+        onBack={() => onNavigate(backTarget)}
         actions={
           hasUnread ? (
             <button onClick={markAll} className="text-blue-600 text-xs font-semibold">
