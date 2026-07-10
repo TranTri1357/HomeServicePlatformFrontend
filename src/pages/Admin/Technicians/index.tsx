@@ -1,86 +1,134 @@
-import { useState } from "react";
-import { Star, Shield, X, Edit3, Wrench, Plus } from "lucide-react";
-import { adminProvidersList } from "@/services/Admin/technician.data";
-import { AdminBadge, ConfirmModal, AdminPagination, AdminSearchBar } from "@/components/Admin";
-import { useTechnicians } from "@/hooks/Admin/useTechnicians";
+import { useEffect, useState } from "react";
+import { Star, Shield, X, Wrench, Loader2, AlertCircle } from "lucide-react";
+import type { AdminTaskerItem, AdminTaskerDetail } from "@/shared/types";
+import { adminTaskerApi } from "@/services/api";
+import { useApi } from "@/shared/hooks";
+import { notify, formatDateVn } from "@/shared/lib";
+import { ConfirmModal, AdminPagination, AdminSearchBar } from "@/components/Admin";
+
+const PAGE_SIZE = 10;
+
+const STATUS: Record<number, { label: string; cls: string }> = {
+  0: { label: "Chờ duyệt", cls: "bg-amber-100 text-amber-700" },
+  1: { label: "Hoạt động", cls: "bg-green-100 text-green-700" },
+  2: { label: "Bị khóa", cls: "bg-red-100 text-red-600" },
+};
+
+function StatusBadge({ status }: { status: number }) {
+  const s = STATUS[status] ?? STATUS[0];
+  return <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${s.cls}`}>{s.label}</span>;
+}
+
+type Action = "approve" | "block" | "unblock";
 
 export function Technicians() {
-  const {
-    search,
-    setSearch,
-    statusFilter,
-    setStatusFilter,
-    page,
-    setPage,
-    filtered,
-    paged,
-    perPage,
-  } = useTechnicians();
-  const [selected, setSelected] = useState<(typeof adminProvidersList)[0] | null>(null);
-  const [confirm, setConfirm] = useState<{
-    show: boolean;
-    action: string;
-    item: (typeof adminProvidersList)[0] | null;
-  }>({ show: false, action: "", item: null });
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
 
-  const handleAction = (action: string, item: (typeof adminProvidersList)[0]) => {
-    setConfirm({ show: true, action, item });
+  const { data: paged, loading, error, refetch } = useApi(
+    () =>
+      adminTaskerApi.getTaskers({
+        searchTerm: search.trim() || undefined,
+        status: statusFilter === "all" ? undefined : Number(statusFilter),
+        pageIndex: page,
+        pageSize: PAGE_SIZE,
+      }),
+    { immediate: false },
+  );
+  useEffect(() => {
+    const t = setTimeout(() => void refetch(), 300);
+    return () => clearTimeout(t);
+  }, [search, statusFilter, page, refetch]);
+
+  const items = paged?.items ?? [];
+  const total = paged?.totalCount ?? 0;
+
+  // Detail panel.
+  const [detail, setDetail] = useState<AdminTaskerDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
+  // Approve / lock / unlock confirm.
+  const [confirm, setConfirm] = useState<{ action: Action; item: AdminTaskerItem } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  // Reject with reason.
+  const [rejectTarget, setRejectTarget] = useState<AdminTaskerItem | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejecting, setRejecting] = useState(false);
+
+  const openDetail = async (t: AdminTaskerItem) => {
+    setLoadingDetail(true);
+    setDetail({
+      taskerId: t.taskerId,
+      fullName: t.fullName,
+      email: "",
+      phone: t.phone,
+      bio: null,
+      experienceYears: 0,
+      isVerified: false,
+      verifiedAt: null,
+      ratingAvg: t.ratingAvg,
+      totalReviews: 0,
+      taskerStatus: t.status,
+      userStatus: 1,
+      joinedDate: t.joinedDate,
+      skills: t.skills,
+    });
+    try {
+      const d = await adminTaskerApi.getTaskerDetail(t.taskerId);
+      setDetail(d);
+    } catch (err) {
+      notify.error(err);
+      setDetail(null);
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  const runConfirm = async () => {
+    if (!confirm) return;
+    setBusy(true);
+    try {
+      if (confirm.action === "approve") {
+        await adminTaskerApi.approveTasker(confirm.item.taskerId);
+        notify.success("Đã duyệt hồ sơ thợ.");
+      } else {
+        await adminTaskerApi.toggleTaskerStatus(confirm.item.taskerId);
+        notify.success(confirm.action === "block" ? "Đã khóa hồ sơ thợ." : "Đã mở khóa hồ sơ thợ.");
+      }
+      setConfirm(null);
+      void refetch();
+    } catch (err) {
+      notify.error(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmReject = async () => {
+    if (!rejectTarget) return;
+    setRejecting(true);
+    try {
+      await adminTaskerApi.rejectTasker(rejectTarget.taskerId, rejectReason.trim() || "Hồ sơ chưa đạt yêu cầu.");
+      notify.success("Đã từ chối hồ sơ thợ.");
+      setRejectTarget(null);
+      setRejectReason("");
+      void refetch();
+    } catch (err) {
+      notify.error(err);
+    } finally {
+      setRejecting(false);
+    }
   };
 
   return (
     <div className="space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Quản lý thợ</h1>
-          <p className="text-sm text-muted-foreground">Duyệt hồ sơ và quản lý thợ kỹ thuật</p>
-        </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors flex-shrink-0 shadow-sm shadow-blue-200">
-          <Plus className="w-4 h-4" />
-          Thêm thợ
-        </button>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Quản lý thợ</h1>
+        <p className="text-sm text-muted-foreground">Duyệt hồ sơ và quản lý thợ kỹ thuật</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          {
-            label: "Tổng thợ",
-            value: adminProvidersList.length,
-            color: "text-blue-600",
-            bg: "bg-blue-100",
-          },
-          {
-            label: "Hoạt động",
-            value: adminProvidersList.filter((p) => p.status === "active").length,
-            color: "text-green-600",
-            bg: "bg-green-100",
-          },
-          {
-            label: "Chờ duyệt",
-            value: adminProvidersList.filter((p) => p.status === "pending").length,
-            color: "text-amber-600",
-            bg: "bg-amber-100",
-          },
-          {
-            label: "Bị khóa",
-            value: adminProvidersList.filter((p) => p.status === "blocked").length,
-            color: "text-red-600",
-            bg: "bg-red-100",
-          },
-        ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3">
-            <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center`}>
-              <Wrench className={`w-5 h-5 ${s.color}`} />
-            </div>
-            <div>
-              <p className={`text-xl font-extrabold ${s.color}`}>{s.value}</p>
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Table card */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div className="p-4 border-b border-border flex flex-wrap gap-3 items-center">
           <AdminSearchBar
@@ -89,7 +137,7 @@ export function Technicians() {
               setSearch(v);
               setPage(1);
             }}
-            placeholder="Tìm theo tên, SĐT, kỹ năng..."
+            placeholder="Tìm theo tên, SĐT..."
           />
           <select
             value={statusFilter}
@@ -97,130 +145,166 @@ export function Technicians() {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            className="border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+            className="border border-border rounded-xl px-3 py-2 text-sm focus:outline-none bg-background"
           >
             <option value="all">Tất cả trạng thái</option>
-            <option value="active">Hoạt động</option>
-            <option value="pending">Chờ duyệt</option>
-            <option value="blocked">Bị khóa</option>
+            <option value="0">Chờ duyệt</option>
+            <option value="1">Hoạt động</option>
+            <option value="2">Bị khóa</option>
           </select>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px]">
-            <thead className="bg-muted/40">
-              <tr>
-                {[
-                  "Thợ kỹ thuật",
-                  "Kỹ năng",
-                  "Đánh giá",
-                  "Công việc",
-                  "Trạng thái",
-                  "Ngày tham gia",
-                  "Thao tác",
-                ].map((h) => (
-                  <th
-                    key={h}
-                    className="text-left text-xs font-bold text-muted-foreground px-4 py-3"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {paged.map((p) => (
-                <tr key={p.id} className="hover:bg-muted/30 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-blue-600 text-xs font-bold">{p.name[0]}</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground flex items-center gap-1">
-                          {p.name}
-                          {p.verified && <Shield className="w-3 h-3 text-blue-500" />}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{p.phone}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="bg-accent text-blue-600 text-xs font-semibold px-2 py-0.5 rounded-full">
-                      {p.skill}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {p.rating > 0 ? (
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        <span className="text-sm font-semibold">{p.rating}</span>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">Chưa có</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm font-medium text-foreground">{p.jobs}</td>
-                  <td className="px-4 py-3">
-                    <AdminBadge status={p.status} />
-                  </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{p.joined}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setSelected(p)}
-                        className="px-2 py-1 bg-muted hover:bg-accent rounded-lg text-xs font-semibold text-foreground transition-colors"
+        {loading && items.length === 0 ? (
+          <div className="py-16 flex items-center justify-center text-muted-foreground gap-2">
+            <Loader2 className="w-5 h-5 animate-spin" /> Đang tải...
+          </div>
+        ) : error ? (
+          <div className="py-16 flex flex-col items-center gap-3 text-center">
+            <AlertCircle className="w-10 h-10 text-red-400" />
+            <p className="text-sm text-muted-foreground">{error}</p>
+            <button
+              onClick={() => void refetch()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
+            >
+              Thử lại
+            </button>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="py-16 flex flex-col items-center gap-2 text-muted-foreground">
+            <Wrench className="w-10 h-10 opacity-30" />
+            <p className="text-sm font-medium">Không có thợ nào</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px]">
+              <thead className="bg-muted/40">
+                <tr>
+                  {["Thợ kỹ thuật", "Kỹ năng", "Đánh giá", "Công việc", "Trạng thái", "Tham gia", "Thao tác"].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className="text-left text-xs font-bold text-muted-foreground px-4 py-3"
                       >
-                        Chi tiết
-                      </button>
-                      {p.status === "pending" && (
-                        <>
-                          <button
-                            onClick={() => handleAction("approve", p)}
-                            className="px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg text-xs font-semibold transition-colors"
+                        {h}
+                      </th>
+                    ),
+                  )}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {items.map((t) => (
+                  <tr key={t.taskerId} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-blue-600 text-xs font-bold">
+                            {t.fullName.charAt(0)}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground flex items-center gap-1">
+                            {t.fullName}
+                            {t.status === 1 && <Shield className="w-3 h-3 text-blue-500" />}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{t.phone}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1 max-w-[180px]">
+                        {t.skills.slice(0, 2).map((s) => (
+                          <span
+                            key={s}
+                            className="bg-accent text-blue-600 text-[11px] font-semibold px-2 py-0.5 rounded-full"
                           >
-                            Duyệt
-                          </button>
+                            {s}
+                          </span>
+                        ))}
+                        {t.skills.length > 2 && (
+                          <span className="text-[11px] text-muted-foreground">
+                            +{t.skills.length - 2}
+                          </span>
+                        )}
+                        {t.skills.length === 0 && (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {t.ratingAvg > 0 ? (
+                        <div className="flex items-center gap-1">
+                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                          <span className="text-sm font-semibold">{t.ratingAvg}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Chưa có</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium text-foreground">{t.totalJobs}</td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={t.status} />
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {formatDateVn(t.joinedDate)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => openDetail(t)}
+                          className="px-2 py-1 bg-muted hover:bg-accent rounded-lg text-xs font-semibold text-foreground transition-colors"
+                        >
+                          Chi tiết
+                        </button>
+                        {t.status === 0 && (
+                          <>
+                            <button
+                              onClick={() => setConfirm({ action: "approve", item: t })}
+                              className="px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg text-xs font-semibold transition-colors"
+                            >
+                              Duyệt
+                            </button>
+                            <button
+                              onClick={() => {
+                                setRejectTarget(t);
+                                setRejectReason("");
+                              }}
+                              className="px-2 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg text-xs font-semibold transition-colors"
+                            >
+                              Từ chối
+                            </button>
+                          </>
+                        )}
+                        {t.status === 1 && (
                           <button
-                            onClick={() => handleAction("reject", p)}
+                            onClick={() => setConfirm({ action: "block", item: t })}
                             className="px-2 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg text-xs font-semibold transition-colors"
                           >
-                            Từ chối
+                            Khóa
                           </button>
-                        </>
-                      )}
-                      {p.status === "active" && (
-                        <button
-                          onClick={() => handleAction("block", p)}
-                          className="px-2 py-1 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg text-xs font-semibold transition-colors"
-                        >
-                          Khóa
-                        </button>
-                      )}
-                      {p.status === "blocked" && (
-                        <button
-                          onClick={() => handleAction("unblock", p)}
-                          className="px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg text-xs font-semibold transition-colors"
-                        >
-                          Mở khóa
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <AdminPagination page={page} total={filtered.length} perPage={perPage} onChange={setPage} />
+                        )}
+                        {t.status === 2 && (
+                          <button
+                            onClick={() => setConfirm({ action: "unblock", item: t })}
+                            className="px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg text-xs font-semibold transition-colors"
+                          >
+                            Mở khóa
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <AdminPagination page={page} total={total} perPage={PAGE_SIZE} onChange={setPage} />
       </div>
 
       {/* Detail panel */}
-      {selected && (
-        <div
-          className="fixed inset-0 bg-black/40 z-[100] flex justify-end"
-          onClick={() => setSelected(null)}
-        >
+      {detail && (
+        <div className="fixed inset-0 bg-black/40 z-[100] flex justify-end" onClick={() => setDetail(null)}>
           <div
             className="w-full max-w-md bg-white h-full shadow-2xl overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
@@ -228,7 +312,7 @@ export function Technicians() {
             <div className="sticky top-0 bg-white border-b border-border px-5 py-4 flex items-center justify-between">
               <h3 className="font-bold text-foreground">Chi tiết thợ</h3>
               <button
-                onClick={() => setSelected(null)}
+                onClick={() => setDetail(null)}
                 className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
@@ -236,94 +320,133 @@ export function Technicians() {
             </div>
             <div className="p-5 space-y-4">
               <div className="flex items-center gap-4 p-4 bg-muted rounded-2xl">
-                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 text-2xl font-bold">
-                  {selected.name[0]}
+                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 text-2xl font-bold flex-shrink-0">
+                  {detail.fullName.charAt(0)}
                 </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-lg text-foreground truncate">{detail.fullName}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <StatusBadge status={detail.taskerStatus} />
+                    {detail.isVerified && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600">
+                        <Shield className="w-3 h-3" /> Đã xác minh
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {loadingDetail && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Đang tải chi tiết...
+                </div>
+              )}
+
+              {detail.bio && <p className="text-sm text-muted-foreground">{detail.bio}</p>}
+
+              <div>
+                {[
+                  ["Email", detail.email || "—"],
+                  ["Điện thoại", detail.phone],
+                  ["Kinh nghiệm", `${detail.experienceYears} năm`],
+                  ["Đánh giá", detail.ratingAvg > 0 ? `${detail.ratingAvg} ⭐ (${detail.totalReviews})` : "Chưa có"],
+                  ["Ngày tham gia", formatDateVn(detail.joinedDate)],
+                  ["Xác minh lúc", detail.verifiedAt ? formatDateVn(detail.verifiedAt) : "—"],
+                ].map(([l, v]) => (
+                  <div key={l} className="flex justify-between py-2 border-b border-border">
+                    <span className="text-sm text-muted-foreground">{l}</span>
+                    <span className="text-sm font-semibold text-right">{v}</span>
+                  </div>
+                ))}
+              </div>
+
+              {detail.skills.length > 0 && (
                 <div>
-                  <p className="font-bold text-lg text-foreground">{selected.name}</p>
-                  <p className="text-sm text-muted-foreground">{selected.skill}</p>
-                  <AdminBadge status={selected.status} />
+                  <h4 className="text-sm font-bold text-foreground mb-2">Kỹ năng / dịch vụ</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {detail.skills.map((s) => (
+                      <span
+                        key={s}
+                        className="bg-accent text-blue-600 text-xs font-semibold px-2.5 py-1 rounded-full"
+                      >
+                        {s}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              {[
-                { label: "Email", value: selected.email },
-                { label: "Điện thoại", value: selected.phone },
-                {
-                  label: "Đánh giá",
-                  value: selected.rating > 0 ? `${selected.rating} ⭐` : "Chưa có",
-                },
-                {
-                  label: "Công việc đã làm",
-                  value: `${selected.jobs} công việc`,
-                },
-                {
-                  label: "Doanh thu",
-                  value: `${selected.revenue}đ`,
-                },
-                {
-                  label: "Ngày tham gia",
-                  value: selected.joined,
-                },
-                {
-                  label: "Xác minh",
-                  value: selected.verified ? "✅ Đã xác minh" : "❌ Chưa xác minh",
-                },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="flex justify-between py-2 border-b border-border last:border-0"
-                >
-                  <span className="text-sm text-muted-foreground">{item.label}</span>
-                  <span className="text-sm font-semibold text-foreground">{item.value}</span>
-                </div>
-              ))}
-              <div className="flex gap-3 pt-2">
-                <button className="flex-1 py-2.5 border border-border rounded-xl text-sm font-semibold hover:bg-muted transition-colors flex items-center justify-center gap-1.5">
-                  <Edit3 className="w-3.5 h-3.5" />
-                  Chỉnh sửa
-                </button>
-                {selected.status === "pending" && (
-                  <button
-                    onClick={() => {
-                      setSelected(null);
-                      handleAction("approve", selected);
-                    }}
-                    className="flex-1 py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors"
-                  >
-                    Duyệt hồ sơ
-                  </button>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {confirm.show && confirm.item && (
+      {/* Approve / lock / unlock confirm */}
+      {confirm && (
         <ConfirmModal
           title={
             confirm.action === "approve"
               ? "Duyệt hồ sơ thợ?"
-              : confirm.action === "reject"
-                ? "Từ chối hồ sơ?"
-                : confirm.action === "block"
-                  ? "Khóa tài khoản?"
-                  : "Mở khóa tài khoản?"
+              : confirm.action === "block"
+                ? "Khóa hồ sơ thợ?"
+                : "Mở khóa hồ sơ thợ?"
           }
-          message={`${confirm.action === "approve" ? "Thợ" : "Tài khoản của"} ${confirm.item.name} ${confirm.action === "approve" ? "sẽ được duyệt và bắt đầu nhận việc." : confirm.action === "reject" ? "sẽ bị từ chối và không thể hoạt động." : confirm.action === "block" ? "sẽ bị khóa và không thể nhận việc." : "sẽ được mở khóa."}`}
-          confirmLabel={
+          message={
             confirm.action === "approve"
-              ? "Duyệt"
-              : confirm.action === "reject"
-                ? "Từ chối"
+              ? `Thợ ${confirm.item.fullName} sẽ được duyệt và bắt đầu nhận việc.`
+              : confirm.action === "block"
+                ? `Thợ ${confirm.item.fullName} sẽ bị khóa và không thể nhận việc.`
+                : `Thợ ${confirm.item.fullName} sẽ được mở khóa để nhận việc.`
+          }
+          confirmLabel={
+            busy
+              ? "Đang xử lý..."
+              : confirm.action === "approve"
+                ? "Duyệt"
                 : confirm.action === "block"
                   ? "Khóa"
                   : "Mở khóa"
           }
-          danger={confirm.action !== "approve" && confirm.action !== "unblock"}
-          onConfirm={() => setConfirm({ show: false, action: "", item: null })}
-          onCancel={() => setConfirm({ show: false, action: "", item: null })}
+          danger={confirm.action === "block"}
+          onConfirm={runConfirm}
+          onCancel={() => !busy && setConfirm(null)}
         />
+      )}
+
+      {/* Reject modal with reason */}
+      {rejectTarget && (
+        <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 className="text-lg font-bold text-foreground">Từ chối hồ sơ?</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Hồ sơ của {rejectTarget.fullName} sẽ bị từ chối. Nhập lý do (tuỳ chọn).
+            </p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={3}
+              autoFocus
+              className="w-full bg-muted rounded-xl p-3 text-sm mt-3 focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
+              placeholder="VD: Giấy tờ chưa hợp lệ, thiếu chứng chỉ..."
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setRejectTarget(null)}
+                disabled={rejecting}
+                className="flex-1 py-2.5 border border-border rounded-xl text-sm font-semibold hover:bg-muted transition-colors disabled:opacity-60"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={confirmReject}
+                disabled={rejecting}
+                className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {rejecting && <Loader2 className="w-4 h-4 animate-spin" />}
+                Từ chối
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
