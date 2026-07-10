@@ -1,4 +1,13 @@
 ﻿export * as addressApi from "./address.api";
+export * as adminBookingApi from "./adminBooking.api";
+export * as adminCategoryApi from "./adminCategory.api";
+export * as adminCommissionApi from "./adminCommission.api";
+export * as adminDashboardApi from "./adminDashboard.api";
+export * as adminDisputeApi from "./adminDispute.api";
+export * as adminReviewApi from "./adminReview.api";
+export * as adminServiceApi from "./adminService.api";
+export * as adminTaskerApi from "./adminTasker.api";
+export * as adminUserApi from "./adminUser.api";
 export * as authApi from "./auth.api";
 export * as categoryApi from "./category.api";
 export * as chatApi from "./chat.api";
