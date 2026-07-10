@@ -1,60 +1,131 @@
-﻿import { useState } from "react";
-import { Search, X, Plus, Edit3, Trash2, Star, Package, ImageIcon } from "lucide-react";
-import type { Screen } from "@/shared/types";
-import { providerServices } from "@/services/Provider/provider.data";
+import { useState } from "react";
+import {
+  Search,
+  X,
+  Plus,
+  Pencil,
+  Trash2,
+  Package,
+  Clock,
+  Wrench,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import type { Screen, TaskerService } from "@/shared/types";
+import { taskerServiceApi, serviceApi } from "@/services/api";
+import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
+import { formatVnd, notify, getErrorMessage } from "@/shared/lib";
 
 export function ProviderServiceManagement({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
-  const [items, setItems] = useState(providerServices);
-  const [showAdd, setShowAdd] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newPrice, setNewPrice] = useState("");
-  const [newCat, setNewCat] = useState("Điện");
-  const [editId, setEditId] = useState<number | null>(null);
 
-  const filtered = items.filter((s) => {
-    const matchSearch =
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.category.toLowerCase().includes(search.toLowerCase());
-    const matchFilter =
-      filter === "all" || (filter === "active" && s.active) || (filter === "inactive" && !s.active);
-    return matchSearch && matchFilter;
+  const { data: services = [], loading, error, refetch } = useApi(() =>
+    taskerServiceApi.getMyTaskerServices(),
+  );
+
+  // Platform services to pick from when adding (fetched once).
+  const { data: catalog } = useApi(() => serviceApi.getServicesExplorer({ pageSize: 100 }), {
+    initialData: undefined,
   });
 
-  const toggleActive = (id: number) =>
-    setItems(items.map((s) => (s.id === id ? { ...s, active: !s.active } : s)));
-  const deleteItem = (id: number) => setItems(items.filter((s) => s.id !== id));
-  const addService = () => {
-    if (!newName.trim() || !newPrice.trim()) return;
-    setItems([
-      ...items,
-      {
-        id: Date.now(),
-        name: newName,
-        category: newCat,
-        price: newPrice,
-        unit: "lượt",
-        image: "photo-1621905251189-08b1489462be",
-        active: true,
-        bookings: 0,
-        rating: 0,
-      },
-    ]);
-    setNewName("");
-    setNewPrice("");
-    setShowAdd(false);
+  // Add modal.
+  const [showAdd, setShowAdd] = useState(false);
+  const [addServiceId, setAddServiceId] = useState<number | "">("");
+  const [addPrice, setAddPrice] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  // Edit-price modal.
+  const [editSvc, setEditSvc] = useState<TaskerService | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+  const [savingPrice, setSavingPrice] = useState(false);
+
+  // Delete confirm.
+  const [deleteSvc, setDeleteSvc] = useState<TaskerService | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const filtered = services.filter(
+    (s) =>
+      s.serviceName.toLowerCase().includes(search.toLowerCase()) ||
+      s.categoryName.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  // Services in the catalog the tasker hasn't registered yet.
+  const registeredIds = new Set(services.map((s) => s.serviceId));
+  const available = (catalog?.items ?? []).filter((s) => !registeredIds.has(s.serviceId));
+
+  const openAdd = () => {
+    setAddServiceId("");
+    setAddPrice("");
+    setShowAdd(true);
   };
+
+  const submitAdd = async () => {
+    if (addServiceId === "") return notify.error("Vui lòng chọn dịch vụ.");
+    const price = Number(addPrice);
+    if (!price || price <= 0) return notify.error("Vui lòng nhập giá hợp lệ.");
+    setAdding(true);
+    try {
+      await taskerServiceApi.addTaskerService(Number(addServiceId), price);
+      notify.success("Đã thêm dịch vụ.");
+      setShowAdd(false);
+      void refetch();
+    } catch (err) {
+      notify.error(getErrorMessage(err));
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const openEdit = (svc: TaskerService) => {
+    setEditSvc(svc);
+    setEditPrice(String(svc.price));
+  };
+
+  const submitEdit = async () => {
+    if (!editSvc) return;
+    const price = Number(editPrice);
+    if (!price || price <= 0) return notify.error("Vui lòng nhập giá hợp lệ.");
+    setSavingPrice(true);
+    try {
+      await taskerServiceApi.updateTaskerServicePrice(editSvc.serviceId, price);
+      notify.success("Đã cập nhật giá.");
+      setEditSvc(null);
+      void refetch();
+    } catch (err) {
+      notify.error(getErrorMessage(err));
+    } finally {
+      setSavingPrice(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteSvc) return;
+    setDeleting(true);
+    try {
+      await taskerServiceApi.removeTaskerService(deleteSvc.serviceId);
+      notify.success("Đã xóa dịch vụ.");
+      setDeleteSvc(null);
+      void refetch();
+    } catch (err) {
+      notify.error(err);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const avgPrice = services.length
+    ? Math.round(services.reduce((a, s) => a + s.price, 0) / services.length)
+    : 0;
 
   return (
     <div className="flex flex-col h-full">
       <TopBar
-        title="Quản lý dịch vụ"
+        title="Dịch vụ & giá"
         onBack={() => onNavigate("providerDashboard")}
         actions={
           <button
-            onClick={() => setShowAdd(true)}
+            onClick={openAdd}
             className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-700 transition-colors"
           >
             <Plus className="w-4 h-4 text-white" />
@@ -62,63 +133,37 @@ export function ProviderServiceManagement({ onNavigate }: { onNavigate: (s: Scre
         }
       />
 
-      {/* Search + Filter */}
-      <div className="bg-white px-4 py-3 border-b border-border space-y-3">
+      {/* Search */}
+      <div className="bg-white px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2.5">
           <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-muted-foreground"
-            placeholder="Tìm kiếm dịch vụ của bạn..."
+            placeholder="Tìm dịch vụ của bạn..."
           />
           {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="text-muted-foreground hover:text-foreground"
-            >
+            <button onClick={() => setSearch("")} className="text-muted-foreground">
               <X className="w-4 h-4" />
             </button>
           )}
         </div>
-        <div className="flex gap-2">
-          {["all", "active", "inactive"].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${filter === f ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"}`}
-            >
-              {f === "all"
-                ? `Tất cả (${items.length})`
-                : f === "active"
-                  ? `Đang bật (${items.filter((s) => s.active).length})`
-                  : `Tắt (${items.filter((s) => !s.active).length})`}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* Stats row */}
+      {/* Stats */}
       <div className="bg-white border-b border-border px-4 py-3 flex gap-4">
         {[
+          { label: "Tổng dịch vụ", value: `${services.length}`, color: "text-blue-600" },
           {
-            label: "Tổng dịch vụ",
-            value: items.length,
-            color: "text-blue-600",
-          },
-          {
-            label: "Đang hoạt động",
-            value: items.filter((s) => s.active).length,
+            label: "Đang bật",
+            value: `${services.filter((s) => s.isActive).length}`,
             color: "text-green-600",
           },
-          {
-            label: "Tổng đặt lịch",
-            value: items.reduce((a, s) => a + s.bookings, 0),
-            color: "text-purple-600",
-          },
+          { label: "Giá trung bình", value: `${formatVnd(avgPrice)}đ`, color: "text-purple-600" },
         ].map((stat) => (
           <div key={stat.label} className="flex-1 text-center">
-            <p className={`text-xl font-extrabold ${stat.color}`}>{stat.value}</p>
+            <p className={`text-lg font-extrabold ${stat.color}`}>{stat.value}</p>
             <p className="text-[10px] text-muted-foreground">{stat.label}</p>
           </div>
         ))}
@@ -126,96 +171,89 @@ export function ProviderServiceManagement({ onNavigate }: { onNavigate: (s: Scre
 
       {/* List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {filtered.length === 0 && (
+        {loading && services.length === 0 ? (
+          [1, 2, 3].map((i) => (
+            <div key={i} className="bg-white rounded-2xl p-4 shadow-sm animate-pulse h-24" />
+          ))
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+            <AlertCircle className="w-10 h-10 text-red-400" />
+            <p className="text-sm text-muted-foreground">{error}</p>
+            <button
+              onClick={() => void refetch()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
+            >
+              Thử lại
+            </button>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <Package className="w-12 h-12 mb-3 opacity-30" />
-            <p className="text-sm font-medium">Không tìm thấy dịch vụ</p>
-            <p className="text-xs mt-1">Thử từ khóa khác hoặc thêm dịch vụ mới</p>
+            <p className="text-sm font-medium">
+              {services.length === 0 ? "Bạn chưa đăng ký dịch vụ nào" : "Không tìm thấy dịch vụ"}
+            </p>
+            <p className="text-xs mt-1">Bấm + để thêm dịch vụ và đặt giá</p>
           </div>
-        )}
-        {filtered.map((svc) => (
-          <div
-            key={svc.id}
-            className={`bg-white rounded-2xl overflow-hidden shadow-sm border-2 transition-colors ${svc.active ? "border-transparent" : "border-border opacity-75"}`}
-          >
-            <div className="flex gap-3 p-3">
-              <div className="relative flex-shrink-0">
-                <img
-                  src={`https://images.unsplash.com/${svc.image}?w=100&h=100&fit=crop&auto=format`}
-                  alt={svc.name}
-                  className="w-20 h-20 rounded-xl object-cover"
-                />
-                {!svc.active && (
-                  <div className="absolute inset-0 bg-white/60 rounded-xl flex items-center justify-center">
-                    <span className="text-[10px] font-bold text-muted-foreground">Tắt</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm text-foreground truncate">{svc.name}</p>
-                    <span className="inline-block bg-accent text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5">
-                      {svc.category}
+        ) : (
+          filtered.map((svc) => (
+            <div key={svc.taskerServiceId} className="bg-white rounded-2xl p-3 shadow-sm">
+              <div className="flex gap-3">
+                <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                  <Wrench className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-foreground truncate">
+                        {svc.serviceName}
+                      </p>
+                      <span className="inline-block bg-accent text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5">
+                        {svc.categoryName || "Dịch vụ"}
+                      </span>
+                    </div>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${svc.isActive ? "bg-green-100 text-green-700" : "bg-slate-200 text-slate-500"}`}
+                    >
+                      {svc.isActive ? "Đang bật" : "Tắt"}
                     </span>
                   </div>
-                  {/* Active toggle */}
-                  <button
-                    onClick={() => toggleActive(svc.id)}
-                    className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 mt-0.5 ${svc.active ? "bg-green-500" : "bg-gray-300"}`}
-                  >
-                    <div
-                      className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${svc.active ? "translate-x-5" : "translate-x-0.5"}`}
-                    />
-                  </button>
-                </div>
-                <div className="flex items-center gap-3 mt-1.5">
-                  <span className="text-blue-600 font-extrabold text-sm">
-                    {svc.price}đ
-                    <span className="text-muted-foreground font-normal text-xs">/{svc.unit}</span>
-                  </span>
-                  {svc.rating > 0 && (
-                    <div className="flex items-center gap-0.5">
-                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                      <span className="text-xs font-semibold">{svc.rating}</span>
-                    </div>
-                  )}
-                  <span className="text-xs text-muted-foreground">{svc.bookings} đặt lịch</span>
-                </div>
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={() => setEditId(svc.id)}
-                    className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-accent rounded-lg text-xs font-semibold text-foreground transition-colors"
-                  >
-                    <Edit3 className="w-3 h-3" />
-                    Sửa
-                  </button>
-                  <button
-                    onClick={() => deleteItem(svc.id)}
-                    className="flex items-center gap-1 px-2.5 py-1 bg-red-50 hover:bg-red-100 rounded-lg text-xs font-semibold text-red-600 transition-colors"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                    Xóa
-                  </button>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <span className="text-blue-600 font-extrabold text-sm">
+                      {formatVnd(svc.price)}đ
+                    </span>
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="w-3 h-3" />~{svc.durationMinutes} phút
+                    </span>
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => openEdit(svc)}
+                      className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-accent rounded-lg text-xs font-semibold text-foreground transition-colors"
+                    >
+                      <Pencil className="w-3 h-3" />
+                      Sửa giá
+                    </button>
+                    <button
+                      onClick={() => setDeleteSvc(svc)}
+                      className="flex items-center gap-1 px-2.5 py-1 bg-red-50 hover:bg-red-100 rounded-lg text-xs font-semibold text-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Xóa
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
-      {/* Add Service Modal */}
+      {/* Add service modal */}
       {showAdd && (
-        <div
-          className="absolute inset-0 bg-black/40 z-50 flex items-end"
-          onClick={() => setShowAdd(false)}
-        >
-          <div
-            className="w-full bg-white rounded-t-3xl p-6 space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
+          <div className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-foreground">Thêm dịch vụ mới</h3>
+              <h3 className="text-lg font-bold text-foreground">Thêm dịch vụ</h3>
               <button
                 onClick={() => setShowAdd(false)}
                 className="w-8 h-8 bg-muted rounded-full flex items-center justify-center"
@@ -223,121 +261,119 @@ export function ProviderServiceManagement({ onNavigate }: { onNavigate: (s: Scre
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground mb-1 block">
-                  Tên dịch vụ *
-                </label>
-                <input
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  className="w-full bg-muted px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="VD: Sửa ổ cắm điện"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">
-                    Giá (đồng) *
-                  </label>
-                  <input
-                    value={newPrice}
-                    onChange={(e) => setNewPrice(e.target.value)}
-                    className="w-full bg-muted px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="150,000"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">
-                    Danh mục
-                  </label>
+
+            {available.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                Bạn đã đăng ký hết các dịch vụ hiện có trên hệ thống.
+              </p>
+            ) : (
+              <>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-muted-foreground">Chọn dịch vụ</label>
                   <select
-                    value={newCat}
-                    onChange={(e) => setNewCat(e.target.value)}
-                    className="w-full bg-muted px-3 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={addServiceId}
+                    onChange={(e) => {
+                      const id = e.target.value === "" ? "" : Number(e.target.value);
+                      setAddServiceId(id);
+                      const svc = available.find((x) => x.serviceId === id);
+                      if (svc && svc.startingPrice > 0) setAddPrice(String(svc.startingPrice));
+                    }}
+                    className="w-full bg-muted px-3 py-3 rounded-xl text-sm focus:outline-none"
                   >
-                    {["Điện", "Nước", "Điều hòa", "Dọn dẹp", "Sơn", "Thiết bị"].map((c) => (
-                      <option key={c}>{c}</option>
+                    <option value="">— Chọn dịch vụ —</option>
+                    {available.map((s) => (
+                      <option key={s.serviceId} value={s.serviceId}>
+                        {s.name}
+                      </option>
                     ))}
                   </select>
                 </div>
-              </div>
-              <button className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-3 text-sm text-muted-foreground hover:border-blue-400 hover:text-blue-600 transition-colors">
-                <ImageIcon className="w-4 h-4" />
-                Thêm ảnh dịch vụ
-              </button>
-            </div>
-            <button
-              onClick={addService}
-              className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
-            >
-              Thêm dịch vụ
-            </button>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-muted-foreground">Giá của bạn (đ)</label>
+                  <input
+                    value={addPrice}
+                    onChange={(e) => setAddPrice(e.target.value.replace(/\D/g, ""))}
+                    inputMode="numeric"
+                    className="w-full bg-muted px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="VD: 150000"
+                  />
+                </div>
+                <button
+                  onClick={submitAdd}
+                  disabled={adding}
+                  className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+                >
+                  {adding && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {adding ? "Đang thêm..." : "Thêm dịch vụ"}
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
 
-      {/* Edit Modal */}
-      {editId !== null && (
-        <div
-          className="absolute inset-0 bg-black/40 z-50 flex items-end"
-          onClick={() => setEditId(null)}
-        >
-          <div
-            className="w-full bg-white rounded-t-3xl p-6 space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-foreground">Chỉnh sửa dịch vụ</h3>
+      {/* Edit price modal */}
+      {editSvc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">
+            <h3 className="font-bold text-foreground">Sửa giá · {editSvc.serviceName}</h3>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Giá mới (đ)</label>
+              <input
+                value={editPrice}
+                onChange={(e) => setEditPrice(e.target.value.replace(/\D/g, ""))}
+                inputMode="numeric"
+                autoFocus
+                className="w-full bg-muted px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="VD: 150000"
+              />
+            </div>
+            <div className="flex gap-2">
               <button
-                onClick={() => setEditId(null)}
-                className="w-8 h-8 bg-muted rounded-full flex items-center justify-center"
+                onClick={() => setEditSvc(null)}
+                disabled={savingPrice}
+                className="flex-1 py-2.5 border border-border rounded-xl text-sm font-semibold disabled:opacity-60"
               >
-                <X className="w-4 h-4" />
+                Hủy
+              </button>
+              <button
+                onClick={submitEdit}
+                disabled={savingPrice}
+                className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {savingPrice && <Loader2 className="w-4 h-4 animate-spin" />}
+                Lưu
               </button>
             </div>
-            {(() => {
-              const svc = items.find((s) => s.id === editId)!;
-              return (
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground mb-1 block">
-                      Tên dịch vụ
-                    </label>
-                    <input
-                      defaultValue={svc.name}
-                      className="w-full bg-muted px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground mb-1 block">
-                        Giá
-                      </label>
-                      <input
-                        defaultValue={svc.price}
-                        className="w-full bg-muted px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground mb-1 block">
-                        Đơn vị
-                      </label>
-                      <input
-                        defaultValue={svc.unit}
-                        className="w-full bg-muted px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setEditId(null)}
-                    className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
-                  >
-                    Lưu thay đổi
-                  </button>
-                </div>
-              );
-            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirm modal */}
+      {deleteSvc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">
+            <div>
+              <h3 className="font-bold text-foreground">Xóa dịch vụ?</h3>
+              <p className="text-sm text-muted-foreground mt-1">{deleteSvc.serviceName}</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeleteSvc(null)}
+                disabled={deleting}
+                className="flex-1 py-2.5 border border-border rounded-xl text-sm font-semibold disabled:opacity-60"
+              >
+                Quay lại
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                Xóa
+              </button>
+            </div>
           </div>
         </div>
       )}

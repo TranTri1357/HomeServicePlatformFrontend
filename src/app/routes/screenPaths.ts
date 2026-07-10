@@ -21,6 +21,7 @@ export const SCREEN_PATHS: Record<Screen, string> = {
   providerSchedule: "/provider/schedule",
   providerChat: "/provider/chat",
   providerProfile: "/provider/profile",
+  providerNotifications: "/provider/notifications",
   providerJobManagement: "/provider/jobs",
   providerServiceManagement: "/provider/services",
   providerAreaRouting: "/provider/area",
