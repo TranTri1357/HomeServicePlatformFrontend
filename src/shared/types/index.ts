@@ -16,3 +16,4 @@ export * from "@/types/search";
 export * from "@/types/service";
 export * from "@/types/tasker";
 export * from "@/types/technician";
+export * from "@/types/wallet";

@@ -31,6 +31,8 @@ export function AppRouter() {
               <Route path="payment/gateway" element={<RouteScreen screen="mockGateway" />} />
               <Route path="chat" element={<RouteScreen screen="chat" />} />
               <Route path="profile" element={<RouteScreen screen="customerProfile" />} />
+              <Route path="wallet" element={<RouteScreen screen="customerWallet" />} />
+              <Route path="addresses" element={<RouteScreen screen="customerAddresses" />} />
               <Route path="bookings" element={<RouteScreen screen="bookingManagement" />} />
               <Route path="notifications" element={<RouteScreen screen="notifications" />} />
             </Route>

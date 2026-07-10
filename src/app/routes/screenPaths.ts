@@ -12,6 +12,8 @@ export const SCREEN_PATHS: Record<Screen, string> = {
   mockGateway: "/customer/payment/gateway",
   chat: "/customer/chat",
   customerProfile: "/customer/profile",
+  customerWallet: "/customer/wallet",
+  customerAddresses: "/customer/addresses",
   bookingManagement: "/customer/bookings",
   notifications: "/customer/notifications",
   providerDashboard: "/provider/dashboard",

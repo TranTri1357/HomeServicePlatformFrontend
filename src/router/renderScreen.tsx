@@ -6,6 +6,8 @@ import { ServiceList, ServiceDetail, ProviderServiceManagement } from "@/pages/S
 import { TechnicianMap, TechnicianDetail } from "@/pages/Technician";
 import { Booking, BookingManagement } from "@/pages/Booking";
 import { Payment, MockGateway } from "@/pages/Payment";
+import { CustomerWallet } from "@/pages/Wallet";
+import { CustomerAddresses } from "@/pages/Address";
 import { Chat } from "@/pages/Chat";
 import { Notifications } from "@/pages/Notification";
 import { ProviderDashboard, ProviderJobSheet, ProviderJobManagement } from "@/pages/Provider";
@@ -74,9 +76,13 @@ export function renderScreen(
         />
       );
     case "chat":
-      return <Chat onNavigate={navigate} />;
+      return <Chat onNavigate={navigate} data={screenData as { bookingId?: number }} />;
     case "customerProfile":
       return <CustomerProfile onNavigate={navigate} />;
+    case "customerWallet":
+      return <CustomerWallet onNavigate={navigate} />;
+    case "customerAddresses":
+      return <CustomerAddresses onNavigate={navigate} />;
     case "bookingManagement":
       return <BookingManagement onNavigate={navigate} />;
     case "notifications":
@@ -88,7 +94,13 @@ export function renderScreen(
     case "providerSchedule":
       return <ProviderSchedule onNavigate={navigate} />;
     case "providerChat":
-      return <Chat onNavigate={(s) => navigate(s)} isProvider />;
+      return (
+        <Chat
+          onNavigate={navigate}
+          isProvider
+          data={screenData as { bookingId?: number }}
+        />
+      );
     case "providerProfile":
       return <ProviderProfile onNavigate={navigate} />;
     case "providerJobManagement":
