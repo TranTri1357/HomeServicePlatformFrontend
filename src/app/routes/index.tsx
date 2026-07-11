@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "../App";
 import { AuthLayout } from "./AuthLayout";
 import { CustomerLayout } from "./CustomerLayout";
@@ -6,6 +6,7 @@ import { ProviderLayout } from "./ProviderLayout";
 import { AdminLayout as AdminRouteLayout } from "./AdminLayout";
 import { RouteScreen } from "./RouteScreen";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { RootRedirect } from "./RootRedirect";
 import { ForbiddenPage } from "@/pages/Error";
 
 export function AppRouter() {
@@ -13,19 +14,23 @@ export function AppRouter() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />}>
-          <Route index element={<Navigate to="/auth" replace />} />
+          <Route index element={<RootRedirect />} />
           <Route path="auth" element={<AuthLayout />} />
           <Route path="403" element={<ForbiddenPage />} />
 
-          {/* Customer */}
-          <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
-            <Route path="customer" element={<CustomerLayout />}>
-              <Route index element={<RouteScreen screen="customerHome" />} />
-              <Route path="home" element={<RouteScreen screen="customerHome" />} />
-              <Route path="services" element={<RouteScreen screen="serviceList" />} />
-              <Route path="service/detail" element={<RouteScreen screen="serviceDetail" />} />
-              <Route path="technicians" element={<RouteScreen screen="technicianMap" />} />
-              <Route path="technician/detail" element={<RouteScreen screen="technicianDetail" />} />
+          {/* Customer — the browse screens are public (khách vãng lai xem được),
+              only the action screens below require a customer login. */}
+          <Route path="customer" element={<CustomerLayout />}>
+            {/* Public (guest-accessible) */}
+            <Route index element={<RouteScreen screen="customerHome" />} />
+            <Route path="home" element={<RouteScreen screen="customerHome" />} />
+            <Route path="services" element={<RouteScreen screen="serviceList" />} />
+            <Route path="service/detail" element={<RouteScreen screen="serviceDetail" />} />
+            <Route path="technicians" element={<RouteScreen screen="technicianMap" />} />
+            <Route path="technician/detail" element={<RouteScreen screen="technicianDetail" />} />
+
+            {/* Protected — require a logged-in customer */}
+            <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
               <Route path="booking" element={<RouteScreen screen="booking" />} />
               <Route path="emergency" element={<RouteScreen screen="emergencyBooking" />} />
               <Route path="payment" element={<RouteScreen screen="payment" />} />
@@ -47,6 +52,7 @@ export function AppRouter() {
               <Route path="job/detail" element={<RouteScreen screen="providerJobSheet" />} />
               <Route path="schedule" element={<RouteScreen screen="providerSchedule" />} />
               <Route path="jobs" element={<RouteScreen screen="providerJobManagement" />} />
+              <Route path="income" element={<RouteScreen screen="providerIncome" />} />
               <Route path="services" element={<RouteScreen screen="providerServiceManagement" />} />
               <Route path="area" element={<RouteScreen screen="providerAreaRouting" />} />
               <Route path="profile" element={<RouteScreen screen="providerProfile" />} />
@@ -71,7 +77,7 @@ export function AppRouter() {
             </Route>
           </Route>
 
-          <Route path="*" element={<Navigate to="/auth" replace />} />
+          <Route path="*" element={<RootRedirect />} />
         </Route>
       </Routes>
     </BrowserRouter>

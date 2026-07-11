@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Wrench, Eye, EyeOff } from "lucide-react";
+import { Wrench, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { authApi } from "@/services/api";
 import type { LoginResult } from "@/services/api/auth.api";
 import { parseApiErrors, type FieldErrors, type FieldKey } from "@/services/api/authErrors";
@@ -13,7 +13,14 @@ function inputClass(hasError: boolean) {
   ].join(" ");
 }
 
-export function AuthScreen({ onLogin }: { onLogin: (result: LoginResult) => void }) {
+export function AuthScreen({
+  onLogin,
+  onBack,
+}: {
+  onLogin: (result: LoginResult) => void;
+  /** Quay lại trang duyệt công khai (khách vãng lai). */
+  onBack?: () => void;
+}) {
   const [tab, setTab] = useState<"login" | "register">("login");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -111,6 +118,17 @@ export function AuthScreen({ onLogin }: { onLogin: (result: LoginResult) => void
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="mb-4 flex items-center gap-1.5 text-blue-100 hover:text-white text-sm font-medium transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Về trang chủ
+          </button>
+        )}
+
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">

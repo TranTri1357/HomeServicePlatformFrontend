@@ -12,6 +12,7 @@ import {
   Wrench,
   Bell,
   Siren,
+  LogIn,
 } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { categoryApi, serviceApi, taskerApi, searchApi } from "@/services/api";
@@ -38,7 +39,7 @@ function CategoryIcon({ iconUrl, name }: { iconUrl: string; name: string }) {
 }
 
 export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: object) => void }) {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   // Reference example for teammates: fetch each resource through `useApi`.
   // `initialData` seeds the mock so the screen never flashes empty, and on an
   // API error the hook keeps the last value (the mock) while exposing `error`.
@@ -91,24 +92,34 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
           <div>
             <p className="text-blue-200 text-sm">Xin chào,</p>
             <p className="text-white font-bold text-lg leading-tight">
-              {user?.fullName || "Khách hàng"}
+              {isAuthenticated ? user?.fullName || "Khách hàng" : "Khách"}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          {isAuthenticated ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onNavigate("notifications")}
+                aria-label="Thông báo"
+                className="w-11 h-11 rounded-full bg-white/15 hover:bg-white/25 transition-colors flex items-center justify-center"
+              >
+                <Bell className="w-5 h-5 text-white" />
+              </button>
+              <button
+                onClick={() => onNavigate("customerProfile")}
+                className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-white/50 ring-offset-2 ring-offset-blue-700"
+              >
+                <Avatar name={user?.fullName || "Khách hàng"} size={44} />
+              </button>
+            </div>
+          ) : (
             <button
-              onClick={() => onNavigate("notifications")}
-              aria-label="Thông báo"
-              className="w-11 h-11 rounded-full bg-white/15 hover:bg-white/25 transition-colors flex items-center justify-center"
+              onClick={() => onNavigate("auth")}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-blue-700 text-sm font-bold hover:bg-blue-50 transition-colors"
             >
-              <Bell className="w-5 h-5 text-white" />
+              <LogIn className="w-4 h-4" />
+              Đăng nhập
             </button>
-            <button
-              onClick={() => onNavigate("customerProfile")}
-              className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-white/50 ring-offset-2 ring-offset-blue-700"
-            >
-              <Avatar name={user?.fullName || "Khách hàng"} size={44} />
-            </button>
-          </div>
+          )}
         </div>
 
 

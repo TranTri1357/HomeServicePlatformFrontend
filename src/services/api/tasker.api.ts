@@ -5,6 +5,7 @@ import type {
   TaskerAvailability,
   TaskerDashboard,
   TaskerDetail,
+  TaskerIncome,
   TaskerJob,
   TaskerProfileData,
   TaskerQuickInfo,
@@ -42,6 +43,17 @@ export async function updateTaskerProfile(input: UpdateTaskerProfileInput): Prom
 /** GET /api/tasker/dashboard — home stats for the logged-in tasker. */
 export async function getTaskerDashboard(): Promise<TaskerDashboard> {
   const response = await get<ApiResponse<TaskerDashboard>>("/tasker/dashboard");
+  return unwrap(response);
+}
+
+/**
+ * GET /api/tasker/wallet — the logged-in tasker's income ledger: balance +
+ * per-booking earning history (gross → commission → net). Paged.
+ */
+export async function getTaskerIncome(page = 1, pageSize = 20): Promise<TaskerIncome> {
+  const response = await get<ApiResponse<TaskerIncome>>("/tasker/wallet", {
+    params: { page, pageSize },
+  });
   return unwrap(response);
 }
 

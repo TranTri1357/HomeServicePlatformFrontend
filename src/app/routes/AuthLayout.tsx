@@ -29,7 +29,7 @@ export function AuthLayout() {
 
   return (
     <div className="w-full h-full" style={{ fontFamily: "'Inter', sans-serif" }}>
-      <AuthScreen onLogin={handleLogin} />
+      <AuthScreen onLogin={handleLogin} onBack={() => navigate("/customer/home")} />
     </div>
   );
 }

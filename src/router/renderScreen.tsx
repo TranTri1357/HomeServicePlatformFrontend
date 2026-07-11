@@ -11,7 +11,12 @@ import { CustomerWallet } from "@/pages/Wallet";
 import { CustomerAddresses } from "@/pages/Address";
 import { Chat } from "@/pages/Chat";
 import { Notifications } from "@/pages/Notification";
-import { ProviderDashboard, ProviderJobSheet, ProviderJobManagement } from "@/pages/Provider";
+import {
+  ProviderDashboard,
+  ProviderJobSheet,
+  ProviderJobManagement,
+  ProviderIncome,
+} from "@/pages/Provider";
 import { ProviderSchedule } from "@/pages/Calendar";
 import { ProviderAreaRouting } from "@/pages/Area";
 import {
@@ -108,6 +113,8 @@ export function renderScreen(
       return <Notifications onNavigate={navigate} variant="provider" />;
     case "providerJobManagement":
       return <ProviderJobManagement onNavigate={navigate} />;
+    case "providerIncome":
+      return <ProviderIncome onNavigate={navigate} />;
     case "providerServiceManagement":
       return <ProviderServiceManagement onNavigate={navigate} />;
     case "providerAreaRouting":
