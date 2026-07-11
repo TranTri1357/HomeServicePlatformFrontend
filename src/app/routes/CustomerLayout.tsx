@@ -1,25 +1,33 @@
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { Wifi } from "lucide-react";
-import type { Screen } from "@/shared/types";
 import { NO_BOTTOM_NAV_SCREENS } from "@/shared/constants";
-import { CUSTOMER_NAV_ITEMS } from "@/app/config";
+import { CUSTOMER_NAV_ITEMS, GUEST_NAV_ITEMS } from "@/app/config";
 import { DesktopTopNav } from "@/layouts";
 import { CustomerNav } from "@/components/Navigation";
 import { useNavBadges } from "@/shared/hooks";
-import { getPathForScreen, getScreenForPath } from "./screenPaths";
+import { useAuth } from "@/app/providers";
+import { getScreenForPath } from "./screenPaths";
+import { useGatedNavigate } from "./useGatedNavigate";
 
 export function CustomerLayout() {
-  const navigate = useNavigate();
   const { pathname } = useLocation();
   const screen = getScreenForPath(pathname);
 
-  const onNavigate = (nextScreen: Screen, data?: object) => {
-    navigate(getPathForScreen(nextScreen), { state: data });
-  };
+  const { isAuthenticated, hasRole, getHomePath } = useAuth();
+  const onNavigate = useGatedNavigate();
+  const isCustomer = hasRole("customer");
 
-  // Live nav badges: unread-notification dot + count of ongoing bookings.
-  const { notifDot, jobBadge } = useNavBadges("customer");
-  const navItems = CUSTOMER_NAV_ITEMS.map((i) =>
+  // Live nav badges chỉ nạp cho khách hàng thật (guest/thợ -> không gọi API khách).
+  // Gọi hook trước mọi early-return để tuân thủ rules-of-hooks.
+  const { notifDot, jobBadge } = useNavBadges("customer", isCustomer);
+
+  // Người đã đăng nhập nhưng KHÔNG phải khách (thợ/admin) không được lạc vào khu
+  // khách hàng — đưa về đúng khu theo vai trò. Khách vãng lai (chưa đăng nhập)
+  // vẫn được xem bình thường.
+  if (isAuthenticated && !isCustomer) {
+    return <Navigate to={getHomePath()} replace />;
+  }
+  const navItems = (isAuthenticated ? CUSTOMER_NAV_ITEMS : GUEST_NAV_ITEMS).map((i) =>
     i.screen === "bookingManagement" && jobBadge > 0 ? { ...i, badge: jobBadge } : i,
   );
 
@@ -57,7 +65,12 @@ export function CustomerLayout() {
         </div>
 
         {!hideBottomNav && (
-          <CustomerNav current={screen} onNavigate={onNavigate} jobBadge={jobBadge} />
+          <CustomerNav
+            current={screen}
+            onNavigate={onNavigate}
+            jobBadge={jobBadge}
+            guest={!isAuthenticated}
+          />
         )}
       </div>
     </div>

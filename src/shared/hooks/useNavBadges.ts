@@ -4,11 +4,13 @@ import { notificationApi, taskerApi, bookingApi } from "@/services/api";
 export type NavRole = "customer" | "provider";
 
 /** True when the current user has at least one unread notification. */
-export function useHasUnreadNotifications(role: NavRole): boolean {
-  const { data } = useApi(() =>
-    role === "provider"
-      ? notificationApi.getTaskerNotifications(1, 20)
-      : notificationApi.getMyNotifications(1, 20),
+export function useHasUnreadNotifications(role: NavRole, enabled = true): boolean {
+  const { data } = useApi(
+    () =>
+      role === "provider"
+        ? notificationApi.getTaskerNotifications(1, 20)
+        : notificationApi.getMyNotifications(1, 20),
+    { immediate: enabled },
   );
   return Boolean(data?.items.some((n) => !n.isRead));
 }
@@ -25,16 +27,16 @@ export interface NavBadges {
  * the count of ongoing orders (jobs for a tasker, bookings for a customer).
  * Fetched once in the persistent layout so both nav bars share it.
  */
-export function useNavBadges(role: NavRole): NavBadges {
+export function useNavBadges(role: NavRole, enabled = true): NavBadges {
   const isProvider = role === "provider";
-  const notifDot = useHasUnreadNotifications(role);
+  const notifDot = useHasUnreadNotifications(role, enabled);
 
   const { data: jobs = [] } = useApi(() => taskerApi.getTaskerJobs(), {
-    immediate: isProvider,
+    immediate: enabled && isProvider,
     initialData: [],
   });
   const { data: bookings = [] } = useApi(() => bookingApi.getMyBookings(), {
-    immediate: !isProvider,
+    immediate: enabled && !isProvider,
     initialData: [],
   });
 

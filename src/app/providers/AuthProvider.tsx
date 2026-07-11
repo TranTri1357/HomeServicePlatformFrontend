@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
-import { authApi, getAccessToken } from "@/services/api";
+import { authApi, getAccessToken, clearTokens } from "@/services/api";
 import {
   getAllFrontendRoles,
   getHomePathByRole,
@@ -74,7 +74,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUserState | null>(() => {
     const token = getAccessToken();
     if (!token) return null;
-    return readStoredUser();
+
+    const stored = readStoredUser();
+    // Có token nhưng thiếu/hỏng thông tin user -> trạng thái "mồ côi" gây rối
+    // (app tưởng guest nhưng vẫn gắn token khi gọi API). Dọn sạch token để về
+    // đúng trạng thái khách vãng lai.
+    if (!stored) {
+      clearTokens();
+      return null;
+    }
+    return stored;
   });
 
   const roles = useMemo(() => (user ? getAllFrontendRoles(user.roles) : []), [user]);
@@ -97,9 +106,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Best-effort backend revoke; reads the refresh token before it clears tokens.
     void authApi.logout();
     clearStoredUser();
+    clearTokens();
     setUser(null);
-    if (typeof window !== "undefined" && !window.location.pathname.startsWith("/auth")) {
-      window.location.href = "/auth";
+    // Đăng xuất -> về trang duyệt công khai (khách vãng lai), không ép vào /auth.
+    if (typeof window !== "undefined") {
+      window.location.href = "/customer/home";
     }
   }, []);
 

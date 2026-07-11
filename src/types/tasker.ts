@@ -44,11 +44,40 @@ export interface TaskerDashboard {
   isAvailable: boolean;
   ratingAvg: number;
   totalReviews: number;
+  /** Thực nhận hôm nay (sau hoa hồng). */
   todayEarnings: number;
   todayJobsCount: number;
+  /** Thực nhận tháng này (sau hoa hồng). */
   monthEarnings: number;
-  /** 7 days, oldest → newest. */
+  /** Doanh thu gộp tháng này (trước hoa hồng). */
+  monthGrossEarnings: number;
+  /** Tổng hoa hồng đã trừ trong tháng. */
+  monthCommission: number;
+  /** 7 days, oldest → newest (thực nhận). */
   weeklyRevenue: DailyRevenue[];
+}
+
+/** Một lần ghi có thu nhập ứng với một đơn hoàn thành. */
+export interface IncomeEntry {
+  transactionId: number;
+  bookingId: number;
+  serviceSummary: string;
+  /** Giá gộp (trước hoa hồng). */
+  gross: number;
+  /** Hoa hồng đã trừ. */
+  commission: number;
+  /** Thực nhận (ghi có ví). */
+  net: number;
+  balanceAfter: number;
+  createdAt: string;
+}
+
+/** Ví/thu nhập của thợ — GET /api/tasker/wallet. */
+export interface TaskerIncome {
+  balance: number;
+  totalEarned: number;
+  totalCount: number;
+  entries: IncomeEntry[];
 }
 
 /** A service a tasker offers, for the customer booking flow — GET /api/Taskers/{id}/services. */

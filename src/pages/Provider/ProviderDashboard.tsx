@@ -51,9 +51,13 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
   const maxRevenue = Math.max(1, ...weekly.map((d) => d.amount));
   const weeklyTotal = weekly.reduce((sum, d) => sum + d.amount, 0);
 
+  const monthGross = dashboard?.monthGrossEarnings ?? 0;
+  const monthCommission = dashboard?.monthCommission ?? 0;
+  const monthNet = dashboard?.monthEarnings ?? 0;
+
   const stats = [
     {
-      label: "Thu nhập hôm nay",
+      label: "Thực nhận hôm nay",
       value: `${formatVnd(dashboard?.todayEarnings ?? 0)}đ`,
       icon: DollarSign,
       color: "text-green-600",
@@ -74,8 +78,8 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
       bg: "bg-amber-100",
     },
     {
-      label: "Tháng này",
-      value: `${formatVnd(dashboard?.monthEarnings ?? 0)}đ`,
+      label: "Thực nhận tháng này",
+      value: `${formatVnd(monthNet)}đ`,
       icon: TrendingUp,
       color: "text-purple-600",
       bg: "bg-purple-100",
@@ -153,6 +157,33 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
               <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
             </div>
           ))}
+        </div>
+
+        {/* Month earnings breakdown (sau khi trừ hoa hồng) */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-foreground">Thu nhập tháng này</h3>
+            <button
+              onClick={() => onNavigate("providerIncome")}
+              className="text-blue-600 text-xs font-semibold"
+            >
+              Xem chi tiết
+            </button>
+          </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Doanh thu gộp</span>
+              <span className="font-semibold text-foreground">{formatVnd(monthGross)}đ</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Hoa hồng nền tảng</span>
+              <span className="font-semibold text-red-500">−{formatVnd(monthCommission)}đ</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-border pt-2 mt-1">
+              <span className="font-semibold text-foreground">Thực nhận</span>
+              <span className="text-lg font-extrabold text-green-600">{formatVnd(monthNet)}đ</span>
+            </div>
+          </div>
         </div>
 
         {/* Today's Jobs */}

@@ -24,6 +24,7 @@ export type Screen =
   | "providerProfile"
   | "providerNotifications"
   | "providerJobManagement"
+  | "providerIncome"
   | "technicianDetail"
   | "providerServiceManagement"
   | "providerAreaRouting"

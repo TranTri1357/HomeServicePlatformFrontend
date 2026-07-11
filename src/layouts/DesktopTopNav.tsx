@@ -1,4 +1,4 @@
-import { Bell, Wrench, User, ChevronDown, LogOut } from "lucide-react";
+import { Bell, Wrench, User, ChevronDown, LogOut, LogIn } from "lucide-react";
 import type { Screen, NavItem } from "@/shared/types";
 import { Avatar } from "@/shared/ui";
 import { useAuth } from "@/app/providers"; // Import Auth Context
@@ -17,11 +17,12 @@ export function DesktopTopNav({
   onNavigate,
   notifDot = false,
 }: DesktopTopNavProps) {
-  const { user, logout, hasRole } = useAuth();
+  const { user, logout, hasRole, isAuthenticated } = useAuth();
 
   // Tự động nhận diện Role để đổi giao diện
+  const guest = !isAuthenticated;
   const isProviderScreen = hasRole("provider");
-  const isCustomer = hasRole("customer");
+  const isCustomer = hasRole("customer") || guest; // khách vãng lai dùng giao diện khách
 
   return (
     <nav
@@ -51,7 +52,7 @@ export function DesktopTopNav({
         }`}
       >
         {isCustomer ? <User className="w-3 h-3" /> : <Wrench className="w-3 h-3" />}
-        {isCustomer ? "Khách hàng" : "Thợ kỹ thuật"}
+        {guest ? "Khách" : isCustomer ? "Khách hàng" : "Thợ kỹ thuật"}
       </div>
 
       {/* Nav links */}
@@ -89,6 +90,16 @@ export function DesktopTopNav({
 
       {/* Right section */}
       <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+        {guest ? (
+          <button
+            onClick={() => onNavigate("auth")}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm font-bold"
+          >
+            <LogIn className="w-4 h-4" />
+            Đăng nhập
+          </button>
+        ) : (
+          <>
         {/* Bell */}
         <button
           onClick={() => onNavigate(isCustomer ? "notifications" : "providerNotifications")}
@@ -139,6 +150,8 @@ export function DesktopTopNav({
         >
           <LogOut className="w-4 h-4" />
         </button>
+          </>
+        )}
       </div>
     </nav>
   );
