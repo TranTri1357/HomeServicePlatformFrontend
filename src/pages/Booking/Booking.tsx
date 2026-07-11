@@ -1,15 +1,35 @@
-import { useMemo, useState } from "react";
-import { Wrench, Star, AlertCircle, Check, MapPin } from "lucide-react";
-import type { Screen, CustomerAddress, CreateBookingInput } from "@/shared/types";
-import { serviceApi, addressApi } from "@/services/api";
+import { useEffect, useMemo, useState } from "react";
+import { Wrench, Star, AlertCircle, Check, MapPin, Loader2, Plus } from "lucide-react";
+import type {
+  Screen,
+  CustomerAddress,
+  CreateBookingInput,
+  BookingItemInput,
+  TaskerServiceOption,
+  AvailabilitySlot,
+} from "@/shared/types";
+import { serviceApi, addressApi, taskerApi, bookingApi } from "@/services/api";
+import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { useAuth } from "@/app/providers";
 import { TopBar, Avatar } from "@/shared/ui";
-import { formatVnd } from "@/shared/lib";
+import { formatVnd, notify, getErrorMessage } from "@/shared/lib";
 
 const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
-const TIME_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
+// Fallback slots used only when no specific tasker is chosen (system auto-assigns).
+const DEFAULT_TIME_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
 const PHONE_REGEX = /^(03|05|07|08|09)\d{8}$/;
+
+/** Local date → "yyyy-MM-dd" (VN date, no timezone shift) for the availability API. */
+function toDateParam(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** "HH:mm:ss" | "HH:mm" → "HH:mm". */
+const hhmm = (t: string) => t.slice(0, 5);
 
 export function Booking({
   onNavigate,
@@ -19,6 +39,7 @@ export function Booking({
   data?: { serviceId?: number };
 }) {
   const serviceId = data?.serviceId;
+  const goBack = useGoBack("customerHome");
   const { user } = useAuth();
 
   const {
@@ -49,9 +70,19 @@ export function Booking({
   const [address, setAddress] = useState("");
   const [note, setNote] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Saved addresses — GET /api/customer/addresses. `savedAddr` keeps the picked
-  // one so we can forward its ward/district codes + coordinates on submit.
+  // Services offered by the chosen tasker (extra services can be added to the order).
+  const [serviceOptions, setServiceOptions] = useState<TaskerServiceOption[]>([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
+  const [loadingOptions, setLoadingOptions] = useState(false);
+
+  // The chosen tasker's free/busy hours for the selected date.
+  const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
+  const [hasSchedule, setHasSchedule] = useState(true);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
+  // Saved addresses — GET /api/customer/addresses.
   const { data: savedAddresses = [] } = useApi(() => addressApi.getMyAddresses(), {
     initialData: [],
   });
@@ -61,6 +92,55 @@ export function Booking({
     setSavedAddr(addr);
     setAddress(addr.addressLine);
   };
+
+  // ── Load the tasker's service options when a specific tasker is picked ───────
+  useEffect(() => {
+    if (taskerId == null) {
+      setServiceOptions([]);
+      setSelectedServiceIds([]);
+      return;
+    }
+    let alive = true;
+    setLoadingOptions(true);
+    taskerApi
+      .getTaskerServiceOptions(taskerId)
+      .then((opts) => {
+        if (!alive) return;
+        setServiceOptions(opts);
+        // Pre-select the primary service the customer arrived with (if the tasker offers it).
+        setSelectedServiceIds(
+          opts.some((o) => o.serviceId === serviceId) && serviceId != null ? [serviceId] : [],
+        );
+      })
+      .catch((err) => alive && notify.error(getErrorMessage(err)))
+      .finally(() => alive && setLoadingOptions(false));
+    return () => {
+      alive = false;
+    };
+  }, [taskerId, serviceId]);
+
+  // ── Load the tasker's availability whenever tasker or date changes ───────────
+  useEffect(() => {
+    if (taskerId == null) {
+      setSlots([]);
+      setHasSchedule(true);
+      return;
+    }
+    let alive = true;
+    setLoadingSlots(true);
+    taskerApi
+      .getTaskerAvailability(taskerId, toDateParam(dateOptions[dateIdx]))
+      .then((av) => {
+        if (!alive) return;
+        setHasSchedule(av.hasSchedule);
+        setSlots(av.slots);
+      })
+      .catch((err) => alive && notify.error(getErrorMessage(err)))
+      .finally(() => alive && setLoadingSlots(false));
+    return () => {
+      alive = false;
+    };
+  }, [taskerId, dateIdx, dateOptions]);
 
   // ── Guards ────────────────────────────────────────────────────────────────
   if (!serviceId) {
@@ -81,7 +161,7 @@ export function Booking({
   if (loading && !detail) {
     return (
       <div className="flex flex-col h-full">
-        <TopBar title="Đặt lịch dịch vụ" onBack={() => onNavigate("serviceDetail", { serviceId })} />
+        <TopBar title="Đặt lịch dịch vụ" onBack={goBack} />
         <div className="p-4 space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-24 bg-slate-200 rounded-2xl animate-pulse" />
@@ -107,39 +187,100 @@ export function Booking({
   }
 
   const taskers = detail.suggestedTaskers ?? [];
-  const selectedTasker = taskers.find((t) => t.taskerId === taskerId);
-  const unitPrice =
-    selectedTasker && selectedTasker.currentPrice > 0
-      ? selectedTasker.currentPrice
-      : detail.startingPrice;
+  const hasTasker = taskerId != null;
 
-  const buildStartAt = () => {
-    const d = new Date(dateOptions[dateIdx]);
-    const [h, m] = time.split(":").map(Number);
-    d.setHours(h, m, 0, 0);
-    return d;
+  // Services actually going on the order, ordered so the primary one comes first.
+  const chosenServices: TaskerServiceOption[] = hasTasker
+    ? serviceOptions.filter((o) => selectedServiceIds.includes(o.serviceId))
+    : [];
+  const orderedServices = [
+    ...chosenServices.filter((s) => s.serviceId === serviceId),
+    ...chosenServices.filter((s) => s.serviceId !== serviceId),
+  ];
+
+  // Estimated total: sum of chosen services when a tasker is picked, else the
+  // service's starting price (system will assign a tasker & confirm final price).
+  const estimatedTotal = hasTasker
+    ? orderedServices.reduce((sum, s) => sum + s.price, 0)
+    : detail.startingPrice;
+
+  const toggleService = (sid: number) => {
+    if (sid === serviceId) return; // primary service stays selected
+    setSelectedServiceIds((prev) =>
+      prev.includes(sid) ? prev.filter((x) => x !== sid) : [...prev, sid],
+    );
   };
 
-  // Validate the form and forward a booking *draft* to the payment screen.
-  // The order itself is created there, only when the customer confirms payment.
-  const handleSubmit = () => {
+  // Time slots to render: from the tasker's availability, else the static fallback.
+  const timeChoices = hasTasker
+    ? slots.map((s) => ({ label: hhmm(s.time), value: hhmm(s.time), free: s.isFree }))
+    : DEFAULT_TIME_SLOTS.map((t) => ({ label: t, value: t, free: true }));
+
+  /** Build the (possibly multi-service) booking items, chained sequentially so a
+   *  single tasker never has two overlapping items. */
+  const buildBookingItems = (): BookingItemInput[] => {
+    const base = new Date(dateOptions[dateIdx]);
+    const [h, m] = time.split(":").map(Number);
+    base.setHours(h, m, 0, 0);
+    let cursor = base.getTime();
+
+    if (!hasTasker) {
+      const endAt = cursor + (detail.durationMinutes || 60) * 60_000;
+      return [
+        {
+          serviceId: detail.serviceId,
+          taskerId: null,
+          startAt: new Date(cursor).toISOString(),
+          endAt: new Date(endAt).toISOString(),
+          unitPrice: detail.startingPrice,
+          quantity: 1,
+        },
+      ];
+    }
+
+    return orderedServices.map((s) => {
+      const startAt = cursor;
+      const endAt = cursor + (s.durationMinutes || 60) * 60_000;
+      cursor = endAt;
+      return {
+        serviceId: s.serviceId,
+        taskerId,
+        startAt: new Date(startAt).toISOString(),
+        endAt: new Date(endAt).toISOString(),
+        unitPrice: s.price,
+        quantity: 1,
+      };
+    });
+  };
+
+  // Create the order (Pending "hold") NOW, then go to payment to check out.
+  const handleSubmit = async () => {
     setFormError(null);
 
+    if (!hasTasker) return setFormError("Vui lòng chọn thợ trước khi đặt lịch.");
+    if (orderedServices.length === 0)
+      return setFormError("Vui lòng chọn ít nhất một dịch vụ của thợ.");
     if (!fullName.trim()) return setFormError("Vui lòng nhập tên người nhận.");
     if (!PHONE_REGEX.test(phone.trim()))
       return setFormError("Số điện thoại không đúng định dạng di động Việt Nam (10 số).");
     if (!address.trim()) return setFormError("Vui lòng nhập địa chỉ chi tiết.");
 
-    const startAt = buildStartAt();
-    if (startAt.getTime() <= Date.now())
+    const base = new Date(dateOptions[dateIdx]);
+    const [h, m] = time.split(":").map(Number);
+    base.setHours(h, m, 0, 0);
+    if (base.getTime() <= Date.now())
       return setFormError("Vui lòng chọn thời gian hẹn trong tương lai.");
-    const endAt = new Date(startAt.getTime() + (detail.durationMinutes || 60) * 60_000);
 
-    // Attach ward/district codes + coordinates only when the field still holds
-    // the picked saved address (user hasn't retyped it).
+    // Guard: the chosen slot must be free (when booking a specific tasker).
+    if (hasTasker) {
+      const slot = timeChoices.find((t) => t.value === time);
+      if (!slot || !slot.free)
+        return setFormError("Khung giờ này thợ đã bận. Vui lòng chọn khung giờ khác.");
+    }
+
     const useSaved = savedAddr && savedAddr.addressLine === address.trim();
 
-    const draft: CreateBookingInput = {
+    const input: CreateBookingInput = {
       fullName: fullName.trim(),
       phone: phone.trim(),
       addressLine: address.trim(),
@@ -149,26 +290,28 @@ export function Booking({
       latitude: useSaved ? savedAddr!.latitude : undefined,
       longitude: useSaved ? savedAddr!.longitude : undefined,
       note: note.trim() || undefined,
-      bookingItems: [
-        {
-          serviceId: detail.serviceId,
-          taskerId: taskerId ?? null,
-          startAt: startAt.toISOString(),
-          endAt: endAt.toISOString(),
-          unitPrice,
-          quantity: 1,
-        },
-      ],
+      bookingItems: buildBookingItems(),
     };
 
-    // Estimated total (discount is applied server-side; 0 here).
-    const estimatedAmount = unitPrice;
-    onNavigate("payment", { draft, estimatedAmount });
+    setSubmitting(true);
+    try {
+      const created = await bookingApi.createBooking(input);
+      notify.success("Đã giữ chỗ! Vui lòng thanh toán để xác nhận đơn.");
+      onNavigate("payment", {
+        bookingId: created.bookingId,
+        finalAmount: created.finalAmount,
+      });
+    } catch (err) {
+      // Backend returns a friendly 400 when the slot was just taken (overlap).
+      setFormError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar title="Đặt lịch dịch vụ" onBack={() => onNavigate("serviceDetail", { serviceId })} />
+      <TopBar title="Đặt lịch dịch vụ" onBack={goBack} />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Selected service */}
@@ -197,24 +340,16 @@ export function Booking({
 
         {/* Tasker selection */}
         <div className="bg-white rounded-2xl p-4">
-          <h3 className="font-bold text-foreground mb-3">Chọn thợ</h3>
+          <h3 className="font-bold text-foreground mb-1">Chọn thợ</h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            Vui lòng chọn thợ để tiếp tục chọn ngày và giờ làm.
+          </p>
           <div className="space-y-2">
-            <button
-              onClick={() => setTaskerId(undefined)}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${
-                taskerId === undefined ? "border-blue-600 bg-accent" : "border-transparent bg-muted"
-              }`}
-            >
-              <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                <Wrench className="w-5 h-5 text-blue-600" />
-              </div>
-              <div className="flex-1 text-left">
-                <p className="font-semibold text-sm text-foreground">Để hệ thống chọn thợ</p>
-                <p className="text-xs text-muted-foreground">Tự động tìm thợ phù hợp nhất</p>
-              </div>
-              {taskerId === undefined && <Check className="w-4 h-4 text-blue-600" />}
-            </button>
-
+            {taskers.length === 0 && (
+              <p className="text-sm text-muted-foreground py-2">
+                Hiện chưa có thợ nào nhận dịch vụ này. Vui lòng chọn dịch vụ khác.
+              </p>
+            )}
             {taskers.map((t) => (
               <button
                 key={t.taskerId}
@@ -249,7 +384,76 @@ export function Booking({
           </div>
         </div>
 
+        {/* Extra services of the chosen tasker */}
+        {hasTasker && (
+          <div className="bg-white rounded-2xl p-4">
+            <h3 className="font-bold text-foreground mb-1">Dịch vụ của thợ</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Chọn thêm dịch vụ khác của thợ này (làm lần lượt sau dịch vụ chính).
+            </p>
+            {loadingOptions ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                <Loader2 className="w-4 h-4 animate-spin" /> Đang tải dịch vụ...
+              </div>
+            ) : serviceOptions.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-2">Thợ chưa cấu hình dịch vụ nào.</p>
+            ) : (
+              <div className="space-y-2">
+                {serviceOptions.map((o) => {
+                  const active = selectedServiceIds.includes(o.serviceId);
+                  const isPrimary = o.serviceId === serviceId;
+                  return (
+                    <button
+                      key={o.serviceId}
+                      onClick={() => toggleService(o.serviceId)}
+                      disabled={isPrimary}
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-colors ${
+                        active ? "border-blue-600 bg-accent" : "border-transparent bg-muted"
+                      } ${isPrimary ? "opacity-90" : ""}`}
+                    >
+                      <div
+                        className={`w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${
+                          active ? "bg-blue-600 border-blue-600" : "border-slate-300"
+                        }`}
+                      >
+                        {active ? (
+                          <Check className="w-4 h-4 text-white" />
+                        ) : (
+                          <Plus className="w-4 h-4 text-slate-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-foreground truncate">
+                          {o.serviceName}
+                          {isPrimary && (
+                            <span className="ml-1.5 text-[10px] text-blue-600 font-bold">
+                              (dịch vụ chính)
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {o.categoryName} · ~{o.durationMinutes} phút
+                        </p>
+                      </div>
+                      <span className="font-bold text-sm text-blue-600 flex-shrink-0">
+                        {formatVnd(o.price)}đ
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {!hasTasker && (
+          <div className="bg-white rounded-2xl p-4 text-center text-sm text-muted-foreground">
+            Chọn thợ ở trên để hiện lịch trống và khung giờ làm.
+          </div>
+        )}
+
         {/* Date */}
+        {hasTasker && (
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Chọn ngày</h3>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -274,22 +478,45 @@ export function Booking({
             ))}
           </div>
         </div>
+        )}
 
         {/* Time */}
+        {hasTasker && (
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Chọn giờ</h3>
-          <div className="grid grid-cols-4 gap-2">
-            {TIME_SLOTS.map((t) => (
-              <button
-                key={t}
-                onClick={() => setTime(t)}
-                className={`py-2.5 rounded-xl text-sm font-semibold transition-colors ${time === t ? "bg-blue-600 text-white" : "bg-muted text-foreground hover:bg-accent"}`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+          {hasTasker && loadingSlots ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Đang tải khung giờ...
+            </div>
+          ) : hasTasker && !hasSchedule ? (
+            <p className="text-sm text-amber-600 py-2">Thợ không làm việc vào ngày này. Chọn ngày khác.</p>
+          ) : hasTasker && timeChoices.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-2">Không có khung giờ trống trong ngày này.</p>
+          ) : (
+            <div className="grid grid-cols-4 gap-2">
+              {timeChoices.map((t) => {
+                const active = time === t.value;
+                return (
+                  <button
+                    key={t.value}
+                    onClick={() => t.free && setTime(t.value)}
+                    disabled={!t.free}
+                    className={`py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                      active
+                        ? "bg-blue-600 text-white"
+                        : t.free
+                          ? "bg-muted text-foreground hover:bg-accent"
+                          : "bg-slate-100 text-slate-300 line-through cursor-not-allowed"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
+        )}
 
         {/* Contact & address (required by backend) */}
         <div className="bg-white rounded-2xl p-4 space-y-3">
@@ -364,21 +591,30 @@ export function Booking({
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Tóm tắt chi phí</h3>
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Đơn giá dịch vụ</span>
-              <span className="font-semibold text-foreground">{formatVnd(unitPrice)}đ</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Số lượng</span>
-              <span className="font-semibold text-foreground">1</span>
-            </div>
+            {hasTasker && orderedServices.length > 0 ? (
+              orderedServices.map((s) => (
+                <div key={s.serviceId} className="flex justify-between text-sm">
+                  <span className="text-muted-foreground truncate mr-2">{s.serviceName}</span>
+                  <span className="font-semibold text-foreground flex-shrink-0">
+                    {formatVnd(s.price)}đ
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Đơn giá dịch vụ</span>
+                <span className="font-semibold text-foreground">{formatVnd(estimatedTotal)}đ</span>
+              </div>
+            )}
             <div className="h-px bg-border my-1" />
             <div className="flex justify-between">
               <span className="font-bold text-foreground">Tạm tính</span>
-              <span className="font-extrabold text-blue-600 text-lg">{formatVnd(unitPrice)}đ</span>
+              <span className="font-extrabold text-blue-600 text-lg">
+                {formatVnd(estimatedTotal)}đ
+              </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Tổng cuối cùng sẽ được xác nhận sau khi hệ thống xử lý đơn.
+              Đơn sẽ được giữ chỗ 15 phút; vui lòng thanh toán để xác nhận với thợ.
             </p>
           </div>
         </div>
@@ -392,9 +628,11 @@ export function Booking({
         )}
         <button
           onClick={handleSubmit}
-          className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-base hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 active:scale-[0.98] flex items-center justify-center gap-2"
+          disabled={submitting}
+          className="w-full py-4 bg-blue-600 disabled:opacity-70 text-white rounded-xl font-bold text-base hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 active:scale-[0.98] flex items-center justify-center gap-2"
         >
-          Tiếp tục thanh toán →
+          {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
+          {submitting ? "Đang giữ chỗ..." : "Đặt lịch · Tiếp tục thanh toán →"}
         </button>
       </div>
     </div>

@@ -81,8 +81,7 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
     { label: "Lịch sử đặt lịch", icon: BookOpen, onClick: () => onNavigate("bookingManagement") },
     { label: "Địa chỉ đã lưu", icon: MapPin, onClick: () => onNavigate("customerAddresses") },
     { label: "Thông báo", icon: Bell, onClick: () => onNavigate("notifications") },
-    { label: "Bảo mật", icon: Shield, onClick: () => {} },
-    { label: "Hỗ trợ khách hàng", icon: MessageCircle, onClick: () => {} },
+    
   ];
 
   return (
@@ -92,9 +91,7 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
         <div className="bg-gradient-to-br from-blue-600 to-blue-800 px-4 pt-6 pb-12">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white text-xl font-bold">Hồ sơ của tôi</h2>
-            <button className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
-              <Settings className="w-4 h-4 text-white" />
-            </button>
+
           </div>
           <div className="flex items-center gap-4">
             <div className="relative">

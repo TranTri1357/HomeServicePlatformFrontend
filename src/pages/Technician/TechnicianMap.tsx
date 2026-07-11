@@ -6,6 +6,7 @@ import { taskerApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
 import { Avatar, TopBar } from "@/shared/ui";
 import { formatVnd, getApiAssetUrl } from "@/shared/lib";
+import { useGoBack } from "@/app/routes/useGoBack";
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
 const DEFAULT_CENTER = { lat: 10.7769, lng: 106.7009 }; // TP.HCM
@@ -97,6 +98,7 @@ export function TechnicianMap({
   data?: { serviceId?: number };
 }) {
   const serviceId = data?.serviceId;
+  const goBack = useGoBack("customerHome");
   const [center, setCenter] = useState<LatLng>(DEFAULT_CENTER);
   const [locReady, setLocReady] = useState(false);
   const [selectedTaskerId, setSelectedTaskerId] = useState<number | null>(null);
@@ -157,7 +159,7 @@ export function TechnicianMap({
   if (!serviceId) {
     return (
       <div className="flex flex-col h-full">
-        <TopBar title="Tìm thợ gần bạn" onBack={() => onNavigate("customerHome")} />
+        <TopBar title="Tìm thợ gần bạn" onBack={goBack} />
         <div className="flex-1 relative">
           <CenterMessage
             icon={<MapPin className="w-10 h-10 text-blue-400" />}
@@ -176,7 +178,7 @@ export function TechnicianMap({
 
   return (
     <div className="flex flex-col h-full relative">
-      <TopBar title="Tìm thợ gần bạn" onBack={() => onNavigate("serviceDetail", { serviceId })} />
+      <TopBar title="Tìm thợ gần bạn" onBack={goBack} />
 
       {/* Map */}
       <div className="flex-1 relative overflow-hidden bg-blue-50">

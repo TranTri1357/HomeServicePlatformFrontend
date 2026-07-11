@@ -1,6 +1,7 @@
 import { Bell, AlertCircle } from "lucide-react";
 import type { Screen, AppNotification } from "@/shared/types";
 import { notificationApi } from "@/services/api";
+import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { formatDateVn, notify } from "@/shared/lib";
@@ -42,6 +43,7 @@ export function Notifications({
     ? notificationApi.markTaskerNotificationRead
     : notificationApi.markNotificationRead;
   const backTarget: Screen = isProvider ? "providerDashboard" : "customerHome";
+  const goBack = useGoBack(backTarget);
 
   // Backend giới hạn pageSize tối đa 20 mỗi lần tải.
   const { data: paged, loading, error, refetch } = useApi(() => fetchList(1, 20));
@@ -75,7 +77,7 @@ export function Notifications({
     <div className="flex flex-col h-full">
       <TopBar
         title="Thông báo"
-        onBack={() => onNavigate(backTarget)}
+        onBack={goBack}
         actions={
           hasUnread ? (
             <button onClick={markAll} className="text-blue-600 text-xs font-semibold">

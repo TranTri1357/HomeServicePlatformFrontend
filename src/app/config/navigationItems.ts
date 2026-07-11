@@ -3,7 +3,6 @@
   Briefcase,
   Package,
   Route,
-  MessageCircle,
   Home,
   Search,
   Calendar,
@@ -21,10 +20,9 @@ export const CUSTOMER_NAV_ITEMS: NavItem[] = [
 
 export const PROVIDER_NAV_ITEMS: NavItem[] = [
   { screen: "providerDashboard", icon: BarChart2, label: "Dashboard" },
-  { screen: "providerJobManagement", icon: Briefcase, label: "Công việc", badge: 3 },
+  { screen: "providerJobManagement", icon: Briefcase, label: "Công việc" },
   { screen: "providerServiceManagement", icon: Package, label: "Dịch vụ" },
   { screen: "providerAreaRouting", icon: Route, label: "Khu vực" },
   { screen: "providerSchedule", icon: Calendar, label: "Lịch" },
-  { screen: "providerChat", icon: MessageCircle, label: "Chat" },
   { screen: "providerProfile", icon: User, label: "Hồ sơ" },
 ];

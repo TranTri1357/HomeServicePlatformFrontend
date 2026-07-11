@@ -11,12 +11,14 @@ import {
   LocateFixed,
 } from "lucide-react";
 import type { Screen, CustomerAddress, AddressInput } from "@/shared/types";
+import { useGoBack } from "@/app/routes/useGoBack";
 import { addressApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { notify, getErrorMessage } from "@/shared/lib";
 
 export function CustomerAddresses({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  const goBack = useGoBack("customerProfile");
   const { data: addresses = [], loading, error, refetch } = useApi(() => addressApi.getMyAddresses());
 
   // Add / edit modal.
@@ -150,7 +152,7 @@ export function CustomerAddresses({ onNavigate }: { onNavigate: (s: Screen) => v
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar title="Địa chỉ đã lưu" onBack={() => onNavigate("customerProfile")} />
+      <TopBar title="Địa chỉ đã lưu" onBack={goBack} />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {loading && addresses.length === 0 ? (

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { Screen, WeeklyScheduleInput } from "@/shared/types";
 import { scheduleApi } from "@/services/api";
+import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { notify, getErrorMessage } from "@/shared/lib";
@@ -54,6 +55,7 @@ const SLOT_STYLE: Record<number, { cls: string; label?: string }> = {
 };
 
 export function ProviderSchedule({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  const goBack = useGoBack("providerDashboard");
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const isoDate = toISODate(selectedDate);
 
@@ -127,7 +129,7 @@ export function ProviderSchedule({ onNavigate }: { onNavigate: (s: Screen) => vo
     <div className="flex flex-col h-full">
       <TopBar
         title="Lịch làm việc"
-        onBack={() => onNavigate("providerDashboard")}
+        onBack={goBack}
         actions={
           <button
             onClick={() => setShowSetup(true)}

@@ -13,11 +13,13 @@ import {
 } from "lucide-react";
 import type { Screen, TaskerService } from "@/shared/types";
 import { taskerServiceApi, serviceApi } from "@/services/api";
+import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { formatVnd, notify, getErrorMessage } from "@/shared/lib";
 
 export function ProviderServiceManagement({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  const goBack = useGoBack("providerDashboard");
   const [search, setSearch] = useState("");
 
   const { data: services = [], loading, error, refetch } = useApi(() =>
@@ -122,7 +124,7 @@ export function ProviderServiceManagement({ onNavigate }: { onNavigate: (s: Scre
     <div className="flex flex-col h-full">
       <TopBar
         title="Dịch vụ & giá"
-        onBack={() => onNavigate("providerDashboard")}
+        onBack={goBack}
         actions={
           <button
             onClick={openAdd}
@@ -196,7 +198,9 @@ export function ProviderServiceManagement({ onNavigate }: { onNavigate: (s: Scre
           </div>
         ) : (
           filtered.map((svc) => (
-            <div key={svc.taskerServiceId} className="bg-white rounded-2xl p-3 shadow-sm">
+            // Key by serviceId: the backend returns TaskerServiceId = taskerId (same
+            // for every row), so serviceId is the real unique id per registered service.
+            <div key={svc.serviceId} className="bg-white rounded-2xl p-3 shadow-sm">
               <div className="flex gap-3">
                 <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
                   <Wrench className="w-6 h-6 text-blue-600" />

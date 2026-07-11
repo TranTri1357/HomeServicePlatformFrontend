@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Bell, DollarSign, Briefcase, Star, TrendingUp, Timer, Calendar } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { taskerApi } from "@/services/api";
-import { useApi } from "@/shared/hooks";
+import { useApi, useHasUnreadNotifications } from "@/shared/hooks";
 import { useAuth } from "@/app/providers";
 import { Avatar } from "@/shared/ui";
 import { formatVnd, notify } from "@/shared/lib";
@@ -20,6 +20,7 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
 
   const { data: dashboard, loading } = useApi(() => taskerApi.getTaskerDashboard());
   const { data: jobs = [] } = useApi(() => taskerApi.getTaskerJobs(), { initialData: [] });
+  const hasUnread = useHasUnreadNotifications("provider");
 
   const [online, setOnline] = useState(true);
   const [togglingOnline, setTogglingOnline] = useState(false);
@@ -102,10 +103,13 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
               className="relative w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center"
             >
               <Bell className="w-5 h-5 text-white" />
+              {hasUnread && (
+                <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-slate-800" />
+              )}
             </button>
             <button
               onClick={() => onNavigate("providerProfile")}
-              className="w-10 h-10 rounded-xl overflow-hidden border-2 border-white/30"
+              className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-white/40 ring-offset-2 ring-offset-slate-900"
             >
               <Avatar size={40} name={name} />
             </button>

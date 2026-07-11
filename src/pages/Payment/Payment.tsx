@@ -9,8 +9,9 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import type { Screen, PaymentMethodCode, CreateBookingInput } from "@/shared/types";
-import { paymentApi, bookingApi } from "@/services/api";
+import type { Screen, PaymentMethodCode } from "@/shared/types";
+import { paymentApi } from "@/services/api";
+import { useGoBack } from "@/app/routes/useGoBack";
 import { TopBar } from "@/shared/ui";
 import { formatVnd, notify, getErrorMessage } from "@/shared/lib";
 
@@ -39,39 +40,27 @@ export function Payment({
 }: {
   onNavigate: (s: Screen, d?: object) => void;
   data?: {
-    // New booking flow: a draft to create then pay.
-    draft?: CreateBookingInput;
-    estimatedAmount?: number;
-    // Re-pay flow: an order already exists (e.g. payment was cancelled earlier).
+    // The order already exists (created as a "hold" at booking time, or an
+    // earlier payment was cancelled). Payment only checks it out — never creates.
     bookingId?: number;
     finalAmount?: number;
   };
 }) {
-  const draft = data?.draft;
-  const estimatedAmount = data?.estimatedAmount ?? 0;
-  const existingBookingId = data?.bookingId;
+  const bookingId = data?.bookingId;
+  const goBack = useGoBack("bookingManagement");
 
   const [method, setMethod] = useState<PaymentMethodCode>(1);
   const [payType, setPayType] = useState<PayType>("deposit");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ isPaid: boolean; bookingId: number } | null>(null);
 
-  // Track the order being paid. In re-pay mode it already exists; in the new
-  // flow it's created on confirm, and kept so a retry doesn't duplicate it.
-  const [createdBookingId, setCreatedBookingId] = useState<number | null>(
-    existingBookingId ?? null,
-  );
-  const [createdFinalAmount, setCreatedFinalAmount] = useState<number | null>(
-    data?.finalAmount ?? null,
-  );
-
-  // ── No context (draft missing and no existing order — e.g. page refreshed) ──
-  if (!draft && existingBookingId == null) {
+  // ── No context (no order to pay — e.g. page refreshed) ──────────────────────
+  if (bookingId == null) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
         <AlertCircle className="w-10 h-10 text-red-400" />
         <p className="text-sm text-muted-foreground">
-          Không có thông tin đặt lịch để thanh toán. Vui lòng đặt lịch lại.
+          Không có đơn cần thanh toán. Vui lòng đặt lịch lại.
         </p>
         <button
           onClick={() => onNavigate("customerHome")}
@@ -83,7 +72,7 @@ export function Payment({
     );
   }
 
-  const displayTotal = createdFinalAmount ?? estimatedAmount;
+  const displayTotal = data?.finalAmount ?? 0;
   const depositAmount = Math.round(displayTotal * DEPOSIT_RATE);
   const displayPay = payType === "deposit" ? depositAmount : displayTotal;
 
@@ -97,21 +86,9 @@ export function Payment({
   const handleConfirm = async () => {
     setSubmitting(true);
     try {
-      // 1) Create the order (Pending) if not already created / not a re-pay.
-      let bookingId = createdBookingId;
-      let finalAmount = createdFinalAmount ?? estimatedAmount;
-      if (bookingId == null) {
-        if (!draft) throw new Error("Thiếu thông tin đặt lịch.");
-        const created = await bookingApi.createBooking(draft);
-        bookingId = created.bookingId;
-        finalAmount = created.finalAmount;
-        setCreatedBookingId(bookingId);
-        setCreatedFinalAmount(finalAmount);
-      }
-
-      // 2) Charge either the deposit or the full amount.
+      // Charge either the deposit or the full amount of the existing order.
       const payAmount =
-        payType === "deposit" ? Math.round(finalAmount * DEPOSIT_RATE) : finalAmount;
+        payType === "deposit" ? Math.round(displayTotal * DEPOSIT_RATE) : displayTotal;
       const res = await paymentApi.checkout({ bookingId, amount: payAmount, method });
 
       // Simulated MoMo/ZaloPay: open the in-app mock gateway screen.
@@ -187,14 +164,7 @@ export function Payment({
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar
-        title="Thanh toán"
-        onBack={() =>
-          draft
-            ? onNavigate("booking", { serviceId: draft.bookingItems[0]?.serviceId })
-            : onNavigate("bookingManagement")
-        }
-      />
+      <TopBar title="Thanh toán" onBack={goBack} />
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Amount */}
         <div className="bg-white rounded-2xl p-4">

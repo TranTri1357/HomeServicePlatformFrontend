@@ -51,6 +51,30 @@ export interface TaskerDashboard {
   weeklyRevenue: DailyRevenue[];
 }
 
+/** A service a tasker offers, for the customer booking flow — GET /api/Taskers/{id}/services. */
+export interface TaskerServiceOption {
+  serviceId: number;
+  serviceName: string;
+  categoryName: string;
+  price: number;
+  durationMinutes: number;
+}
+
+/** One hourly availability slot of a tasker in a day. `time` is "HH:mm:ss". */
+export interface AvailabilitySlot {
+  time: string;
+  isFree: boolean;
+}
+
+/** A tasker's free/busy hours in a day — GET /api/Taskers/{id}/availability?date=. */
+export interface TaskerAvailability {
+  /** ISO date "yyyy-MM-dd". */
+  date: string;
+  /** false = thợ không đặt lịch làm việc ngày này. */
+  hasSchedule: boolean;
+  slots: AvailabilitySlot[];
+}
+
 /** A service the tasker offers — GET /api/tasker-services. */
 export interface TaskerService {
   taskerServiceId: number;
@@ -105,8 +129,25 @@ export interface TaskerProfileData {
   ratingAvg: number;
   totalReviews: number;
   completedJobsCount: number;
-  /** 1 = đang nhận việc · 0 = tạm nghỉ. */
+  /** 0 = chờ duyệt · 1 = đang nhận việc · 2 = bị khóa · 3 = tạm nghỉ. */
   status: number;
+  bio: string | null;
+}
+
+/** Body for PUT /api/tasker/profile — the tasker updates their own account. */
+export interface UpdateTaskerProfileInput {
+  fullName: string;
+  phone: string;
+  bio?: string;
+  experienceYears: number;
+}
+
+/** Body for POST /api/tasker/profile — the tasker creates a profile for admin approval. */
+export interface CreateTaskerProfileInput {
+  bio: string;
+  experienceYears: number;
+  latitude: number;
+  longitude: number;
 }
 
 /** One job of a tasker — GET /api/tasker/tasker-jobs. JobStatus uses BookingStatus codes. */

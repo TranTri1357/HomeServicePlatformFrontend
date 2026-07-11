@@ -3,8 +3,10 @@ import { MapPin, X, CheckCircle, Route } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { districts, districtMapPositions } from "@/services/Provider/provider.data";
 import { TopBar } from "@/shared/ui";
+import { useGoBack } from "@/app/routes/useGoBack";
 
 export function ProviderAreaRouting({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  const goBack = useGoBack("providerDashboard");
   const [areas, setAreas] = useState(districts);
   const [radius, setRadius] = useState(8);
   const [view, setView] = useState<"list" | "map">("map");
@@ -24,7 +26,7 @@ export function ProviderAreaRouting({ onNavigate }: { onNavigate: (s: Screen) =>
     <div className="flex flex-col h-full">
       <TopBar
         title="Định tuyến khu vực"
-        onBack={() => onNavigate("providerDashboard")}
+        onBack={goBack}
         actions={
           <button
             onClick={handleSave}

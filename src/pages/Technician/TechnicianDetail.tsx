@@ -13,6 +13,7 @@ import { taskerApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
 import { Avatar } from "@/shared/ui";
 import { getApiAssetUrl, formatDateVn } from "@/shared/lib";
+import { useGoBack } from "@/app/routes/useGoBack";
 
 export function TechnicianDetail({
   onNavigate,
@@ -22,6 +23,7 @@ export function TechnicianDetail({
   data?: { taskerId?: number };
 }) {
   const taskerId = data?.taskerId;
+  const goBack = useGoBack("customerHome");
 
   const {
     data: tech,
@@ -108,7 +110,7 @@ export function TechnicianDetail({
         {/* Header */}
         <div className="relative bg-gradient-to-br from-blue-600 to-blue-800 px-4 pt-6 pb-16">
           <button
-            onClick={() => onNavigate("customerHome")}
+            onClick={goBack}
             className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center mb-4"
           >
             <ChevronLeft className="w-5 h-5 text-white" />
@@ -265,15 +267,7 @@ export function TechnicianDetail({
 
       {/* CTA */}
       <div className="bg-white border-t border-border px-4 py-4 flex gap-3">
-        <button
-          onClick={() => onNavigate("chat")}
-          className="w-12 h-12 border-2 border-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 hover:bg-accent transition-colors"
-        >
-          <MessageCircle className="w-5 h-5 text-blue-600" />
-        </button>
-        <button className="w-12 h-12 border-2 border-green-600 rounded-xl flex items-center justify-center flex-shrink-0 hover:bg-green-50 transition-colors">
-          <Phone className="w-5 h-5 text-green-600" />
-        </button>
+       
         <button
           onClick={() => onNavigate("booking", { taskerId: tech.taskerId })}
           className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"

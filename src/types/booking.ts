@@ -58,17 +58,36 @@ export interface CreateBookingResult {
  */
 export type BookingStatusCode = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-/** One row of GET /api/customer/bookings/my-orders. */
-export interface MyBooking {
-  bookingId: number;
-  /** First booking item's id — needed to submit a review. Null if no items. */
-  bookingItemId: number | null;
+/** One service line inside a booking (a booking may have several). */
+export interface MyBookingItem {
+  bookingItemId: number;
   serviceName: string;
   taskerId: number | null;
   taskerName: string | null;
   startAt: string;
   endAt: string;
-  fullAddress: string;
-  finalAmount: number;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
   status: number;
+  /** True once this item has been reviewed — hides the review button. */
+  hasReview: boolean;
+}
+
+/** One row of GET /api/customer/bookings/my-orders. */
+export interface MyBooking {
+  bookingId: number;
+  fullAddress: string;
+  subtotalAmount: number;
+  discountAmount: number | null;
+  finalAmount: number;
+  note: string | null;
+  createdAt: string;
+  status: number;
+  /** True once a successful payment exists — hides the pay button. */
+  isPaid: boolean;
+  /** True once a complaint has been filed — hides the complaint button. */
+  hasDispute: boolean;
+  /** All service line items of this booking (1..n). */
+  items: MyBookingItem[];
 }

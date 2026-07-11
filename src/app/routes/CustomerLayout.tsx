@@ -5,6 +5,7 @@ import { NO_BOTTOM_NAV_SCREENS } from "@/shared/constants";
 import { CUSTOMER_NAV_ITEMS } from "@/app/config";
 import { DesktopTopNav } from "@/layouts";
 import { CustomerNav } from "@/components/Navigation";
+import { useNavBadges } from "@/shared/hooks";
 import { getPathForScreen, getScreenForPath } from "./screenPaths";
 
 export function CustomerLayout() {
@@ -16,6 +17,12 @@ export function CustomerLayout() {
     navigate(getPathForScreen(nextScreen), { state: data });
   };
 
+  // Live nav badges: unread-notification dot + count of ongoing bookings.
+  const { notifDot, jobBadge } = useNavBadges("customer");
+  const navItems = CUSTOMER_NAV_ITEMS.map((i) =>
+    i.screen === "bookingManagement" && jobBadge > 0 ? { ...i, badge: jobBadge } : i,
+  );
+
   const hideBottomNav = (NO_BOTTOM_NAV_SCREENS as readonly string[]).includes(screen);
 
   return (
@@ -24,8 +31,9 @@ export function CustomerLayout() {
       <div className="hidden lg:flex flex-col h-full">
         <DesktopTopNav
           screen={screen}
-          currentNavItems={CUSTOMER_NAV_ITEMS}
+          currentNavItems={navItems}
           onNavigate={onNavigate}
+          notifDot={notifDot}
         />
         <div className="flex-1 overflow-hidden bg-background">
           <div className="h-full max-w-5xl mx-auto flex flex-col">
@@ -48,7 +56,9 @@ export function CustomerLayout() {
           <Outlet />
         </div>
 
-        {!hideBottomNav && <CustomerNav current={screen} onNavigate={onNavigate} />}
+        {!hideBottomNav && (
+          <CustomerNav current={screen} onNavigate={onNavigate} jobBadge={jobBadge} />
+        )}
       </div>
     </div>
   );

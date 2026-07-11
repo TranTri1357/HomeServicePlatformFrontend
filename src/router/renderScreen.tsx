@@ -1,4 +1,4 @@
-import type { Screen, CreateBookingInput } from "@/shared/types";
+import type { Screen } from "@/shared/types";
 
 import { CustomerHome } from "@/pages/Customer";
 import { CustomerProfile, ProviderProfile } from "@/pages/Profile";
@@ -53,8 +53,6 @@ export function renderScreen(
           onNavigate={navigate}
           data={
             screenData as {
-              draft?: CreateBookingInput;
-              estimatedAmount?: number;
               bookingId?: number;
               finalAmount?: number;
             }

@@ -22,6 +22,10 @@ export async function connectChat(
   const connection: HubConnection = new HubConnectionBuilder()
     .withUrl(`${HUB_BASE}/chat-hub`, {
       accessTokenFactory: () => getAccessToken() ?? "",
+      // Auth qua bearer token (accessTokenFactory), không dùng cookie. Tắt credentials
+      // để request negotiate không bị chặn CORS: server trả Access-Control-Allow-Origin
+      // '*' (wildcard) mà trình duyệt cấm wildcard khi credentials mode = 'include'.
+      withCredentials: false,
     })
     .withAutomaticReconnect()
     .configureLogging(LogLevel.Warning)

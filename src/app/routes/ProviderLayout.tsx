@@ -4,6 +4,7 @@ import type { Screen } from "@/shared/types";
 import { PROVIDER_NAV_ITEMS } from "@/app/config";
 import { DesktopTopNav } from "@/layouts";
 import { ProviderNav } from "@/components/Navigation";
+import { useNavBadges } from "@/shared/hooks";
 import { getPathForScreen, getScreenForPath } from "./screenPaths";
 
 export function ProviderLayout() {
@@ -15,14 +16,21 @@ export function ProviderLayout() {
     navigate(getPathForScreen(nextScreen), { state: data });
   };
 
+  // Live nav badges: unread-notification dot + count of ongoing jobs.
+  const { notifDot, jobBadge } = useNavBadges("provider");
+  const navItems = PROVIDER_NAV_ITEMS.map((i) =>
+    i.screen === "providerJobManagement" && jobBadge > 0 ? { ...i, badge: jobBadge } : i,
+  );
+
   return (
     <div className="w-full h-full flex flex-col" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Desktop */}
       <div className="hidden lg:flex flex-col h-full">
         <DesktopTopNav
           screen={screen}
-          currentNavItems={PROVIDER_NAV_ITEMS}
+          currentNavItems={navItems}
           onNavigate={onNavigate}
+          notifDot={notifDot}
         />
         <div className="flex-1 overflow-hidden bg-slate-100">
           <div className="h-full max-w-5xl mx-auto flex flex-col">
@@ -46,7 +54,7 @@ export function ProviderLayout() {
         </div>
 
         {!["providerJobSheet", "auth"].includes(screen) && (
-          <ProviderNav current={screen} onNavigate={onNavigate} />
+          <ProviderNav current={screen} onNavigate={onNavigate} jobBadge={jobBadge} />
         )}
       </div>
     </div>

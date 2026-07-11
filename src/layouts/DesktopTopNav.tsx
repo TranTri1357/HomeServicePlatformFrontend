@@ -1,15 +1,22 @@
 import { Bell, Wrench, User, ChevronDown, LogOut } from "lucide-react";
 import type { Screen, NavItem } from "@/shared/types";
-import { technicians } from "@/services/Technician/technician.data";
+import { Avatar } from "@/shared/ui";
 import { useAuth } from "@/app/providers"; // Import Auth Context
 
 interface DesktopTopNavProps {
   screen: Screen;
   currentNavItems: NavItem[];
   onNavigate: (s: Screen) => void;
+  /** Show a red dot on the notification bell. */
+  notifDot?: boolean;
 }
 
-export function DesktopTopNav({ screen, currentNavItems, onNavigate }: DesktopTopNavProps) {
+export function DesktopTopNav({
+  screen,
+  currentNavItems,
+  onNavigate,
+  notifDot = false,
+}: DesktopTopNavProps) {
   const { user, logout, hasRole } = useAuth();
 
   // Tự động nhận diện Role để đổi giao diện
@@ -68,8 +75,8 @@ export function DesktopTopNav({ screen, currentNavItems, onNavigate }: DesktopTo
               <item.icon className="w-4 h-4 flex-shrink-0" />
               <span>{item.label}</span>
               {item.badge ? (
-                <span className="w-4 h-4 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
-                  {item.badge}
+                <span className="min-w-[16px] h-4 px-1 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
+                  {item.badge > 99 ? "99+" : item.badge}
                 </span>
               ) : null}
               {active && !isProviderScreen && (
@@ -92,19 +99,27 @@ export function DesktopTopNav({ screen, currentNavItems, onNavigate }: DesktopTo
           <Bell
             className={`w-4 h-4 ${isProviderScreen ? "text-slate-300" : "text-muted-foreground"}`}
           />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+          {notifDot && (
+            <span
+              className={`absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ${isProviderScreen ? "ring-slate-900" : "ring-white"}`}
+            />
+          )}
         </button>
 
         {/* Avatar */}
         <button
           onClick={() => onNavigate(isCustomer ? "customerProfile" : "providerProfile")}
-          className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl hover:bg-muted transition-colors"
+          className={`flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full border transition-colors ${
+            isProviderScreen
+              ? "border-slate-700 bg-slate-800 hover:bg-slate-700"
+              : "border-border bg-white hover:bg-muted"
+          }`}
         >
-          <img
-            src={`https://images.unsplash.com/${isCustomer ? "photo-1472099645785-5658abf4ff4e" : technicians[0].avatar}?w=64&h=64&fit=crop&auto=format`}
-            alt="avatar"
-            className="w-7 h-7 rounded-full object-cover"
-          />
+          <span
+            className={`rounded-full p-0.5 ${isProviderScreen ? "bg-slate-600" : "bg-blue-100"}`}
+          >
+            <Avatar size={28} name={user?.fullName || (isCustomer ? "Khách hàng" : "Đối tác")} />
+          </span>
           <span
             className={`text-sm font-semibold ${isProviderScreen ? "text-slate-200" : "text-foreground"}`}
           >

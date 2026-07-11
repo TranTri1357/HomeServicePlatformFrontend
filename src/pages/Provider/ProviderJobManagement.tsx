@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { Screen, TaskerJob } from "@/shared/types";
 import { taskerApi } from "@/services/api";
+import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { formatVnd, notify } from "@/shared/lib";
@@ -33,6 +34,43 @@ const TABS: { key: string; label: string; statuses: number[] }[] = [
   { key: "history", label: "Lịch sử", statuses: [4, 5, 6] },
 ];
 
+/** Một đơn (Booking) gom các hạng mục được giao cho thợ này. */
+interface JobGroup {
+  bookingId: number;
+  customerName: string;
+  customerPhone: string;
+  fullAddress: string;
+  jobStatus: number;
+  startAt: string; // Giờ bắt đầu sớm nhất trong đơn.
+  total: number; // Tổng tiền các hạng mục của thợ trong đơn.
+  items: TaskerJob[];
+}
+
+// Gom danh sách hạng mục phẳng thành từng đơn (giống cách hiển thị bên khách hàng).
+function groupByBooking(jobs: TaskerJob[]): JobGroup[] {
+  const map = new Map<number, JobGroup>();
+  for (const j of jobs) {
+    const g = map.get(j.bookingId);
+    if (g) {
+      g.items.push(j);
+      g.total += j.totalPrice;
+      if (j.startAt < g.startAt) g.startAt = j.startAt;
+    } else {
+      map.set(j.bookingId, {
+        bookingId: j.bookingId,
+        customerName: j.customerName,
+        customerPhone: j.customerPhone,
+        fullAddress: j.fullAddress,
+        jobStatus: j.jobStatus,
+        startAt: j.startAt,
+        total: j.totalPrice,
+        items: [j],
+      });
+    }
+  }
+  return Array.from(map.values());
+}
+
 function formatDateTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -50,26 +88,28 @@ export function ProviderJobManagement({
   onNavigate: (s: Screen, d?: object) => void;
 }) {
   const [activeTab, setActiveTab] = useState("incoming");
+  const goBack = useGoBack("providerDashboard");
   const { data: jobs = [], loading, error, refetch } = useApi(() => taskerApi.getTaskerJobs());
 
   const [busyId, setBusyId] = useState<number | null>(null);
 
   // Cancel/decline modal.
-  const [cancelJob, setCancelJob] = useState<TaskerJob | null>(null);
+  const [cancelJob, setCancelJob] = useState<JobGroup | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
 
+  const groups = groupByBooking(jobs);
   const activeStatuses = TABS.find((t) => t.key === activeTab)?.statuses ?? [];
-  const filtered = jobs.filter((j) => activeStatuses.includes(j.jobStatus));
+  const filtered = groups.filter((g) => activeStatuses.includes(g.jobStatus));
 
   const runAction = async (
-    job: TaskerJob,
+    bookingId: number,
     fn: (bookingId: number) => Promise<boolean>,
     successMsg: string,
   ) => {
-    setBusyId(job.bookingItemId);
+    setBusyId(bookingId);
     try {
-      await fn(job.bookingId);
+      await fn(bookingId);
       notify.success(successMsg);
       void refetch();
     } catch (err) {
@@ -101,11 +141,11 @@ export function ProviderJobManagement({
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar title="Quản lý công việc" onBack={() => onNavigate("providerDashboard")} />
+      <TopBar title="Quản lý công việc" onBack={goBack} />
 
       <div className="flex border-b border-border bg-white">
         {TABS.map((t) => {
-          const count = jobs.filter((j) => t.statuses.includes(j.jobStatus)).length;
+          const count = groups.filter((g) => t.statuses.includes(g.jobStatus)).length;
           return (
             <button
               key={t.key}
@@ -145,17 +185,17 @@ export function ProviderJobManagement({
             <p className="text-sm text-muted-foreground">Không có công việc nào.</p>
           </div>
         ) : (
-          filtered.map((job) => {
-            const s = STATUS[job.jobStatus] ?? STATUS[0];
-            const busy = busyId === job.bookingItemId;
+          filtered.map((g) => {
+            const s = STATUS[g.jobStatus] ?? STATUS[0];
+            const busy = busyId === g.bookingId;
             return (
-              <div key={job.bookingItemId} className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-                {/* Header */}
+              <div key={g.bookingId} className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+                {/* Header: mã đơn + khách + trạng thái */}
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0">
-                    <p className="font-bold text-foreground">{job.serviceName}</p>
+                    <p className="font-bold text-foreground">Đơn BK{g.bookingId}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      BK{job.bookingId} · {job.customerName}
+                      {g.items.length} dịch vụ · {g.customerName}
                     </p>
                   </div>
                   <span
@@ -166,37 +206,58 @@ export function ProviderJobManagement({
                   </span>
                 </div>
 
-                {/* Details */}
+                {/* Địa chỉ + liên hệ khách */}
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span>{formatDateTime(job.startAt)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="truncate">{job.fullAddress}</span>
+                    <span className="truncate">{g.fullAddress}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <a
-                      href={`tel:${job.customerPhone}`}
-                      className="flex items-center gap-2 text-sm text-blue-600 font-medium"
-                    >
-                      <Phone className="w-3.5 h-3.5" />
-                      {job.customerPhone}
-                    </a>
-                    <span className="text-base font-extrabold text-green-600">
-                      {formatVnd(job.totalPrice)}đ
-                    </span>
-                  </div>
+                  <a
+                    href={`tel:${g.customerPhone}`}
+                    className="flex items-center gap-2 text-sm text-blue-600 font-medium w-fit"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    {g.customerPhone}
+                  </a>
                 </div>
 
-                {/* Actions */}
-                {job.jobStatus <= 3 && (
+                {/* Danh sách hạng mục dịch vụ của đơn */}
+                <div className="space-y-2">
+                  {g.items.map((it) => (
+                    <div key={it.bookingItemId} className="rounded-xl bg-muted/50 p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm text-foreground truncate">
+                            {it.serviceName}
+                          </p>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                            <Calendar className="w-3 h-3 flex-shrink-0" />
+                            <span>{formatDateTime(it.startAt)}</span>
+                          </div>
+                        </div>
+                        <span className="text-sm font-bold text-green-600 flex-shrink-0">
+                          {formatVnd(it.totalPrice)}đ
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Tổng tiền */}
+                <div className="flex items-center justify-between border-t border-border pt-3">
+                  <span className="text-xs text-muted-foreground">Tổng nhận</span>
+                  <span className="text-base font-extrabold text-green-600">
+                    {formatVnd(g.total)}đ
+                  </span>
+                </div>
+
+                {/* Actions — thao tác trên cả đơn */}
+                {g.jobStatus <= 3 && (
                   <div className="flex gap-2 pt-1">
                     {/* Chat (except pending) */}
-                    {job.jobStatus >= 1 && (
+                    {g.jobStatus >= 1 && (
                       <button
-                        onClick={() => onNavigate("providerChat", { bookingId: job.bookingId })}
+                        onClick={() => onNavigate("providerChat", { bookingId: g.bookingId })}
                         className="px-3 py-2.5 bg-muted rounded-xl text-sm font-semibold flex items-center justify-center gap-1 hover:bg-accent transition-colors"
                       >
                         <MessageCircle className="w-4 h-4" />
@@ -204,10 +265,10 @@ export function ProviderJobManagement({
                     )}
 
                     {/* Decline — chỉ khi đơn còn Chờ xác nhận (backend chỉ cho hủy lúc Pending) */}
-                    {job.jobStatus === 0 && (
+                    {g.jobStatus === 0 && (
                       <button
                         onClick={() => {
-                          setCancelJob(job);
+                          setCancelJob(g);
                           setCancelReason("");
                         }}
                         disabled={busy}
@@ -219,9 +280,9 @@ export function ProviderJobManagement({
                     )}
 
                     {/* Primary advance action */}
-                    {job.jobStatus === 0 && (
+                    {g.jobStatus === 0 && (
                       <button
-                        onClick={() => runAction(job, taskerApi.acceptJob, "Đã nhận đơn.")}
+                        onClick={() => runAction(g.bookingId, taskerApi.acceptJob, "Đã nhận đơn.")}
                         disabled={busy}
                         className="flex-1 py-2.5 bg-green-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1 hover:bg-green-700 transition-colors disabled:opacity-70"
                       >
@@ -229,9 +290,9 @@ export function ProviderJobManagement({
                         Chấp nhận
                       </button>
                     )}
-                    {job.jobStatus === 1 && (
+                    {g.jobStatus === 1 && (
                       <button
-                        onClick={() => runAction(job, taskerApi.startMoving, "Bắt đầu di chuyển.")}
+                        onClick={() => runAction(g.bookingId, taskerApi.startMoving, "Bắt đầu di chuyển.")}
                         disabled={busy}
                         className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1 hover:bg-blue-700 transition-colors disabled:opacity-70"
                       >
@@ -239,9 +300,9 @@ export function ProviderJobManagement({
                         Bắt đầu đi
                       </button>
                     )}
-                    {job.jobStatus === 2 && (
+                    {g.jobStatus === 2 && (
                       <button
-                        onClick={() => runAction(job, taskerApi.startWorking, "Bắt đầu làm việc.")}
+                        onClick={() => runAction(g.bookingId, taskerApi.startWorking, "Bắt đầu làm việc.")}
                         disabled={busy}
                         className="flex-1 py-2.5 bg-purple-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1 hover:bg-purple-700 transition-colors disabled:opacity-70"
                       >
@@ -249,9 +310,9 @@ export function ProviderJobManagement({
                         Bắt đầu làm
                       </button>
                     )}
-                    {job.jobStatus === 3 && (
+                    {g.jobStatus === 3 && (
                       <button
-                        onClick={() => runAction(job, taskerApi.completeWork, "Đã hoàn thành công việc!")}
+                        onClick={() => runAction(g.bookingId, taskerApi.completeWork, "Đã hoàn thành công việc!")}
                         disabled={busy}
                         className="flex-1 py-2.5 bg-green-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1 hover:bg-green-700 transition-colors disabled:opacity-70"
                       >

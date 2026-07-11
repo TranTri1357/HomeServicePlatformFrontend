@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Calendar,
   MapPin,
@@ -10,11 +10,22 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import type { Screen } from "@/shared/types";
+import type { Screen, MyBooking } from "@/shared/types";
 import { bookingApi } from "@/services/api";
+import { connectBookingStatus } from "@/services/realtime/bookingHub";
+import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { formatVnd, notify } from "@/shared/lib";
+
+// Nhãn trạng thái để hiện toast khi trạng thái đơn đổi realtime.
+const STATUS_TOAST: Record<number, string> = {
+  1: "Thợ đã xác nhận đơn",
+  2: "Thợ đang trên đường đến",
+  3: "Thợ đã bắt đầu thực hiện",
+  4: "Đơn đã hoàn thành",
+  5: "Đơn đã bị hủy",
+};
 
 // Numeric BookingStatus → label + colors.
 const STATUS: Record<number, { label: string; cls: string; dot: string }> = {
@@ -59,7 +70,35 @@ export function BookingManagement({
   onNavigate: (s: Screen, d?: object) => void;
 }) {
   const [activeTab, setActiveTab] = useState("all");
-  const { data: bookings = [], loading, error, refetch } = useApi(() => bookingApi.getMyBookings());
+  const goBack = useGoBack("customerHome");
+  const { data: fetched = [], loading, error, refetch } = useApi(() => bookingApi.getMyBookings());
+
+  // Realtime status pushes from the tasker, applied on top of the fetched list
+  // so a single row updates in place without a full refetch (no empty-state flash).
+  const [statusOverride, setStatusOverride] = useState<Record<number, number>>({});
+  useEffect(() => {
+    let dispose = () => {};
+    connectBookingStatus((bookingId, status) => {
+      setStatusOverride((prev) =>
+        prev[bookingId] === status ? prev : { ...prev, [bookingId]: status },
+      );
+      const label = STATUS_TOAST[status];
+      if (label) notify.info(`BK${bookingId}: ${label}`);
+    })
+      .then((d) => {
+        dispose = d;
+      })
+      .catch(() => {
+        /* fall back to manual refresh if the hub can't connect */
+      });
+    return () => dispose();
+  }, []);
+
+  const bookings: MyBooking[] = fetched.map((b) =>
+    statusOverride[b.bookingId] != null && statusOverride[b.bookingId] !== b.status
+      ? { ...b, status: statusOverride[b.bookingId] }
+      : b,
+  );
 
   // Cancel modal state.
   const [cancelTarget, setCancelTarget] = useState<number | null>(null);
@@ -112,6 +151,7 @@ export function BookingManagement({
       notify.success("Đã gửi khiếu nại. Chúng tôi sẽ xem xét sớm nhất.");
       setDisputeTarget(null);
       setDisputeReason("");
+      void refetch();
     } catch (err) {
       notify.error(err);
     } finally {
@@ -139,6 +179,7 @@ export function BookingManagement({
       });
       notify.success("Cảm ơn bạn đã gửi đánh giá!");
       setReviewTarget(null);
+      void refetch();
     } catch (err) {
       notify.error(err);
     } finally {
@@ -148,7 +189,7 @@ export function BookingManagement({
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar title="Lịch đặt của tôi" onBack={() => onNavigate("customerHome")} />
+      <TopBar title="Lịch đặt của tôi" onBack={goBack} />
 
       {/* Tabs */}
       <div className="bg-white border-b border-border px-4 py-2 flex gap-1 overflow-x-auto scrollbar-none">
@@ -191,13 +232,17 @@ export function BookingManagement({
         ) : (
           filtered.map((bk) => {
             const s = STATUS[bk.status] ?? STATUS[0];
+            const discount = bk.discountAmount ?? 0;
+            const canReview = bk.status === 4; // Chỉ đánh giá khi đơn đã hoàn thành.
+            const showPay = bk.status === 0 && !bk.isPaid; // Ẩn nút khi đã thanh toán.
             return (
               <div key={bk.bookingId} className="bg-white rounded-2xl p-4 shadow-sm">
+                {/* Header: mã đơn + ngày tạo + trạng thái */}
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <p className="font-bold text-foreground">{bk.serviceName}</p>
+                    <p className="font-bold text-foreground">Đơn BK{bk.bookingId}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      BK{bk.bookingId} · Thợ: {bk.taskerName || "Đang tìm thợ..."}
+                      {bk.items.length} dịch vụ · {formatDateTime(bk.createdAt)}
                     </p>
                   </div>
                   <span
@@ -208,22 +253,73 @@ export function BookingManagement({
                   </span>
                 </div>
 
-                <div className="space-y-1.5 mb-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span>{formatDateTime(bk.startAt)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="truncate">{bk.fullAddress}</span>
-                  </div>
+                {/* Địa chỉ */}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                  <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">{bk.fullAddress}</span>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-base font-extrabold text-blue-600">
-                    {formatVnd(bk.finalAmount)}đ
-                  </span>
-                  <div className="flex gap-2">
+                {/* Danh sách hạng mục dịch vụ (một đơn có thể gồm nhiều dịch vụ) */}
+                <div className="space-y-2 mb-3">
+                  {bk.items.map((it) => (
+                    <div key={it.bookingItemId} className="rounded-xl bg-muted/50 p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm text-foreground truncate">
+                            {it.serviceName}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Thợ: {it.taskerName || "Đang tìm thợ..."}
+                          </p>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                            <Calendar className="w-3 h-3 flex-shrink-0" />
+                            <span>{formatDateTime(it.startAt)}</span>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-sm font-bold text-blue-600">
+                            {formatVnd(it.totalPrice)}đ
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {formatVnd(it.unitPrice)}đ × {it.quantity}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Đánh giá theo từng hạng mục — đã đánh giá thì khoá lại */}
+                      {canReview &&
+                        (it.hasReview ? (
+                          <div className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-green-600">
+                            <Star className="w-3.5 h-3.5 fill-green-500 text-green-500" />
+                            Đã đánh giá
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => openReview(it.bookingItemId)}
+                            className="mt-2 px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-xs font-semibold inline-flex items-center gap-1 hover:bg-amber-100 transition-colors"
+                          >
+                            <Star className="w-3.5 h-3.5" />
+                            Đánh giá
+                          </button>
+                        ))}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Tóm tắt tiền + hành động cho cả đơn */}
+                <div className="flex items-end justify-between border-t border-border pt-3">
+                  <div>
+                    {discount > 0 && (
+                      <p className="text-[11px] text-muted-foreground line-through">
+                        {formatVnd(bk.subtotalAmount)}đ
+                      </p>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">Tổng cộng</p>
+                    <span className="text-base font-extrabold text-blue-600">
+                      {formatVnd(bk.finalAmount)}đ
+                    </span>
+                  </div>
+                  <div className="flex gap-2 flex-wrap justify-end">
                     <button
                       onClick={() => onNavigate("chat", { bookingId: bk.bookingId })}
                       className="px-3 py-1.5 bg-muted rounded-lg text-xs font-semibold flex items-center gap-1 hover:bg-accent transition-colors"
@@ -237,28 +333,25 @@ export function BookingManagement({
                         Theo dõi
                       </button>
                     )}
-                    {bk.status === 4 && (
-                      <button
-                        onClick={() => openReview(bk.bookingItemId)}
-                        className="px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-xs font-semibold flex items-center gap-1 hover:bg-amber-100 transition-colors"
-                      >
-                        <Star className="w-3.5 h-3.5" />
-                        Đánh giá
-                      </button>
-                    )}
-                    {DISPUTABLE.includes(bk.status) && (
-                      <button
-                        onClick={() => {
-                          setDisputeTarget(bk.bookingId);
-                          setDisputeReason("");
-                        }}
-                        className="px-3 py-1.5 bg-orange-50 text-orange-600 rounded-lg text-xs font-semibold flex items-center gap-1 hover:bg-orange-100 transition-colors"
-                      >
-                        <Flag className="w-3.5 h-3.5" />
-                        Khiếu nại
-                      </button>
-                    )}
-                    {bk.status === 0 && (
+                    {DISPUTABLE.includes(bk.status) &&
+                      (bk.hasDispute ? (
+                        <span className="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-xs font-semibold flex items-center gap-1">
+                          <Flag className="w-3.5 h-3.5" />
+                          Đã khiếu nại
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setDisputeTarget(bk.bookingId);
+                            setDisputeReason("");
+                          }}
+                          className="px-3 py-1.5 bg-orange-50 text-orange-600 rounded-lg text-xs font-semibold flex items-center gap-1 hover:bg-orange-100 transition-colors"
+                        >
+                          <Flag className="w-3.5 h-3.5" />
+                          Khiếu nại
+                        </button>
+                      ))}
+                    {showPay && (
                       <button
                         onClick={() =>
                           onNavigate("payment", {

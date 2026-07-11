@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { serviceApi } from "@/services/api";
+import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { Avatar } from "@/shared/ui";
 import { getApiAssetUrl, formatVnd } from "@/shared/lib";
@@ -25,6 +26,7 @@ export function ServiceDetail({
   data?: { serviceId?: number };
 }) {
   const serviceId = data?.serviceId;
+  const goBack = useGoBack("serviceList");
   const [activeTab, setActiveTab] = useState("about");
 
   const {
@@ -106,7 +108,7 @@ export function ServiceDetail({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <button
-          onClick={() => onNavigate("serviceList")}
+          onClick={goBack}
           className="absolute top-4 left-4 w-9 h-9 bg-white/90 backdrop-blur rounded-xl flex items-center justify-center"
         >
           <ChevronLeft className="w-5 h-5 text-foreground" />

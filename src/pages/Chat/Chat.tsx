@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, Phone, MapPin, Send, AlertCircle, Loader2 } from "lucide-react";
 import type { Screen, ConversationMessage } from "@/shared/types";
 import { chatApi } from "@/services/api";
+import { useGoBack } from "@/app/routes/useGoBack";
 import { connectChat } from "@/services/realtime/chatHub";
 import { useApi } from "@/shared/hooks";
 import { useAuth } from "@/app/providers";
@@ -27,6 +28,7 @@ export function Chat({
   const myId = user?.userId;
   const bookingId = data?.bookingId;
   const backTarget: Screen = isProvider ? "providerDashboard" : "bookingManagement";
+  const goBack = useGoBack(backTarget);
 
   const { data: initial, loading, error, refetch } = useApi(
     () => chatApi.getConversation(bookingId!),
@@ -111,7 +113,7 @@ export function Chat({
       {/* Header */}
       <div className="bg-white border-b border-border px-4 py-3 flex items-center gap-3">
         <button
-          onClick={() => onNavigate(backTarget)}
+          onClick={goBack}
           className="w-8 h-8 flex items-center justify-center"
         >
           <ChevronLeft className="w-5 h-5 text-foreground" />

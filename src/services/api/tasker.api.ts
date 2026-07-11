@@ -1,12 +1,16 @@
-import { get, put, unwrap, type ApiResponse } from "./client";
+import { get, post, put, unwrap, type ApiResponse } from "./client";
 import type {
+  CreateTaskerProfileInput,
   NearbyTasker,
+  TaskerAvailability,
   TaskerDashboard,
   TaskerDetail,
   TaskerJob,
   TaskerProfileData,
   TaskerQuickInfo,
+  TaskerServiceOption,
   TopTasker,
+  UpdateTaskerProfileInput,
 } from "@/shared/types";
 
 /**
@@ -17,6 +21,21 @@ export async function getMyTaskerProfile(taskerId: number): Promise<TaskerProfil
   const response = await get<ApiResponse<TaskerProfileData>>(
     `/tasker/profile/${taskerId}/profile`,
   );
+  return unwrap(response);
+}
+
+/**
+ * POST /api/tasker/profile — create the logged-in tasker's profile (Status 0 =
+ * chờ duyệt) so an admin can approve it. UserId comes from the JWT.
+ */
+export async function createTaskerProfile(input: CreateTaskerProfileInput): Promise<boolean> {
+  const response = await post<ApiResponse<boolean>>("/tasker/profile", input);
+  return unwrap(response);
+}
+
+/** PUT /api/tasker/profile — update the logged-in tasker's account info. */
+export async function updateTaskerProfile(input: UpdateTaskerProfileInput): Promise<boolean> {
+  const response = await put<ApiResponse<boolean>>("/tasker/profile", input);
   return unwrap(response);
 }
 
@@ -119,6 +138,32 @@ export async function getNearbyTaskers(params: GetNearbyTaskersParams): Promise<
  */
 export async function getTaskerDetail(taskerId: number): Promise<TaskerDetail> {
   const response = await get<ApiResponse<TaskerDetail>>(`/Taskers/${taskerId}`);
+  return unwrap(response);
+}
+
+/**
+ * GET /api/Taskers/{id}/services
+ * Services (with the tasker's current price + duration) the tasker offers, for
+ * the customer to pick when booking. Public.
+ */
+export async function getTaskerServiceOptions(taskerId: number): Promise<TaskerServiceOption[]> {
+  const response = await get<ApiResponse<TaskerServiceOption[]>>(`/Taskers/${taskerId}/services`);
+  return unwrap(response);
+}
+
+/**
+ * GET /api/Taskers/{id}/availability?date=yyyy-MM-dd
+ * The tasker's free/busy hourly slots for a day (based on their working schedule,
+ * time-offs and existing bookings/holds). Public.
+ */
+export async function getTaskerAvailability(
+  taskerId: number,
+  date: string,
+): Promise<TaskerAvailability> {
+  const response = await get<ApiResponse<TaskerAvailability>>(
+    `/Taskers/${taskerId}/availability`,
+    { params: { date } },
+  );
   return unwrap(response);
 }
 

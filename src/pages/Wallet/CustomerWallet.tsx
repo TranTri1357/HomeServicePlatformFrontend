@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Wallet as WalletIcon, Plus, ArrowUpRight, ArrowDownLeft, Loader2 } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { walletApi } from "@/services/api";
+import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { formatVnd, formatDateVn, notify, getErrorMessage } from "@/shared/lib";
@@ -16,6 +17,7 @@ const TX: Record<number, { label: string; credit: boolean }> = {
 };
 
 export function CustomerWallet({ onNavigate }: { onNavigate: (s: Screen, d?: object) => void }) {
+  const goBack = useGoBack("customerProfile");
   const { data: wallet, loading, refetch } = useApi(() => walletApi.getMyWallet());
 
   const [amount, setAmount] = useState<number>(QUICK_AMOUNTS[0]);
@@ -42,7 +44,7 @@ export function CustomerWallet({ onNavigate }: { onNavigate: (s: Screen, d?: obj
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar title="Ví của tôi" onBack={() => onNavigate("customerProfile")} />
+      <TopBar title="Ví của tôi" onBack={goBack} />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Balance card */}

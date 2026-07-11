@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Star,
   Phone,
@@ -6,12 +7,29 @@ import {
   BadgeCheck,
   LogOut,
   AlertCircle,
+  Edit3,
+  FileText,
+  MapPin,
+  Loader2,
 } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { taskerApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
 import { useAuth } from "@/app/providers";
 import { Avatar } from "@/shared/ui";
+import { notify } from "@/shared/lib";
+
+// Status → nhãn hiển thị (0 chờ duyệt · 1 nhận việc · 2 khóa · 3 tạm nghỉ).
+const STATUS_LABEL: Record<number, { label: string; online: boolean }> = {
+  0: { label: "Chờ duyệt", online: false },
+  1: { label: "Đang nhận việc", online: true },
+  2: { label: "Bị khóa", online: false },
+  3: { label: "Tạm nghỉ", online: false },
+};
+
+// Toạ độ mặc định (trung tâm TP.HCM) khi không lấy được vị trí trình duyệt.
+const DEFAULT_LAT = 10.7769;
+const DEFAULT_LNG = 106.7009;
 
 export function ProviderProfile(_props: { onNavigate: (s: Screen) => void }) {
   const { user, logout } = useAuth();
@@ -22,8 +40,94 @@ export function ProviderProfile(_props: { onNavigate: (s: Screen) => void }) {
     { immediate: Boolean(taskerId) },
   );
 
+  // ── Edit-account modal ──────────────────────────────────────────────────
+  const [editing, setEditing] = useState(false);
+  const [fFullName, setFFullName] = useState("");
+  const [fPhone, setFPhone] = useState("");
+  const [fExp, setFExp] = useState(0);
+  const [fBio, setFBio] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // ── Create-profile modal ────────────────────────────────────────────────
+  const [creating, setCreating] = useState(false);
+  const [cBio, setCBio] = useState("");
+  const [cExp, setCExp] = useState(0);
+  const [cLat, setCLat] = useState(DEFAULT_LAT);
+  const [cLng, setCLng] = useState(DEFAULT_LNG);
+  const [cLocating, setCLocating] = useState(false);
+  const [cSubmitting, setCSubmitting] = useState(false);
+
   const name = profile?.fullName || user?.fullName || "Thợ";
-  const isOnline = profile?.status === 1;
+  const st = STATUS_LABEL[profile?.status ?? 0] ?? STATUS_LABEL[0];
+  const isOnline = st.online;
+
+  const openEdit = () => {
+    if (!profile) return;
+    setFFullName(profile.fullName ?? "");
+    setFPhone(profile.phone ?? "");
+    setFExp(profile.experienceYears ?? 0);
+    setFBio(profile.bio ?? "");
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    if (!fFullName.trim()) return notify.error("Vui lòng nhập họ tên.");
+    if (!/^(03|05|07|08|09)\d{8}$/.test(fPhone.trim()))
+      return notify.error("Số điện thoại không đúng định dạng di động Việt Nam (10 số).");
+    setSaving(true);
+    try {
+      await taskerApi.updateTaskerProfile({
+        fullName: fFullName.trim(),
+        phone: fPhone.trim(),
+        bio: fBio.trim() || undefined,
+        experienceYears: fExp,
+      });
+      notify.success("Cập nhật hồ sơ thành công.");
+      setEditing(false);
+      void refetch();
+    } catch (err) {
+      notify.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const locate = () => {
+    if (!navigator.geolocation) return notify.error("Trình duyệt không hỗ trợ định vị.");
+    setCLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCLat(Number(pos.coords.latitude.toFixed(6)));
+        setCLng(Number(pos.coords.longitude.toFixed(6)));
+        setCLocating(false);
+        notify.success("Đã lấy vị trí hiện tại.");
+      },
+      () => {
+        setCLocating(false);
+        notify.error("Không lấy được vị trí. Đang dùng toạ độ mặc định.");
+      },
+    );
+  };
+
+  const submitCreate = async () => {
+    if (!cBio.trim()) return notify.error("Vui lòng nhập giới thiệu bản thân.");
+    setCSubmitting(true);
+    try {
+      await taskerApi.createTaskerProfile({
+        bio: cBio.trim(),
+        experienceYears: cExp,
+        latitude: cLat,
+        longitude: cLng,
+      });
+      notify.success("Đã gửi hồ sơ. Vui lòng chờ quản trị viên phê duyệt.");
+      setCreating(false);
+      void refetch();
+    } catch (err) {
+      notify.error(err);
+    } finally {
+      setCSubmitting(false);
+    }
+  };
 
   const stats: [string, string][] = [
     [`${profile?.ratingAvg ?? 0}`, "Đánh giá"],
@@ -35,6 +139,7 @@ export function ProviderProfile(_props: { onNavigate: (s: Screen) => void }) {
     { label: "Họ tên", value: name, icon: User },
     { label: "Điện thoại", value: profile?.phone || "—", icon: Phone },
     { label: "Email", value: profile?.email || "—", icon: MessageCircle },
+    { label: "Giới thiệu", value: profile?.bio || "—", icon: FileText },
     { label: "Tổng đánh giá", value: `${profile?.totalReviews ?? 0} lượt`, icon: Star },
   ];
 
@@ -48,7 +153,7 @@ export function ProviderProfile(_props: { onNavigate: (s: Screen) => void }) {
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${isOnline ? "bg-green-500/20 text-green-300" : "bg-slate-600/40 text-slate-300"}`}
           >
             <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-green-400" : "bg-slate-400"}`} />
-            {isOnline ? "Đang nhận việc" : "Tạm nghỉ"}
+            {st.label}
           </span>
         </div>
         <div className="flex items-center gap-4">
@@ -69,16 +174,33 @@ export function ProviderProfile(_props: { onNavigate: (s: Screen) => void }) {
       </div>
 
       <div className="px-4 -mt-6 space-y-4 pb-6">
+        {/* No profile yet / load error → offer create + retry */}
         {error && !profile && (
           <div className="bg-white rounded-2xl p-4 flex flex-col items-center gap-3 text-center shadow-sm">
-            <AlertCircle className="w-8 h-8 text-red-400" />
-            <p className="text-sm text-muted-foreground">{error}</p>
-            <button
-              onClick={() => void refetch()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
-            >
-              Thử lại
-            </button>
+            <AlertCircle className="w-8 h-8 text-amber-400" />
+            <p className="text-sm text-muted-foreground">
+              {error}. Nếu bạn chưa có hồ sơ thợ, hãy tạo hồ sơ để quản trị viên duyệt.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => void refetch()}
+                className="px-4 py-2 border border-border rounded-xl text-sm font-semibold"
+              >
+                Thử lại
+              </button>
+              <button
+                onClick={() => {
+                  setCBio("");
+                  setCExp(0);
+                  setCLat(DEFAULT_LAT);
+                  setCLng(DEFAULT_LNG);
+                  setCreating(true);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
+              >
+                Tạo hồ sơ thợ
+              </button>
+            </div>
           </div>
         )}
 
@@ -96,8 +218,17 @@ export function ProviderProfile(_props: { onNavigate: (s: Screen) => void }) {
 
         {/* Personal info */}
         <div className="bg-white rounded-2xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <h3 className="font-bold text-foreground">Thông tin cá nhân</h3>
+            {profile && (
+              <button
+                onClick={openEdit}
+                className="text-blue-600 text-xs font-semibold flex items-center gap-1 hover:underline"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                Chỉnh sửa
+              </button>
+            )}
           </div>
           {infoItems.map((item) => (
             <div
@@ -109,7 +240,7 @@ export function ProviderProfile(_props: { onNavigate: (s: Screen) => void }) {
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">{item.label}</p>
-                <p className="text-sm font-medium text-foreground truncate">{item.value}</p>
+                <p className="text-sm font-medium text-foreground">{item.value}</p>
               </div>
             </div>
           ))}
@@ -133,6 +264,141 @@ export function ProviderProfile(_props: { onNavigate: (s: Screen) => void }) {
           <span className="text-sm font-semibold text-red-600">Đăng xuất</span>
         </button>
       </div>
+
+      {/* Edit-account modal */}
+      {editing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+            <h3 className="font-bold text-foreground">Chỉnh sửa thông tin tài khoản</h3>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Họ tên</label>
+              <input
+                value={fFullName}
+                onChange={(e) => setFFullName(e.target.value)}
+                className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Số điện thoại</label>
+              <input
+                value={fPhone}
+                onChange={(e) => setFPhone(e.target.value)}
+                inputMode="tel"
+                className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Số năm kinh nghiệm</label>
+              <input
+                type="number"
+                min={0}
+                value={fExp}
+                onChange={(e) => setFExp(Math.max(0, Number(e.target.value) || 0))}
+                className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Giới thiệu</label>
+              <textarea
+                value={fBio}
+                onChange={(e) => setFBio(e.target.value)}
+                rows={3}
+                maxLength={1000}
+                className="w-full bg-muted rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                placeholder="VD: 5 năm kinh nghiệm điện lạnh, làm việc cẩn thận..."
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => setEditing(false)}
+                disabled={saving}
+                className="flex-1 py-2.5 border border-border rounded-xl text-sm font-semibold disabled:opacity-60"
+              >
+                Huỷ
+              </button>
+              <button
+                onClick={saveEdit}
+                disabled={saving}
+                className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? "Đang lưu..." : "Lưu"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create-profile modal */}
+      {creating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+            <div>
+              <h3 className="font-bold text-foreground">Tạo hồ sơ thợ</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Hồ sơ sẽ ở trạng thái chờ duyệt cho đến khi quản trị viên phê duyệt.
+              </p>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Giới thiệu bản thân</label>
+              <textarea
+                value={cBio}
+                onChange={(e) => setCBio(e.target.value)}
+                rows={3}
+                maxLength={1000}
+                className="w-full bg-muted rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                placeholder="VD: Thợ điện nước 5 năm kinh nghiệm khu vực Quận 1..."
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Số năm kinh nghiệm</label>
+              <input
+                type="number"
+                min={0}
+                value={cExp}
+                onChange={(e) => setCExp(Math.max(0, Number(e.target.value) || 0))}
+                className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Vị trí làm việc</label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 flex items-center gap-2 bg-muted rounded-xl px-3 py-2.5 text-xs text-muted-foreground">
+                  <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">
+                    {cLat.toFixed(4)}, {cLng.toFixed(4)}
+                  </span>
+                </div>
+                <button
+                  onClick={locate}
+                  disabled={cLocating}
+                  className="px-3 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-xs font-semibold disabled:opacity-60 flex items-center gap-1"
+                >
+                  {cLocating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
+                  Vị trí hiện tại
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => setCreating(false)}
+                disabled={cSubmitting}
+                className="flex-1 py-2.5 border border-border rounded-xl text-sm font-semibold disabled:opacity-60"
+              >
+                Huỷ
+              </button>
+              <button
+                onClick={submitCreate}
+                disabled={cSubmitting}
+                className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {cSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {cSubmitting ? "Đang gửi..." : "Gửi hồ sơ"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

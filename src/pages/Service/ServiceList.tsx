@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Search, BookOpen, Wrench, Clock, AlertCircle } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { categoryApi, serviceApi } from "@/services/api";
+import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { getApiAssetUrl, formatVnd } from "@/shared/lib";
@@ -28,6 +29,7 @@ function ServiceImage({ imageUrl, name }: { imageUrl: string | null; name: strin
 }
 
 export function ServiceList({ onNavigate }: { onNavigate: (s: Screen, data?: object) => void }) {
+  const goBack = useGoBack("customerHome");
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
   const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none");
@@ -63,7 +65,7 @@ export function ServiceList({ onNavigate }: { onNavigate: (s: Screen, data?: obj
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar title="Dịch vụ" onBack={() => onNavigate("customerHome")} />
+      <TopBar title="Dịch vụ" onBack={goBack} />
 
       {/* Search + Filter */}
       <div className="bg-white px-4 py-3 border-b border-border space-y-3">

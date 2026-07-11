@@ -16,6 +16,7 @@ import {
 import type { Screen } from "@/shared/types";
 import { categoryApi, serviceApi, taskerApi, searchApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
+import { useAuth } from "@/app/providers";
 import { Avatar } from "@/shared/ui";
 import { getApiAssetUrl, getUnsplashUrl, formatVnd } from "@/shared/lib";
 
@@ -37,6 +38,7 @@ function CategoryIcon({ iconUrl, name }: { iconUrl: string; name: string }) {
 }
 
 export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: object) => void }) {
+  const { user } = useAuth();
   // Reference example for teammates: fetch each resource through `useApi`.
   // `initialData` seeds the mock so the screen never flashes empty, and on an
   // API error the hook keeps the last value (the mock) while exposing `error`.
@@ -87,23 +89,18 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 px-4 pt-6 pb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-blue-200 text-sm">Chào buổi sáng 👋</p>
-            <h2 className="text-white text-xl font-bold">Trần Minh Khoa</h2>
+            <p className="text-blue-200 text-sm"></p>
+
           </div>
           <button
             onClick={() => onNavigate("customerProfile")}
-            className="w-10 h-10 rounded-xl overflow-hidden"
+            className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-white/50 ring-offset-2 ring-offset-blue-700"
           >
-            <Avatar src="photo-1472099645785-5658abf4ff4e" name="Minh Khoa" size={40} />
+            <Avatar name={user?.fullName || "Khách hàng"} size={44} />
           </button>
         </div>
 
-        {/* Location */}
-        <div className="flex items-center gap-2 bg-white/20 rounded-xl px-3 py-2 mb-4">
-          <MapPin className="w-4 h-4 text-blue-200 flex-shrink-0" />
-          <span className="text-white text-sm flex-1 truncate">123 Lê Lợi, Quận 1, TP.HCM</span>
-          <ChevronDown className="w-4 h-4 text-blue-200" />
-        </div>
+
 
         {/* Search */}
         <div className="relative">
