@@ -15,7 +15,12 @@ const ITEMS = [
   { screen: "customerProfile" as Screen, icon: User, label: "Hồ sơ" },
 ];
 
-const HOME_ADJACENT: Screen[] = ["serviceDetail", "technicianMap", "technicianDetail"];
+const HOME_ADJACENT: Screen[] = [
+  "serviceDetail",
+  "technicianMap",
+  "technicianDetail",
+  "emergencyBooking",
+];
 
 export function CustomerNav({ current, onNavigate, jobBadge = 0 }: CustomerNavProps) {
   return (

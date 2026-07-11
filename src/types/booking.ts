@@ -52,6 +52,33 @@ export interface CreateBookingResult {
   finalAmount: number;
 }
 
+/** Body for POST /api/customer/bookings/emergency — direct request to one nearby tasker. */
+export interface EmergencyBookingInput {
+  serviceId: number;
+  taskerId: number;
+  latitude: number;
+  longitude: number;
+  fullName: string;
+  phone: string;
+  addressLine: string;
+  provinceCode?: string;
+  districtCode?: string;
+  wardCode?: string;
+  unitPrice: number;
+  note?: string;
+}
+
+/** Response of POST /api/customer/bookings/emergency. */
+export interface EmergencyBookingResult {
+  bookingId: number;
+  taskerId: number;
+  serviceName: string;
+  addressLine: string;
+  amount: number;
+  distanceKm: number;
+  expiresInSeconds: number;
+}
+
 /**
  * Numeric booking status (matches backend BookingStatus enum):
  * 0 Pending · 1 Accepted · 2 OnTheWay · 3 InProgress · 4 Completed · 5 Cancelled · 6 Refund

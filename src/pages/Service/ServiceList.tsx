@@ -28,10 +28,17 @@ function ServiceImage({ imageUrl, name }: { imageUrl: string | null; name: strin
   );
 }
 
-export function ServiceList({ onNavigate }: { onNavigate: (s: Screen, data?: object) => void }) {
+export function ServiceList({
+  onNavigate,
+  data,
+}: {
+  onNavigate: (s: Screen, data?: object) => void;
+  data?: { categoryId?: number };
+}) {
   const goBack = useGoBack("customerHome");
   const [search, setSearch] = useState("");
-  const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
+  // Pre-select the category when arriving from a home-screen category tile.
+  const [categoryId, setCategoryId] = useState<number | undefined>(data?.categoryId);
   const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none");
 
   const sortBy = priceSort === "asc" ? "price_asc" : priceSort === "desc" ? "price_desc" : undefined;

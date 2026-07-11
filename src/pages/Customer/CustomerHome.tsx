@@ -1,9 +1,7 @@
 ﻿import { useEffect, useState } from "react";
 import {
-  MapPin,
   Search,
   Star,
-  ChevronDown,
   ChevronRight,
   BookOpen,
   LayoutGrid,
@@ -12,6 +10,8 @@ import {
   Loader2,
   X,
   Wrench,
+  Bell,
+  Siren,
 } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { categoryApi, serviceApi, taskerApi, searchApi } from "@/services/api";
@@ -89,15 +89,26 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 px-4 pt-6 pb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-blue-200 text-sm"></p>
-
+            <p className="text-blue-200 text-sm">Xin chào,</p>
+            <p className="text-white font-bold text-lg leading-tight">
+              {user?.fullName || "Khách hàng"}
+            </p>
           </div>
-          <button
-            onClick={() => onNavigate("customerProfile")}
-            className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-white/50 ring-offset-2 ring-offset-blue-700"
-          >
-            <Avatar name={user?.fullName || "Khách hàng"} size={44} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onNavigate("notifications")}
+              aria-label="Thông báo"
+              className="w-11 h-11 rounded-full bg-white/15 hover:bg-white/25 transition-colors flex items-center justify-center"
+            >
+              <Bell className="w-5 h-5 text-white" />
+            </button>
+            <button
+              onClick={() => onNavigate("customerProfile")}
+              className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-white/50 ring-offset-2 ring-offset-blue-700"
+            >
+              <Avatar name={user?.fullName || "Khách hàng"} size={44} />
+            </button>
+          </div>
         </div>
 
 
@@ -199,6 +210,21 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
       </div>
 
       <div className="px-4 space-y-6 pb-6 -mt-3">
+        {/* Emergency call */}
+        <button
+          onClick={() => onNavigate("emergencyBooking")}
+          className="w-full flex items-center gap-3 bg-gradient-to-r from-red-500 to-rose-600 rounded-2xl p-4 shadow-lg shadow-red-200 text-left hover:from-red-600 hover:to-rose-700 transition-colors"
+        >
+          <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+            <Siren className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-white font-bold">Gọi thợ khẩn cấp</p>
+            <p className="text-white/80 text-xs">Tìm thợ đang rảnh gần bạn, phản hồi trong 30 giây</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-white/90 flex-shrink-0" />
+        </button>
+
         {/* Promo Banner */}
         <div className="relative bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl overflow-hidden shadow-lg">
           <img
@@ -208,17 +234,15 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
           />
           <div className="relative p-5">
             <span className="bg-white text-orange-600 text-xs font-bold px-2 py-1 rounded-full">
-              HOT DEAL
+              HOT
             </span>
             <h3 className="text-white text-lg font-bold mt-2">
-              Giảm 30% dịch vụ
+              Vệ sinh sạch sẻ
               <br />
-              Dọn dẹp nhà
+              Dọn dẹp ngăn nắp
             </h3>
-            <p className="text-white/80 text-xs mt-1 mb-3">Áp dụng đến 30/06/2026</p>
-            <button className="bg-white text-orange-600 text-xs font-bold px-4 py-2 rounded-lg">
-              Đặt ngay
-            </button>
+            <p className="text-white/80 text-xs mt-1 mb-3">mại vô mại vô</p>
+
           </div>
         </div>
 
@@ -251,7 +275,7 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
               {categories.map((cat) => (
                 <button
                   key={cat.categoryId}
-                  onClick={() => onNavigate("serviceList", { categorySlug: cat.slug })}
+                  onClick={() => onNavigate("serviceList", { categoryId: cat.categoryId })}
                   className="bg-white rounded-2xl p-3 flex flex-col items-center gap-2 shadow-sm hover:shadow-md transition-shadow active:scale-95"
                 >
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-50 overflow-hidden">

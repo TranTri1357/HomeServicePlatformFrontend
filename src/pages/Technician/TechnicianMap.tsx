@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
-import { Star, Shield, X, MapPin, AlertCircle, Loader2, KeyRound } from "lucide-react";
+import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { Star, Shield, X, MapPin, Loader2 } from "lucide-react";
 import type { Screen, NearbyTasker } from "@/shared/types";
 import { taskerApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
@@ -8,30 +10,38 @@ import { Avatar, TopBar } from "@/shared/ui";
 import { formatVnd, getApiAssetUrl } from "@/shared/lib";
 import { useGoBack } from "@/app/routes/useGoBack";
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
 const DEFAULT_CENTER = { lat: 10.7769, lng: 106.7009 }; // TP.HCM
 const RADIUS_KM = 10;
 
 type LatLng = { lat: number; lng: number };
 
-function markerIcon(color: string): google.maps.Icon {
+/** Colored circle marker as an inline SVG divIcon (no external asset paths). */
+function markerIcon(color: string, bounce: boolean): L.DivIcon {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="10" fill="${color}" stroke="white" stroke-width="3"/></svg>`;
-  return { url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}` };
+  return L.divIcon({
+    className: bounce ? "animate-bounce" : "",
+    html: svg,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+  });
 }
 
-function CenterMessage({
-  icon,
-  text,
-}: {
-  icon: React.ReactNode;
-  text: string;
-}) {
+function CenterMessage({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center bg-blue-50">
       {icon}
       <p className="text-sm text-muted-foreground max-w-xs">{text}</p>
     </div>
   );
+}
+
+/** Recenter the map imperatively whenever `center` changes. */
+function Recenter({ center }: { center: LatLng }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView([center.lat, center.lng]);
+  }, [center, map]);
+  return null;
 }
 
 function MapCanvas({
@@ -45,48 +55,28 @@ function MapCanvas({
   selectedTaskerId: number | null;
   onSelectTasker: (id: number) => void;
 }) {
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY ?? "",
-  });
-
-  if (loadError) {
-    return (
-      <CenterMessage
-        icon={<AlertCircle className="w-10 h-10 text-red-400" />}
-        text="Không tải được Google Maps. Kiểm tra lại API key và kết nối mạng."
-      />
-    );
-  }
-  if (!isLoaded) {
-    return (
-      <CenterMessage
-        icon={<Loader2 className="w-8 h-8 text-blue-500 animate-spin" />}
-        text="Đang tải bản đồ…"
-      />
-    );
-  }
-
   return (
-    <GoogleMap
-      mapContainerStyle={{ width: "100%", height: "100%" }}
-      center={center}
+    <MapContainer
+      center={[center.lat, center.lng]}
       zoom={14}
-      options={{ streetViewControl: false, mapTypeControl: false, fullscreenControl: false }}
+      style={{ width: "100%", height: "100%" }}
+      scrollWheelZoom
     >
-      <Marker position={center} icon={markerIcon("#2563eb")} title="Vị trí của bạn" />
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      <Recenter center={center} />
+      <Marker position={[center.lat, center.lng]} icon={markerIcon("#2563eb", false)} title="Vị trí của bạn" />
       {taskers.map((t) => (
         <Marker
           key={t.taskerId}
-          position={{ lat: t.latitude, lng: t.longitude }}
-          icon={markerIcon(t.status === 1 ? "#22c55e" : "#f59e0b")}
-          animation={
-            selectedTaskerId === t.taskerId ? google.maps.Animation.BOUNCE : undefined
-          }
-          onClick={() => onSelectTasker(t.taskerId)}
+          position={[t.latitude, t.longitude]}
+          icon={markerIcon(t.status === 1 ? "#22c55e" : "#f59e0b", selectedTaskerId === t.taskerId)}
+          eventHandlers={{ click: () => onSelectTasker(t.taskerId) }}
         />
       ))}
-    </GoogleMap>
+    </MapContainer>
   );
 }
 
@@ -182,12 +172,7 @@ export function TechnicianMap({
 
       {/* Map */}
       <div className="flex-1 relative overflow-hidden bg-blue-50">
-        {!GOOGLE_MAPS_API_KEY ? (
-          <CenterMessage
-            icon={<KeyRound className="w-10 h-10 text-amber-400" />}
-            text="Chưa cấu hình Google Maps API key. Thêm VITE_GOOGLE_MAPS_API_KEY vào file .env để bật bản đồ."
-          />
-        ) : !locReady ? (
+        {!locReady ? (
           <CenterMessage
             icon={<Loader2 className="w-8 h-8 text-blue-500 animate-spin" />}
             text="Đang xác định vị trí của bạn…"

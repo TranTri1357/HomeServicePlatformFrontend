@@ -8,6 +8,7 @@ export type Screen =
   | "serviceDetail"
   | "technicianMap"
   | "booking"
+  | "emergencyBooking"
   | "payment"
   | "mockGateway"
   | "chat"

@@ -1,21 +1,19 @@
-import { useState } from "react";
-import {
-  MapPin,
-  Plus,
-  Pencil,
-  Trash2,
-  Check,
-  Star,
-  Loader2,
-  AlertCircle,
-  LocateFixed,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { MapPin, Plus, Pencil, Trash2, Check, Star, Loader2, AlertCircle } from "lucide-react";
 import type { Screen, CustomerAddress, AddressInput } from "@/shared/types";
 import { useGoBack } from "@/app/routes/useGoBack";
 import { addressApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { notify, getErrorMessage } from "@/shared/lib";
+import {
+  fetchProvinces,
+  fetchDistricts,
+  fetchWards,
+  geocodeAddress,
+  type AdminUnit,
+} from "@/services/vnAddress";
+import { LocationPicker } from "./LocationPicker";
 
 export function CustomerAddresses({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const goBack = useGoBack("customerProfile");
@@ -25,25 +23,77 @@ export function CustomerAddresses({ onNavigate }: { onNavigate: (s: Screen) => v
   const [editing, setEditing] = useState<CustomerAddress | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [line, setLine] = useState("");
-  const [province, setProvince] = useState("");
-  const [district, setDistrict] = useState("");
-  const [ward, setWard] = useState("");
+  // Administrative selection — codes are saved to the backend, names drive display + geocoding.
+  const [province, setProvince] = useState<AdminUnit | null>(null);
+  const [district, setDistrict] = useState<AdminUnit | null>(null);
+  const [ward, setWard] = useState<AdminUnit | null>(null);
+  const [provinces, setProvinces] = useState<AdminUnit[]>([]);
+  const [districts, setDistricts] = useState<AdminUnit[]>([]);
+  const [wards, setWards] = useState<AdminUnit[]>([]);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingWards, setLoadingWards] = useState(false);
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
-  const [locating, setLocating] = useState(false);
   const [makeDefault, setMakeDefault] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Human-readable "Ward · District · Province" label per address, for the list card.
+  const [labels, setLabels] = useState<Record<number, string>>({});
 
   // Delete confirm.
   const [deleteTarget, setDeleteTarget] = useState<CustomerAddress | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [busyDefaultId, setBusyDefaultId] = useState<number | null>(null);
 
+  // Load the province list once (also used to resolve names for the list cards).
+  useEffect(() => {
+    fetchProvinces()
+      .then(setProvinces)
+      .catch(() => notify.error("Không tải được danh sách Tỉnh/Thành."));
+  }, []);
+
+  // Resolve code → name for every saved address so cards show real place names.
+  // Depend on a stable content signature (not the array identity, which changes
+  // every render because of the `= []` default) to avoid a setState render loop.
+  const addressSig = addresses
+    .map((a) => `${a.addressId}:${a.provinceCode}:${a.districtCode}:${a.wardCode}`)
+    .join("|");
+  useEffect(() => {
+    if (provinces.length === 0 || addresses.length === 0) return;
+    let alive = true;
+    (async () => {
+      const next: Record<number, string> = {};
+      for (const addr of addresses) {
+        if (!addr.provinceCode && !addr.districtCode && !addr.wardCode) continue;
+        try {
+          const [ds, ws] = await Promise.all([
+            addr.provinceCode ? fetchDistricts(addr.provinceCode) : Promise.resolve<AdminUnit[]>([]),
+            addr.districtCode ? fetchWards(addr.districtCode) : Promise.resolve<AdminUnit[]>([]),
+          ]);
+          const pName = provinces.find((p) => p.code === addr.provinceCode)?.name;
+          const dName = ds.find((d) => d.code === addr.districtCode)?.name;
+          const wName = ws.find((w) => w.code === addr.wardCode)?.name;
+          const label = [wName, dName, pName].filter(Boolean).join(" · ");
+          if (label) next[addr.addressId] = label;
+        } catch {
+          /* fall back to nothing for this address */
+        }
+      }
+      if (alive) setLabels(next);
+    })();
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addressSig, provinces]);
+
   const resetGeoFields = () => {
-    setProvince("");
-    setDistrict("");
-    setWard("");
+    setProvince(null);
+    setDistrict(null);
+    setWard(null);
+    setDistricts([]);
+    setWards([]);
     setLat(null);
     setLng(null);
   };
@@ -57,56 +107,111 @@ export function CustomerAddresses({ onNavigate }: { onNavigate: (s: Screen) => v
     setShowForm(true);
   };
 
-  const openEdit = (addr: CustomerAddress) => {
+  const openEdit = async (addr: CustomerAddress) => {
     setEditing(addr);
     setLine(addr.addressLine);
-    setProvince(addr.provinceCode ?? "");
-    setDistrict(addr.districtCode ?? "");
-    setWard(addr.wardCode ?? "");
     setLat(addr.latitude || null); // 0 = chưa có toạ độ
     setLng(addr.longitude || null);
     setMakeDefault(addr.isDefault);
     setFormError(null);
     setShowForm(true);
+
+    // Prefill the cascading selects from the saved codes.
+    setProvince(addr.provinceCode ? { code: addr.provinceCode, name: "" } : null);
+    setDistrict(addr.districtCode ? { code: addr.districtCode, name: "" } : null);
+    setWard(addr.wardCode ? { code: addr.wardCode, name: "" } : null);
+    setDistricts([]);
+    setWards([]);
+    try {
+      const provs = provinces.length ? provinces : await fetchProvinces();
+      const pName = provs.find((p) => p.code === addr.provinceCode)?.name ?? "";
+      if (addr.provinceCode) setProvince({ code: addr.provinceCode, name: pName });
+      if (addr.provinceCode) {
+        const ds = await fetchDistricts(addr.provinceCode);
+        setDistricts(ds);
+        if (addr.districtCode)
+          setDistrict({ code: addr.districtCode, name: ds.find((d) => d.code === addr.districtCode)?.name ?? "" });
+        if (addr.districtCode) {
+          const ws = await fetchWards(addr.districtCode);
+          setWards(ws);
+          if (addr.wardCode)
+            setWard({ code: addr.wardCode, name: ws.find((w) => w.code === addr.wardCode)?.name ?? "" });
+        }
+      }
+    } catch {
+      /* selects stay partially filled; user can re-pick */
+    }
   };
 
-  const useCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      notify.error("Trình duyệt không hỗ trợ định vị.");
-      return;
+  const onProvinceChange = async (code: string) => {
+    const p = provinces.find((x) => x.code === code) ?? null;
+    setProvince(p);
+    setDistrict(null);
+    setWard(null);
+    setDistricts([]);
+    setWards([]);
+    if (!p) return;
+    setLoadingDistricts(true);
+    try {
+      setDistricts(await fetchDistricts(p.code));
+    } catch {
+      notify.error("Không tải được Quận/Huyện.");
+    } finally {
+      setLoadingDistricts(false);
     }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLat(pos.coords.latitude);
-        setLng(pos.coords.longitude);
-        setLocating(false);
-        notify.success("Đã lấy toạ độ vị trí hiện tại.");
-      },
-      () => {
-        setLocating(false);
-        notify.error("Không lấy được vị trí. Kiểm tra quyền định vị.");
-      },
-      { enableHighAccuracy: true, timeout: 8000 },
-    );
+  };
+
+  const onDistrictChange = async (code: string) => {
+    const d = districts.find((x) => x.code === code) ?? null;
+    setDistrict(d);
+    setWard(null);
+    setWards([]);
+    if (!d) return;
+    setLoadingWards(true);
+    try {
+      setWards(await fetchWards(d.code));
+    } catch {
+      notify.error("Không tải được Phường/Xã.");
+    } finally {
+      setLoadingWards(false);
+    }
   };
 
   const saveForm = async () => {
     setFormError(null);
     if (!line.trim()) return setFormError("Vui lòng nhập địa chỉ chi tiết.");
 
-    const payload: AddressInput = {
-      addressLine: line.trim(),
-      provinceCode: province.trim() || undefined,
-      districtCode: district.trim() || undefined,
-      wardCode: ward.trim() || undefined,
-      latitude: lat ?? undefined,
-      longitude: lng ?? undefined,
-      isDefault: makeDefault,
-    };
-
     setSaving(true);
     try {
+      // Coordinates: prefer any already captured (geolocation / edit), otherwise
+      // geocode the chosen address so nearby-tasker matching keeps working.
+      let latitude = lat ?? undefined;
+      let longitude = lng ?? undefined;
+      if (latitude == null || longitude == null) {
+        const parts = [line.trim(), ward?.name, district?.name, province?.name, "Việt Nam"].filter(
+          Boolean,
+        );
+        try {
+          const geo = await geocodeAddress(parts.join(", "));
+          if (geo) {
+            latitude = geo.lat;
+            longitude = geo.lng;
+          }
+        } catch {
+          /* geocoding is best-effort; save without coords if it fails */
+        }
+      }
+
+      const payload: AddressInput = {
+        addressLine: line.trim(),
+        provinceCode: province?.code || undefined,
+        districtCode: district?.code || undefined,
+        wardCode: ward?.code || undefined,
+        latitude,
+        longitude,
+        isDefault: makeDefault,
+      };
+
       if (editing) {
         await addressApi.updateAddress(editing.addressId, payload);
         notify.success("Cập nhật địa chỉ thành công");
@@ -190,12 +295,8 @@ export function CustomerAddresses({ onNavigate }: { onNavigate: (s: Screen) => v
                       </span>
                     )}
                   </div>
-                  {(addr.wardCode || addr.districtCode || addr.provinceCode) && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {[addr.wardCode, addr.districtCode, addr.provinceCode]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
+                  {labels[addr.addressId] && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{labels[addr.addressId]}</p>
                   )}
                 </div>
               </div>
@@ -265,61 +366,75 @@ export function CustomerAddresses({ onNavigate }: { onNavigate: (s: Screen) => v
               />
             </div>
 
-            {/* Administrative fields (stored as short text; max 20 chars each). */}
+            {/* Administrative selects — cascading Tỉnh → Quận → Phường; store codes. */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Tỉnh/Thành</label>
+              <select
+                value={province?.code ?? ""}
+                onChange={(e) => void onProvinceChange(e.target.value)}
+                className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                disabled={provinces.length === 0}
+              >
+                <option value="">-- Chọn Tỉnh/Thành --</option>
+                {provinces.map((p) => (
+                  <option key={p.code} value={p.code}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-muted-foreground">Tỉnh/Thành</label>
-                <input
-                  value={province}
-                  onChange={(e) => setProvince(e.target.value)}
-                  maxLength={20}
-                  className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="TP.HCM"
-                />
+                <label className="text-xs font-semibold text-muted-foreground">Quận/Huyện</label>
+                <select
+                  value={district?.code ?? ""}
+                  onChange={(e) => void onDistrictChange(e.target.value)}
+                  className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                  disabled={!province || loadingDistricts}
+                >
+                  <option value="">{loadingDistricts ? "Đang tải..." : "-- Chọn --"}</option>
+                  {districts.map((d) => (
+                    <option key={d.code} value={d.code}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-muted-foreground">Quận/Huyện</label>
-                <input
-                  value={district}
-                  onChange={(e) => setDistrict(e.target.value)}
-                  maxLength={20}
-                  className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Quận 1"
-                />
+                <label className="text-xs font-semibold text-muted-foreground">Phường/Xã</label>
+                <select
+                  value={ward?.code ?? ""}
+                  onChange={(e) =>
+                    setWard(wards.find((w) => w.code === e.target.value) ?? null)
+                  }
+                  className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                  disabled={!district || loadingWards}
+                >
+                  <option value="">{loadingWards ? "Đang tải..." : "-- Chọn --"}</option>
+                  {wards.map((w) => (
+                    <option key={w.code} value={w.code}>
+                      {w.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Phường/Xã</label>
-              <input
-                value={ward}
-                onChange={(e) => setWard(e.target.value)}
-                maxLength={20}
-                className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Bến Nghé"
-              />
-            </div>
 
-            {/* Coordinates (used to match nearby taskers). */}
+            {/* Coordinates (used to match nearby taskers) — pick any location on the map. */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Toạ độ</label>
-              <button
-                type="button"
-                onClick={useCurrentLocation}
-                disabled={locating}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm font-semibold text-blue-600 hover:bg-accent transition-colors disabled:opacity-60"
-              >
-                {locating ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <LocateFixed className="w-4 h-4" />
-                )}
-                {locating ? "Đang lấy vị trí..." : "Dùng vị trí hiện tại"}
-              </button>
-              {lat != null && lng != null && (
-                <p className="text-[11px] text-green-600 font-medium">
-                  Đã lấy toạ độ: {lat.toFixed(5)}, {lng.toFixed(5)}
-                </p>
-              )}
+              <label className="text-xs font-semibold text-muted-foreground">
+                Vị trí trên bản đồ
+              </label>
+              <LocationPicker
+                value={lat != null && lng != null ? { lat, lng } : null}
+                onChange={(la, ln) => {
+                  setLat(la);
+                  setLng(ln);
+                }}
+                fallbackQuery={[line, ward?.name, district?.name, province?.name, "Việt Nam"]
+                  .filter(Boolean)
+                  .join(", ")}
+              />
             </div>
 
             <label className="flex items-center gap-2 cursor-pointer">

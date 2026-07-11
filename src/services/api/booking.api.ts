@@ -4,6 +4,8 @@ import type {
   CreateBookingResult,
   CreateDisputeInput,
   CreateReviewInput,
+  EmergencyBookingInput,
+  EmergencyBookingResult,
   MyBooking,
 } from "@/shared/types";
 
@@ -21,6 +23,32 @@ export async function getMyBookings(): Promise<MyBooking[]> {
 export async function createBooking(input: CreateBookingInput): Promise<CreateBookingResult> {
   const response = await post<ApiResponse<CreateBookingResult>>("/customer/bookings", input);
   return unwrap(response);
+}
+
+/**
+ * POST /api/customer/bookings/emergency — call one nearby available tasker directly.
+ * CustomerId comes from the JWT. Pays cash on completion (no upfront payment).
+ */
+export async function createEmergencyBooking(
+  input: EmergencyBookingInput,
+): Promise<EmergencyBookingResult> {
+  const response = await post<ApiResponse<EmergencyBookingResult>>(
+    "/customer/bookings/emergency",
+    input,
+  );
+  return unwrap(response);
+}
+
+/**
+ * POST /api/customer/bookings/emergency/{id}/cancel — customer cancels a pending
+ * emergency request (timed out / chose another tasker). Notifies the tasker.
+ */
+export async function cancelEmergencyBooking(bookingId: number): Promise<boolean> {
+  const response = await post<ApiResponse<{ customerId: number; taskerId: number }>>(
+    `/customer/bookings/emergency/${bookingId}/cancel`,
+    {},
+  );
+  return Boolean(unwrap(response));
 }
 
 /**

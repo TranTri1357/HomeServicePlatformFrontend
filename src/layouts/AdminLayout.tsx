@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  Bell,
   Wrench,
   BarChart2,
   FileText,
@@ -11,7 +10,6 @@ import {
   Star,
   Users,
   Menu,
-  Search,
   ChevronDown,
   ChevronRight,
   LogOut,
@@ -23,24 +21,24 @@ const adminMenu = [
     group: "Tổng quan",
     items: [
       { screen: "adminDashboard" as Screen, icon: BarChart2, label: "Dashboard" },
-      { screen: "adminOrders" as Screen, icon: FileText, label: "Đơn hàng", badge: 3 },
+      { screen: "adminOrders" as Screen, icon: FileText, label: "Đơn hàng" },
     ],
   },
   {
     group: "Quản lý",
     items: [
-      { screen: "adminProviders" as Screen, icon: Wrench, label: "Quản lý thợ", badge: 2 },
+      { screen: "adminProviders" as Screen, icon: Wrench, label: "Quản lý thợ" },
       { screen: "adminServices" as Screen, icon: Package, label: "Dịch vụ" },
       { screen: "adminServiceTypes" as Screen, icon: Layers, label: "Loại dịch vụ" },
       { screen: "adminAccounts" as Screen, icon: Users, label: "Tài khoản" },
-      { screen: "adminReviews" as Screen, icon: Star, label: "Đánh giá", badge: 2 },
+      { screen: "adminReviews" as Screen, icon: Star, label: "Đánh giá" },
     ],
   },
   {
     group: "Cấu hình",
     items: [
       { screen: "adminCommissions" as Screen, icon: Percent, label: "Hoa hồng" },
-      { screen: "adminComplaints" as Screen, icon: Flag, label: "Khiếu nại", badge: 2 },
+      { screen: "adminComplaints" as Screen, icon: Flag, label: "Khiếu nại" },
     ],
   },
 ];
@@ -55,7 +53,6 @@ interface AdminLayoutProps {
 export function AdminLayout({ currentScreen, onNavigate, onLogout, children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [adminSearch, setAdminSearch] = useState("");
 
   const currentLabel =
     adminMenu.flatMap((g) => g.items).find((i) => i.screen === currentScreen)?.label ?? "Admin";
@@ -103,15 +100,6 @@ export function AdminLayout({ currentScreen, onNavigate, onLogout, children }: A
                   {(sidebarOpen || mobile) && (
                     <span className="flex-1 text-left">{item.label}</span>
                   )}
-                  {(sidebarOpen || mobile) &&
-                  "badge" in item &&
-                  (item as { badge?: number }).badge ? (
-                    <span
-                      className={`text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center ${active ? "bg-white text-blue-600" : "bg-red-500 text-white"}`}
-                    >
-                      {(item as { badge?: number }).badge}
-                    </span>
-                  ) : null}
                 </button>
               );
             })}
@@ -182,21 +170,6 @@ export function AdminLayout({ currentScreen, onNavigate, onLogout, children }: A
           </div>
 
           <div className="flex-1" />
-
-          <div className="hidden md:flex items-center gap-2 w-64 bg-muted rounded-xl px-3 py-2">
-            <Search className="w-3.5 h-3.5 text-muted-foreground" />
-            <input
-              value={adminSearch}
-              onChange={(e) => setAdminSearch(e.target.value)}
-              className="flex-1 bg-transparent text-sm focus:outline-none"
-              placeholder="Tìm kiếm..."
-            />
-          </div>
-
-          <button className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-muted transition-colors">
-            <Bell className="w-4 h-4 text-muted-foreground" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-          </button>
 
           <div className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl hover:bg-muted transition-colors cursor-pointer">
             <div className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center">

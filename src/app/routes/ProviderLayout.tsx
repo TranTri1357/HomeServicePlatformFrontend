@@ -4,6 +4,7 @@ import type { Screen } from "@/shared/types";
 import { PROVIDER_NAV_ITEMS } from "@/app/config";
 import { DesktopTopNav } from "@/layouts";
 import { ProviderNav } from "@/components/Navigation";
+import { EmergencyListener } from "@/components/Emergency/EmergencyListener";
 import { useNavBadges } from "@/shared/hooks";
 import { getPathForScreen, getScreenForPath } from "./screenPaths";
 
@@ -24,6 +25,9 @@ export function ProviderLayout() {
 
   return (
     <div className="w-full h-full flex flex-col" style={{ fontFamily: "'Inter', sans-serif" }}>
+      {/* Global emergency request modal (SignalR-driven) */}
+      <EmergencyListener onNavigate={onNavigate} />
+
       {/* Desktop */}
       <div className="hidden lg:flex flex-col h-full">
         <DesktopTopNav

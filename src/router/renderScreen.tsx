@@ -5,6 +5,7 @@ import { CustomerProfile, ProviderProfile } from "@/pages/Profile";
 import { ServiceList, ServiceDetail, ProviderServiceManagement } from "@/pages/Service";
 import { TechnicianMap, TechnicianDetail } from "@/pages/Technician";
 import { Booking, BookingManagement } from "@/pages/Booking";
+import { EmergencyBooking } from "@/pages/Emergency";
 import { Payment, MockGateway } from "@/pages/Payment";
 import { CustomerWallet } from "@/pages/Wallet";
 import { CustomerAddresses } from "@/pages/Address";
@@ -36,7 +37,7 @@ export function renderScreen(
     case "customerHome":
       return <CustomerHome onNavigate={navigate} />;
     case "serviceList":
-      return <ServiceList onNavigate={navigate} />;
+      return <ServiceList onNavigate={navigate} data={screenData as { categoryId?: number }} />;
     case "serviceDetail":
       return <ServiceDetail onNavigate={navigate} data={screenData as { serviceId?: number }} />;
     case "technicianMap":
@@ -47,6 +48,8 @@ export function renderScreen(
       );
     case "booking":
       return <Booking onNavigate={navigate} data={screenData as { serviceId?: number }} />;
+    case "emergencyBooking":
+      return <EmergencyBooking onNavigate={navigate} />;
     case "payment":
       return (
         <Payment

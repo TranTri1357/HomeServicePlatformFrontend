@@ -49,6 +49,7 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
 
   const weekly = dashboard?.weeklyRevenue ?? [];
   const maxRevenue = Math.max(1, ...weekly.map((d) => d.amount));
+  const weeklyTotal = weekly.reduce((sum, d) => sum + d.amount, 0);
 
   const stats = [
     {
@@ -202,29 +203,45 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
 
         {/* Revenue Chart */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <h3 className="font-bold text-foreground mb-4">Doanh thu 7 ngày</h3>
-          <div className="flex items-end gap-2 h-24">
-            {weekly.length === 0
-              ? [1, 2, 3, 4, 5, 6, 7].map((i) => (
-                  <div key={i} className="flex-1 bg-slate-100 rounded-t-lg h-1/2" />
-                ))
-              : weekly.map((d, i) => {
-                  const pct = Math.round((d.amount / maxRevenue) * 100);
-                  const isLast = i === weekly.length - 1;
-                  return (
-                    <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
-                      <div
-                        className={`w-full rounded-t-lg transition-all ${isLast ? "bg-blue-600" : "bg-blue-100"}`}
-                        style={{ height: `${Math.max(pct, 4)}%` }}
-                        title={`${formatVnd(d.amount)}đ`}
-                      />
-                      <span className="text-[10px] text-muted-foreground">
-                        {WEEKDAYS[new Date(d.date).getDay()]}
-                      </span>
-                    </div>
-                  );
-                })}
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-foreground">Doanh thu 7 ngày</h3>
+            {weeklyTotal > 0 && (
+              <span className="text-sm font-bold text-blue-600">{formatVnd(weeklyTotal)}đ</span>
+            )}
           </div>
+          {weekly.length === 0 ? (
+            <div className="flex items-end gap-2 h-24">
+              {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                <div key={i} className="flex-1 bg-slate-100 rounded-t-lg h-1/2 animate-pulse" />
+              ))}
+            </div>
+          ) : weeklyTotal === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-1 h-24 text-center">
+              <p className="text-sm text-muted-foreground">Chưa có doanh thu trong 7 ngày qua.</p>
+              <p className="text-xs text-muted-foreground">
+                Doanh thu được tính khi công việc hoàn thành.
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-end gap-2 h-24">
+              {weekly.map((d, i) => {
+                const pct = Math.round((d.amount / maxRevenue) * 100);
+                const isLast = i === weekly.length - 1;
+                return (
+                  <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className={`w-full rounded-t-lg transition-all ${isLast ? "bg-blue-600" : "bg-blue-100"}`}
+                      style={{ height: `${Math.max(pct, 4)}%` }}
+                      title={`${formatVnd(d.amount)}đ`}
+                    />
+                    <span className="text-[10px] text-muted-foreground">
+                      {WEEKDAYS[new Date(d.date).getDay()]}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Quick Actions */}

@@ -100,6 +100,15 @@ export async function cancelJob(bookingId: number, cancelReason: string): Promis
   return unwrap(response);
 }
 
+/** Decline an emergency request (tasker rejects or the 30s window expires). */
+export async function declineEmergencyJob(bookingId: number): Promise<boolean> {
+  const response = await post<ApiResponse<{ customerId: number; taskerId: number }>>(
+    `/tasker/bookings/emergency/${bookingId}/decline`,
+    {},
+  );
+  return Boolean(unwrap(response));
+}
+
 export type GetTopTaskersParams = {
   /** Number of featured taskers to return. Backend validates 1 ≤ limit ≤ 10 (default 5). */
   limit?: number;

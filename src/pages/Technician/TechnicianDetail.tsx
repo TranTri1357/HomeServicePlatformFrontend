@@ -1,18 +1,21 @@
+import { useState } from "react";
 import {
   ChevronLeft,
   Shield,
   Star,
   Briefcase,
   Award,
-  MessageCircle,
-  Phone,
   AlertCircle,
+  Loader2,
+  X,
+  Wrench,
+  ChevronRight,
 } from "lucide-react";
-import type { Screen } from "@/shared/types";
+import type { Screen, TaskerServiceOption } from "@/shared/types";
 import { taskerApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
 import { Avatar } from "@/shared/ui";
-import { getApiAssetUrl, formatDateVn } from "@/shared/lib";
+import { getApiAssetUrl, formatDateVn, formatVnd, getErrorMessage, notify } from "@/shared/lib";
 import { useGoBack } from "@/app/routes/useGoBack";
 
 export function TechnicianDetail({
@@ -24,6 +27,24 @@ export function TechnicianDetail({
 }) {
   const taskerId = data?.taskerId;
   const goBack = useGoBack("customerHome");
+
+  // Service picker sheet: choose which of the tasker's services to book.
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [services, setServices] = useState<TaskerServiceOption[]>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
+
+  const openPicker = async () => {
+    setPickerOpen(true);
+    if (services.length > 0 || !taskerId) return;
+    setLoadingServices(true);
+    try {
+      setServices(await taskerApi.getTaskerServiceOptions(taskerId));
+    } catch (err) {
+      notify.error(getErrorMessage(err));
+    } finally {
+      setLoadingServices(false);
+    }
+  };
 
   const {
     data: tech,
@@ -105,7 +126,7 @@ export function TechnicianDetail({
   ].map(([star, count]) => [star, totalRatings > 0 ? Math.round((count / totalRatings) * 100) : 0]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       <div className="flex-1 overflow-y-auto">
         {/* Header */}
         <div className="relative bg-gradient-to-br from-blue-600 to-blue-800 px-4 pt-6 pb-16">
@@ -267,14 +288,78 @@ export function TechnicianDetail({
 
       {/* CTA */}
       <div className="bg-white border-t border-border px-4 py-4 flex gap-3">
-       
         <button
-          onClick={() => onNavigate("booking", { taskerId: tech.taskerId })}
+          onClick={openPicker}
           className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
         >
           Đặt lịch với {firstName}
         </button>
       </div>
+
+      {/* Service picker bottom sheet */}
+      {pickerOpen && (
+        <div className="absolute inset-0 z-40 flex flex-col justify-end">
+          <button
+            aria-label="Đóng"
+            onClick={() => setPickerOpen(false)}
+            className="absolute inset-0 bg-black/40"
+          />
+          <div className="relative bg-white rounded-t-3xl max-h-[75%] flex flex-col animate-in slide-in-from-bottom duration-200">
+            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-border">
+              <div>
+                <h3 className="font-bold text-foreground">Chọn dịch vụ của {firstName}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Chọn dịch vụ để tiếp tục đặt lịch với thợ này.
+                </p>
+              </div>
+              <button
+                onClick={() => setPickerOpen(false)}
+                className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0"
+              >
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {loadingServices ? (
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-8">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Đang tải dịch vụ...
+                </div>
+              ) : services.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Thợ này chưa cấu hình dịch vụ nào.
+                </p>
+              ) : (
+                services.map((svc) => (
+                  <button
+                    key={svc.serviceId}
+                    onClick={() =>
+                      onNavigate("booking", { serviceId: svc.serviceId, taskerId: tech.taskerId })
+                    }
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted hover:bg-accent transition-colors text-left"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                      <Wrench className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-foreground truncate">
+                        {svc.serviceName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {svc.categoryName} · ~{svc.durationMinutes} phút
+                      </p>
+                      <p className="text-blue-600 font-bold text-sm mt-0.5">
+                        {formatVnd(svc.price)}đ
+                      </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

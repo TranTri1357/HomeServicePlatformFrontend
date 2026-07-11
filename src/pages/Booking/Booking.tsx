@@ -36,7 +36,7 @@ export function Booking({
   data,
 }: {
   onNavigate: (s: Screen, d?: object) => void;
-  data?: { serviceId?: number };
+  data?: { serviceId?: number; taskerId?: number };
 }) {
   const serviceId = data?.serviceId;
   const goBack = useGoBack("customerHome");
@@ -64,7 +64,8 @@ export function Booking({
 
   const [dateIdx, setDateIdx] = useState(0);
   const [time, setTime] = useState("09:00");
-  const [taskerId, setTaskerId] = useState<number | undefined>(undefined);
+  // Pre-select the tasker when the customer arrived from a technician's profile.
+  const [taskerId, setTaskerId] = useState<number | undefined>(data?.taskerId);
   const [fullName, setFullName] = useState(user?.fullName ?? "");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
