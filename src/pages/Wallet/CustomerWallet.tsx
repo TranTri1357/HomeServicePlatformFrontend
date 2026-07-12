@@ -131,7 +131,7 @@ export function CustomerWallet({ onNavigate }: { onNavigate: (s: Screen, d?: obj
                         className={`text-sm font-bold ${meta.credit ? "text-green-600" : "text-red-600"}`}
                       >
                         {meta.credit ? "+" : "-"}
-                        {formatVnd(t.amount)}đ
+                        {formatVnd(Math.abs(t.amount))}đ
                       </p>
                       <p className="text-[11px] text-muted-foreground">
                         Số dư: {formatVnd(t.balanceAfter)}đ
