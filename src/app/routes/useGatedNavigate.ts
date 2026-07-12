@@ -20,7 +20,9 @@ export function useGatedNavigate() {
     (nextScreen: Screen, data?: object) => {
       const path = getPathForScreen(nextScreen);
       if (!isAuthenticated && CUSTOMER_PROTECTED_SCREENS.includes(nextScreen)) {
-        requireAuth(path);
+        // Giữ lại `data` (vd: serviceId) để sau khi đăng nhập quay lại đúng màn
+        // với đầy đủ tham số, tránh lỗi "Không xác định được dịch vụ cần đặt".
+        requireAuth(path, data);
         return;
       }
       navigate(path, { state: data });

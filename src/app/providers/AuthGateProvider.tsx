@@ -15,8 +15,9 @@ interface AuthGateValue {
    * Cổng đăng nhập cấp hành động. Trả về true nếu đã đăng nhập (cứ tiếp tục);
    * nếu là khách vãng lai thì mở popup nhắc đăng nhập và trả về false.
    * @param intendedPath đường dẫn quay lại sau khi đăng nhập thành công.
+   * @param intendedState state điều hướng cần khôi phục (vd: { serviceId }).
    */
-  requireAuth: (intendedPath?: string) => boolean;
+  requireAuth: (intendedPath?: string, intendedState?: object) => boolean;
 }
 
 const AuthGateContext = createContext<AuthGateValue | undefined>(undefined);
@@ -26,11 +27,13 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [intended, setIntended] = useState<string | undefined>(undefined);
+  const [intendedState, setIntendedState] = useState<object | undefined>(undefined);
 
   const requireAuth = useCallback(
-    (intendedPath?: string) => {
+    (intendedPath?: string, intendedState?: object) => {
       if (isAuthenticated) return true;
       setIntended(intendedPath);
+      setIntendedState(intendedState);
       setOpen(true);
       return false;
     },
@@ -39,7 +42,10 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
 
   const goLogin = () => {
     setOpen(false);
-    navigate("/auth", intended ? { state: { from: { pathname: intended } } } : undefined);
+    navigate(
+      "/auth",
+      intended ? { state: { from: { pathname: intended, state: intendedState } } } : undefined,
+    );
   };
 
   const value = useMemo<AuthGateValue>(() => ({ requireAuth }), [requireAuth]);
