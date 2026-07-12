@@ -8,6 +8,7 @@
   Calendar,
   User,
   FileText,
+  Wallet,
 } from "lucide-react";
 import type { NavItem } from "@/shared/types";
 
@@ -30,5 +31,6 @@ export const PROVIDER_NAV_ITEMS: NavItem[] = [
   { screen: "providerServiceManagement", icon: Package, label: "Dịch vụ" },
   { screen: "providerAreaRouting", icon: Route, label: "Khu vực" },
   { screen: "providerSchedule", icon: Calendar, label: "Lịch" },
+  { screen: "providerIncome", icon: Wallet, label: "Ví" },
   { screen: "providerProfile", icon: User, label: "Hồ sơ" },
 ];
