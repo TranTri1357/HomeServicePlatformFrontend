@@ -67,10 +67,14 @@ export interface IncomeEntry {
   serviceSummary: string;
   /** Giá gộp (trước hoa hồng). */
   gross: number;
-  /** Hoa hồng đã trừ. */
+  /** Hoa hồng THẬT sàn đã khấu (= held − net). */
   commission: number;
-  /** Thực nhận (ghi có ví). */
+  /** Thực nhận vào ví (= held − hoa hồng). */
   net: number;
+  /** Tiền hệ thống đã giữ cho đơn (cọc/trả hết). */
+  heldAmount: number;
+  /** Tiền mặt thợ thu trực tiếp từ khách (= gross − held). */
+  cashReceived: number;
   balanceAfter: number;
   createdAt: string;
 }
