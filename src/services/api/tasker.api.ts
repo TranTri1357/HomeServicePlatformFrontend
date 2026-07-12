@@ -57,6 +57,15 @@ export async function getTaskerIncome(page = 1, pageSize = 20): Promise<TaskerIn
   return unwrap(response);
 }
 
+/**
+ * POST /api/tasker/wallet/withdraw — rút tiền khỏi ví thu nhập (demo: trừ thẳng
+ * số dư). Trả về số dư mới sau khi rút.
+ */
+export async function withdrawIncome(amount: number): Promise<number> {
+  const response = await post<ApiResponse<number>>("/tasker/wallet/withdraw", { amount });
+  return unwrap(response);
+}
+
 /** PUT /api/tasker/availability — turn "accepting jobs" on/off. Returns new state. */
 export async function setAvailability(isAvailable: boolean): Promise<boolean> {
   const response = await put<ApiResponse<boolean>>("/tasker/availability", { isAvailable });

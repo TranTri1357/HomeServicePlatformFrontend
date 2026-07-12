@@ -57,9 +57,11 @@ export interface TaskerDashboard {
   weeklyRevenue: DailyRevenue[];
 }
 
-/** Một lần ghi có thu nhập ứng với một đơn hoàn thành. */
+/** Một dòng giao dịch ví của thợ (thu nhập, rút tiền, điều chỉnh...). */
 export interface IncomeEntry {
   transactionId: number;
+  /** Loại giao dịch: 4=Thu nhập, 5=Rút tiền, 6=Điều chỉnh... */
+  type: number;
   bookingId: number;
   serviceSummary: string;
   /** Giá gộp (trước hoa hồng). */
