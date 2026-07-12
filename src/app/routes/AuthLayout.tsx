@@ -5,7 +5,7 @@ import { useAuth } from "@/app/providers";
 import { getHomePathByRole } from "@/shared/auth/roles";
 
 interface LocationState {
-  from?: { pathname?: string };
+  from?: { pathname?: string; state?: unknown };
 }
 
 export function AuthLayout() {
@@ -21,10 +21,15 @@ export function AuthLayout() {
       roles: user.roles,
       mode,
     });
-    // Return the user to the page they were bounced from, if any.
+    // Return the user to the page they were bounced from, if any — kèm theo
+    // state gốc (vd: { serviceId }) để màn đích có đủ tham số. Dùng chung cho cả
+    // luồng popup (AuthGate) lẫn ProtectedRoute (from = location, có sẵn .state).
     // ProtectedRoute still guards it, so a role-mismatch falls back to home.
-    const from = (location.state as LocationState | null)?.from?.pathname;
-    navigate(from || getHomePathByRole(mode), { replace: true });
+    const from = (location.state as LocationState | null)?.from;
+    navigate(from?.pathname || getHomePathByRole(mode), {
+      replace: true,
+      state: from?.state,
+    });
   };
 
   return (

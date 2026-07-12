@@ -63,7 +63,8 @@ export function Booking({
   }, []);
 
   const [dateIdx, setDateIdx] = useState(0);
-  const [time, setTime] = useState("09:00");
+  // Không chọn sẵn khung giờ; khách phải tự chọn (bấm lại để bỏ chọn).
+  const [time, setTime] = useState("");
   // Pre-select the tasker when the customer arrived from a technician's profile.
   const [taskerId, setTaskerId] = useState<number | undefined>(data?.taskerId);
   const [fullName, setFullName] = useState(user?.fullName ?? "");
@@ -265,6 +266,7 @@ export function Booking({
     if (!PHONE_REGEX.test(phone.trim()))
       return setFormError("Số điện thoại không đúng định dạng di động Việt Nam (10 số).");
     if (!address.trim()) return setFormError("Vui lòng nhập địa chỉ chi tiết.");
+    if (!time) return setFormError("Vui lòng chọn giờ hẹn.");
 
     const base = new Date(dateOptions[dateIdx]);
     const [h, m] = time.split(":").map(Number);
@@ -500,7 +502,7 @@ export function Booking({
                 return (
                   <button
                     key={t.value}
-                    onClick={() => t.free && setTime(t.value)}
+                    onClick={() => t.free && setTime((prev) => (prev === t.value ? "" : t.value))}
                     disabled={!t.free}
                     className={`py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                       active
