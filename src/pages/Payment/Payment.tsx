@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   CheckCircle,
-  DollarSign,
   Wallet,
   Smartphone,
   Check,
@@ -22,11 +21,10 @@ type PaymentMethodOption = {
   desc: string;
 };
 
-// Wallet (1) & Cash (2) are real; MoMo (3) & ZaloPay (4) go through the
-// simulated gateway (demo, no merchant credentials).
+// Ví (1) trừ số dư ngay; MoMo (3) & ZaloPay (4) qua cổng giả lập (demo, chưa có
+// merchant credentials). Đã bỏ phương thức "Tiền mặt" theo yêu cầu nghiệp vụ.
 const METHODS: PaymentMethodOption[] = [
   { id: 1, label: "Ví hệ thống", icon: Wallet, desc: "Trừ trực tiếp từ số dư ví, xác nhận ngay" },
-  { id: 2, label: "Tiền mặt", icon: DollarSign, desc: "Thanh toán cho thợ khi hoàn thành" },
   { id: 3, label: "MoMo", icon: Smartphone, desc: "Cổng giả lập (demo)" },
   { id: 4, label: "ZaloPay", icon: Smartphone, desc: "Cổng giả lập (demo)" },
 ];
@@ -76,12 +74,8 @@ export function Payment({
   const depositAmount = Math.round(displayTotal * DEPOSIT_RATE);
   const displayPay = payType === "deposit" ? depositAmount : displayTotal;
 
-  // Cash makes no sense for a deposit (nothing to hand over yet), so hide it.
-  const availableMethods = payType === "deposit" ? METHODS.filter((m) => m.id !== 2) : METHODS;
-  const selectPayType = (t: PayType) => {
-    setPayType(t);
-    if (t === "deposit" && method === 2) setMethod(1); // fall back off Cash
-  };
+  const availableMethods = METHODS;
+  const selectPayType = (t: PayType) => setPayType(t);
 
   const handleConfirm = async () => {
     setSubmitting(true);
@@ -259,11 +253,9 @@ export function Payment({
           {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
           {submitting
             ? "Đang xử lý..."
-            : method === 2
-              ? `Đặt lịch · ${formatVnd(displayPay)}đ`
-              : method === 1
-                ? `Thanh toán ${formatVnd(displayPay)}đ`
-                : "Tiếp tục thanh toán"}
+            : method === 1
+              ? `Thanh toán ${formatVnd(displayPay)}đ`
+              : "Tiếp tục thanh toán"}
         </button>
       </div>
     </div>
