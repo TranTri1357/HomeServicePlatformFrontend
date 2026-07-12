@@ -10,6 +10,7 @@ import {
   Edit3,
   FileText,
   MapPin,
+  ChevronRight,
   Loader2,
 } from "lucide-react";
 import type { Screen } from "@/shared/types";
@@ -31,7 +32,7 @@ const STATUS_LABEL: Record<number, { label: string; online: boolean }> = {
 const DEFAULT_LAT = 10.7769;
 const DEFAULT_LNG = 106.7009;
 
-export function ProviderProfile(_props: { onNavigate: (s: Screen) => void }) {
+export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const { user, logout } = useAuth();
   const taskerId = user?.userId;
 
@@ -245,6 +246,21 @@ export function ProviderProfile(_props: { onNavigate: (s: Screen) => void }) {
             </div>
           ))}
         </div>
+
+        {/* Địa chỉ hoạt động (Phương án B: dùng chung bảng Address) */}
+        <button
+          onClick={() => onNavigate("providerAddresses")}
+          className="w-full bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:bg-muted transition-colors"
+        >
+          <div className="w-9 h-9 bg-accent rounded-xl flex items-center justify-center flex-shrink-0">
+            <MapPin className="w-4 h-4 text-blue-600" />
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-sm font-semibold text-foreground">Địa chỉ hoạt động</p>
+            <p className="text-xs text-muted-foreground">Khu vực nhận việc của bạn</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+        </button>
 
         {/* Verification note */}
         <div className="bg-blue-50 rounded-2xl px-4 py-3 flex items-center gap-3">

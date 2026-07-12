@@ -18,6 +18,7 @@ export * as scheduleApi from "./schedule.api";
 export * as searchApi from "./search.api";
 export * as serviceApi from "./service.api";
 export * as taskerApi from "./tasker.api";
+export * as taskerAddressApi from "./taskerAddress.api";
 export * as taskerServiceApi from "./taskerService.api";
 export * as walletApi from "./wallet.api";
 export * as bookingApi from "./booking.api";
