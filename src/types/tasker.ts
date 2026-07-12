@@ -13,6 +13,7 @@ export interface TopTasker {
 /** A tasker pin on the map — GET /api/Taskers/nearby. Status: 1 online, 2 busy. */
 export interface NearbyTasker {
   taskerId: number;
+  fullName: string;
   latitude: number;
   longitude: number;
   status: number;

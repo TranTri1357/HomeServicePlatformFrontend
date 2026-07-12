@@ -26,6 +26,33 @@ function markerIcon(color: string, bounce: boolean): L.DivIcon {
   });
 }
 
+/** 1–2 chữ cái đầu của tên (vd "Nguyễn Văn A" → "NA") cho avatar trên ghim. */
+function initialsOf(name: string): string {
+  const parts = (name || "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  const first = parts[0][0] ?? "";
+  const last = parts.length > 1 ? (parts[parts.length - 1][0] ?? "") : "";
+  return (first + last).toUpperCase();
+}
+
+/**
+ * Ghim hình giọt nước cắm đúng tọa độ, đầu ghim là avatar chữ cái của thợ, thân
+ * ghim tô màu theo trạng thái (xanh = rảnh, cam = bận). Nảy nhẹ khi được chọn.
+ */
+function taskerPinIcon(name: string, color: string, bounce: boolean): L.DivIcon {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50">
+    <path d="M20 0C9 0 0 9 0 20c0 13 20 30 20 30s20-17 20-30C40 9 31 0 20 0z" fill="${color}"/>
+    <circle cx="20" cy="19" r="13" fill="white"/>
+    <text x="20" y="19" text-anchor="middle" dominant-baseline="central" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="${color}">${initialsOf(name)}</text>
+  </svg>`;
+  return L.divIcon({
+    className: bounce ? "animate-bounce" : "",
+    html: svg,
+    iconSize: [40, 50],
+    iconAnchor: [20, 50],
+  });
+}
+
 function CenterMessage({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center bg-blue-50">
@@ -72,7 +99,7 @@ function MapCanvas({
         <Marker
           key={t.taskerId}
           position={[t.latitude, t.longitude]}
-          icon={markerIcon(t.status === 1 ? "#22c55e" : "#f59e0b", selectedTaskerId === t.taskerId)}
+          icon={taskerPinIcon(t.fullName, t.status === 1 ? "#22c55e" : "#f59e0b", selectedTaskerId === t.taskerId)}
           eventHandlers={{ click: () => onSelectTasker(t.taskerId) }}
         />
       ))}
@@ -187,7 +214,7 @@ export function TechnicianMap({
         )}
 
         {/* Legend */}
-        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur rounded-xl px-3 py-2 shadow z-10">
+        <div className="absolute top-3 left-14 bg-white/90 backdrop-blur rounded-xl px-3 py-2 shadow z-[1000]">
           <p className="text-xs font-bold text-foreground mb-1.5">Trạng thái thợ</p>
           {[
             { label: "Đang rảnh", color: "bg-green-500" },
@@ -202,7 +229,7 @@ export function TechnicianMap({
         </div>
 
         {/* Result count / status */}
-        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur rounded-xl px-3 py-2 shadow z-10 text-xs font-semibold">
+        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur rounded-xl px-3 py-2 shadow z-[1000] text-xs font-semibold">
           {loading ? (
             <span className="flex items-center gap-1.5 text-muted-foreground">
               <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang tìm…
