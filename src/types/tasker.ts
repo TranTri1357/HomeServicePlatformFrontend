@@ -56,6 +56,51 @@ export interface TaskerDashboard {
   monthCommission: number;
   /** 7 days, oldest → newest (thực nhận). */
   weeklyRevenue: DailyRevenue[];
+  /** Tổng số ĐƠN đã chốt của thợ (nhãn "X việc"). */
+  totalJobsCount: number;
+  /** Xem nhanh các việc có lịch hôm nay. */
+  todayJobs: TaskerTodayJob[];
+}
+
+/** Một việc có lịch hôm nay (xem nhanh ở trang chủ thợ). */
+export interface TaskerTodayJob {
+  bookingItemId: number;
+  bookingId: number;
+  serviceName: string;
+  customerName: string;
+  startAt: string;
+  totalPrice: number;
+  jobStatus: number;
+  fullAddress: string;
+}
+
+/** Một hạng mục (dịch vụ) trong đơn của thợ — phần tử của TaskerJobGroup. */
+export interface TaskerJobGroupItem {
+  bookingItemId: number;
+  serviceName: string;
+  startAt: string;
+  endAt: string;
+  totalPrice: number;
+  itemStatus: number;
+}
+
+/** Một đơn gom các hạng mục của thợ — GET /api/tasker/tasker-jobs/paged (đã gộp ở server). */
+export interface TaskerJobGroup {
+  bookingId: number;
+  customerName: string;
+  customerPhone: string;
+  fullAddress: string;
+  jobStatus: number;
+  startAt: string;
+  total: number;
+  items: TaskerJobGroupItem[];
+}
+
+/** Đếm số đơn theo nhóm trạng thái — GET /api/tasker/tasker-jobs/stats. */
+export interface TaskerJobStats {
+  incoming: number;
+  active: number;
+  history: number;
 }
 
 /** Một dòng giao dịch ví của thợ (thu nhập, rút tiền, điều chỉnh...). */

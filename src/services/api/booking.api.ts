@@ -8,11 +8,28 @@ import type {
   EmergencyBookingInput,
   EmergencyBookingResult,
   MyBooking,
+  PagedResult,
 } from "@/shared/types";
 
-/** GET /api/customer/bookings/my-orders — the current customer's bookings. */
-export async function getMyBookings(): Promise<MyBooking[]> {
-  const response = await get<ApiResponse<MyBooking[]>>("/customer/bookings/my-orders");
+export type GetMyBookingsParams = {
+  /** Lọc theo tập trạng thái (theo tab). Bỏ trống = tất cả. */
+  status?: number[];
+  /** Tìm theo mã đơn (BK123 / 123) hoặc tên dịch vụ. */
+  search?: string;
+  pageIndex?: number;
+  pageSize?: number;
+};
+
+/**
+ * GET /api/customer/bookings/my-orders — đơn của khách, LỌC + PHÂN TRANG ở server.
+ */
+export async function getMyBookings(
+  params?: GetMyBookingsParams,
+): Promise<PagedResult<MyBooking>> {
+  const response = await get<ApiResponse<PagedResult<MyBooking>>>(
+    "/customer/bookings/my-orders",
+    { params },
+  );
   return unwrap(response);
 }
 

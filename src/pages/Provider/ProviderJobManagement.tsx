@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   MapPin,
   Phone,
@@ -10,11 +10,12 @@ import {
   Calendar,
   AlertCircle,
   Loader2,
+  Search,
 } from "lucide-react";
-import type { Screen, TaskerJob } from "@/shared/types";
+import type { Screen, TaskerJobGroup } from "@/shared/types";
 import { taskerApi } from "@/services/api";
 import { useGoBack } from "@/app/routes/useGoBack";
-import { useApi } from "@/shared/hooks";
+import { useApi, useInfiniteList, useDebounced } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { formatVnd, notify } from "@/shared/lib";
 
@@ -34,43 +35,6 @@ const TABS: { key: string; label: string; statuses: number[] }[] = [
   { key: "history", label: "Lịch sử", statuses: [4, 5, 6] },
 ];
 
-/** Một đơn (Booking) gom các hạng mục được giao cho thợ này. */
-interface JobGroup {
-  bookingId: number;
-  customerName: string;
-  customerPhone: string;
-  fullAddress: string;
-  jobStatus: number;
-  startAt: string; // Giờ bắt đầu sớm nhất trong đơn.
-  total: number; // Tổng tiền các hạng mục của thợ trong đơn.
-  items: TaskerJob[];
-}
-
-// Gom danh sách hạng mục phẳng thành từng đơn (giống cách hiển thị bên khách hàng).
-function groupByBooking(jobs: TaskerJob[]): JobGroup[] {
-  const map = new Map<number, JobGroup>();
-  for (const j of jobs) {
-    const g = map.get(j.bookingId);
-    if (g) {
-      g.items.push(j);
-      g.total += j.totalPrice;
-      if (j.startAt < g.startAt) g.startAt = j.startAt;
-    } else {
-      map.set(j.bookingId, {
-        bookingId: j.bookingId,
-        customerName: j.customerName,
-        customerPhone: j.customerPhone,
-        fullAddress: j.fullAddress,
-        jobStatus: j.jobStatus,
-        startAt: j.startAt,
-        total: j.totalPrice,
-        items: [j],
-      });
-    }
-  }
-  return Array.from(map.values());
-}
-
 function formatDateTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -89,18 +53,46 @@ export function ProviderJobManagement({
 }) {
   const [activeTab, setActiveTab] = useState("incoming");
   const goBack = useGoBack("providerDashboard");
-  const { data: jobs = [], loading, error, refetch } = useApi(() => taskerApi.getTaskerJobs());
+
+  // Tìm kiếm (debounce) — theo mã đơn / tên khách / tên dịch vụ, LỌC ở server.
+  const [searchInput, setSearchInput] = useState("");
+  const search = useDebounced(searchInput.trim());
+
+  // Danh sách việc GỘP THEO ĐƠN + phân trang "tải thêm" (server đã lọc theo tab).
+  const fetchPage = useCallback(
+    (page: number) => {
+      const statuses = TABS.find((t) => t.key === activeTab)?.statuses;
+      return taskerApi.getTaskerJobsPaged({
+        status: statuses,
+        search: search || undefined,
+        pageIndex: page,
+        pageSize: 10,
+      });
+    },
+    [activeTab, search],
+  );
+  const { items: groups, hasNext, loading, loadingMore, error, loadMore, reload } =
+    useInfiniteList(fetchPage);
+
+  // Số lượng trên mỗi tab (đếm đơn ở server) — làm mới sau mỗi thao tác đổi trạng thái.
+  const { data: stats, refetch: refetchStats } = useApi(() => taskerApi.getTaskerJobStats());
+  const tabCount: Record<string, number> = {
+    incoming: stats?.incoming ?? 0,
+    active: stats?.active ?? 0,
+    history: stats?.history ?? 0,
+  };
+
+  const refresh = useCallback(() => {
+    reload();
+    void refetchStats();
+  }, [reload, refetchStats]);
 
   const [busyId, setBusyId] = useState<number | null>(null);
 
   // Cancel/decline modal.
-  const [cancelJob, setCancelJob] = useState<JobGroup | null>(null);
+  const [cancelJob, setCancelJob] = useState<TaskerJobGroup | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
-
-  const groups = groupByBooking(jobs);
-  const activeStatuses = TABS.find((t) => t.key === activeTab)?.statuses ?? [];
-  const filtered = groups.filter((g) => activeStatuses.includes(g.jobStatus));
 
   const runAction = async (
     bookingId: number,
@@ -111,7 +103,7 @@ export function ProviderJobManagement({
     try {
       await fn(bookingId);
       notify.success(successMsg);
-      void refetch();
+      refresh();
     } catch (err) {
       notify.error(err);
     } finally {
@@ -131,7 +123,7 @@ export function ProviderJobManagement({
       notify.success("Đã hủy đơn.");
       setCancelJob(null);
       setCancelReason("");
-      void refetch();
+      refresh();
     } catch (err) {
       notify.error(err);
     } finally {
@@ -145,7 +137,7 @@ export function ProviderJobManagement({
 
       <div className="flex border-b border-border bg-white">
         {TABS.map((t) => {
-          const count = groups.filter((g) => t.statuses.includes(g.jobStatus)).length;
+          const count = tabCount[t.key] ?? 0;
           return (
             <button
               key={t.key}
@@ -159,8 +151,21 @@ export function ProviderJobManagement({
         })}
       </div>
 
+      {/* Ô tìm kiếm */}
+      <div className="bg-white px-4 py-2 border-b border-border">
+        <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2.5">
+          <Search className="w-4 h-4 text-muted-foreground" />
+          <input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="flex-1 bg-transparent text-sm focus:outline-none"
+            placeholder="Tìm mã đơn, tên khách hoặc dịch vụ..."
+          />
+        </div>
+      </div>
+
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {loading && jobs.length === 0 ? (
+        {loading && groups.length === 0 ? (
           [1, 2].map((i) => (
             <div key={i} className="bg-white rounded-2xl p-4 shadow-sm animate-pulse space-y-3">
               <div className="h-4 w-1/2 bg-slate-200 rounded" />
@@ -173,19 +178,22 @@ export function ProviderJobManagement({
             <AlertCircle className="w-10 h-10 text-red-400" />
             <p className="text-sm text-muted-foreground">{error}</p>
             <button
-              onClick={() => void refetch()}
+              onClick={reload}
               className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
             >
               Thử lại
             </button>
           </div>
-        ) : filtered.length === 0 ? (
+        ) : groups.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
             <Calendar className="w-10 h-10 text-slate-300" />
-            <p className="text-sm text-muted-foreground">Không có công việc nào.</p>
+            <p className="text-sm text-muted-foreground">
+              {search ? "Không tìm thấy công việc phù hợp." : "Không có công việc nào."}
+            </p>
           </div>
         ) : (
-          filtered.map((g) => {
+          <>
+          {groups.map((g) => {
             const s = STATUS[g.jobStatus] ?? STATUS[0];
             const busy = busyId === g.bookingId;
             return (
@@ -325,7 +333,18 @@ export function ProviderJobManagement({
                 )}
               </div>
             );
-          })
+          })}
+          {hasNext && (
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="w-full py-2.5 rounded-xl bg-white border border-border text-sm font-semibold text-blue-600 flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
+              {loadingMore ? "Đang tải..." : "Tải thêm"}
+            </button>
+          )}
+          </>
         )}
       </div>
 

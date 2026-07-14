@@ -9,17 +9,10 @@ import { formatVnd, notify } from "@/shared/lib";
 
 const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
-function isToday(iso: string): boolean {
-  const d = new Date(iso);
-  const now = new Date();
-  return d.toDateString() === now.toDateString();
-}
-
 export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const { user } = useAuth();
 
   const { data: dashboard, loading } = useApi(() => taskerApi.getTaskerDashboard());
-  const { data: jobs = [] } = useApi(() => taskerApi.getTaskerJobs(), { initialData: [] });
   const hasUnread = useHasUnreadNotifications("provider");
 
   const [online, setOnline] = useState(true);
@@ -45,7 +38,8 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
   };
 
   const name = dashboard?.fullName || user?.fullName || "Thợ";
-  const todayJobs = jobs.filter((j) => isToday(j.startAt) && j.jobStatus !== 5);
+  // "Việc hôm nay" đã được server tính sẵn (theo giờ VN, đã loại đơn hủy).
+  const todayJobs = dashboard?.todayJobs ?? [];
 
   const weekly = dashboard?.weeklyRevenue ?? [];
   const maxRevenue = Math.max(1, ...weekly.map((d) => d.amount));
@@ -283,7 +277,7 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
           >
             <Timer className="w-6 h-6" />
             <span className="font-bold text-sm">Quản lý công việc</span>
-            <span className="text-blue-200 text-xs">{jobs.length} việc</span>
+            <span className="text-blue-200 text-xs">{dashboard?.totalJobsCount ?? 0} việc</span>
           </button>
           <button
             onClick={() => onNavigate("providerSchedule")}
