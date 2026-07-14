@@ -10,7 +10,7 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import type { Screen, MyBooking } from "@/shared/types";
+import type { Screen, MyBooking, CancellationPreview } from "@/shared/types";
 import { bookingApi } from "@/services/api";
 import { connectBookingStatus } from "@/services/realtime/bookingHub";
 import { useGoBack } from "@/app/routes/useGoBack";
@@ -46,8 +46,9 @@ const TABS: { key: string; label: string; statuses: number[] | null }[] = [
   { key: "cancelled", label: "Hủy", statuses: [5, 6] },
 ];
 
-// Backend allows a customer to cancel only while the booking is still Pending.
-const CANCELLABLE = [0];
+// Khách được tự hủy khi đơn Chờ xác nhận / Đã xác nhận / Đang đến (Pending/Accepted/OnTheWay).
+// Số tiền hoàn phụ thuộc chính sách, xem trước trong modal trước khi xác nhận.
+const CANCELLABLE = [0, 1, 2];
 // Chỉ cho khiếu nại khi đơn đã Hoàn thành (đánh giá chất lượng sau khi xong việc).
 const DISPUTABLE = [4];
 const MIN_DISPUTE_LEN = 10;
@@ -104,6 +105,29 @@ export function BookingManagement({
   const [cancelTarget, setCancelTarget] = useState<number | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
+  // Xem trước chính sách hoàn tiền cho đơn sắp hủy.
+  const [cancelPreview, setCancelPreview] = useState<CancellationPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  // Mở modal hủy và tải trước số tiền hoàn/phí hủy để khách cân nhắc.
+  const openCancel = async (bookingId: number) => {
+    setCancelTarget(bookingId);
+    setCancelReason("");
+    setCancelPreview(null);
+    setPreviewLoading(true);
+    try {
+      setCancelPreview(await bookingApi.getCancellationPreview(bookingId));
+    } catch (err) {
+      notify.error(err);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const closeCancel = () => {
+    setCancelTarget(null);
+    setCancelPreview(null);
+  };
 
   // Dispute (complaint) modal state.
   const [disputeTarget, setDisputeTarget] = useState<number | null>(null);
@@ -129,7 +153,7 @@ export function BookingManagement({
     try {
       await bookingApi.cancelBooking(cancelTarget, cancelReason.trim());
       notify.success("Đã hủy đơn thành công");
-      setCancelTarget(null);
+      closeCancel();
       setCancelReason("");
       void refetch();
     } catch (err) {
@@ -367,10 +391,7 @@ export function BookingManagement({
                     )}
                     {CANCELLABLE.includes(bk.status) && (
                       <button
-                        onClick={() => {
-                          setCancelTarget(bk.bookingId);
-                          setCancelReason("");
-                        }}
+                        onClick={() => void openCancel(bk.bookingId)}
                         className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-semibold hover:bg-red-100 transition-colors"
                       >
                         Hủy
@@ -394,6 +415,47 @@ export function BookingManagement({
                 Vui lòng cho biết lý do bạn muốn hủy đơn này.
               </p>
             </div>
+
+            {/* Xem trước chính sách hoàn tiền */}
+            {previewLoading ? (
+              <div className="flex items-center gap-2 rounded-xl bg-muted p-3 text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Đang tính số tiền được hoàn...
+              </div>
+            ) : cancelPreview ? (
+              cancelPreview.totalPaid > 0 ? (
+                <div className="rounded-xl border border-border bg-muted/50 p-3 space-y-1.5 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Đã thanh toán</span>
+                    <span className="font-medium">{formatVnd(cancelPreview.totalPaid)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      Hoàn lại ({cancelPreview.refundPercent}%)
+                    </span>
+                    <span className="font-semibold text-green-600">
+                      {formatVnd(cancelPreview.refundAmount)}
+                    </span>
+                  </div>
+                  {cancelPreview.penaltyAmount > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Phí hủy (đền thợ)</span>
+                      <span className="font-medium text-red-600">
+                        −{formatVnd(cancelPreview.penaltyAmount)}
+                      </span>
+                    </div>
+                  )}
+                  <p className="pt-1 text-xs text-muted-foreground border-t border-border/60">
+                    {cancelPreview.reason}
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-xl bg-muted/50 p-3 text-xs text-muted-foreground">
+                  {cancelPreview.reason}
+                </div>
+              )
+            ) : null}
+
             <textarea
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
@@ -404,7 +466,7 @@ export function BookingManagement({
             />
             <div className="flex gap-2">
               <button
-                onClick={() => setCancelTarget(null)}
+                onClick={closeCancel}
                 disabled={cancelling}
                 className="flex-1 py-2.5 border border-border rounded-xl text-sm font-semibold disabled:opacity-60"
               >

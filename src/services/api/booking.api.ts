@@ -1,5 +1,6 @@
 import { get, post, put, unwrap, type ApiResponse } from "./client";
 import type {
+  CancellationPreview,
   CreateBookingInput,
   CreateBookingResult,
   CreateDisputeInput,
@@ -52,9 +53,20 @@ export async function cancelEmergencyBooking(bookingId: number): Promise<boolean
 }
 
 /**
+ * GET /api/customer/bookings/{id}/cancellation-preview — xem trước số tiền được hoàn
+ * / phí hủy theo chính sách, TRƯỚC khi khách xác nhận hủy (không thay đổi dữ liệu).
+ */
+export async function getCancellationPreview(bookingId: number): Promise<CancellationPreview> {
+  const response = await get<ApiResponse<CancellationPreview>>(
+    `/customer/bookings/${bookingId}/cancellation-preview`,
+  );
+  return unwrap(response);
+}
+
+/**
  * PUT /api/customer/bookings/{id}/cancel — the customer cancels their own booking.
- * Requires the Customer role; only Pending bookings can be cancelled. BookingId
- * comes from the route and CustomerId from the JWT, so only cancelReason is sent.
+ * Cho phép hủy khi đơn Pending / Accepted / OnTheWay; hệ thống hoàn tiền theo chính
+ * sách. BookingId từ route, CustomerId từ JWT, nên chỉ gửi cancelReason.
  */
 export async function cancelBooking(bookingId: number, cancelReason: string): Promise<boolean> {
   const response = await put<ApiResponse<boolean>>(`/customer/bookings/${bookingId}/cancel`, {
