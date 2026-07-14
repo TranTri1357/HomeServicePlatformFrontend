@@ -85,6 +85,27 @@ export interface EmergencyBookingResult {
  */
 export type BookingStatusCode = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
+/**
+ * Xem trước chính sách hủy đơn — GET /api/customer/bookings/{id}/cancellation-preview.
+ * Cho khách biết sẽ được hoàn bao nhiêu / giữ lại bao nhiêu TRƯỚC khi bấm hủy.
+ */
+export interface CancellationPreview {
+  bookingId: number;
+  /** Trạng thái đơn có cho phép khách tự hủy không. */
+  canCancel: boolean;
+  status: number;
+  /** Tổng đã thanh toán qua hệ thống. */
+  totalPaid: number;
+  /** % hoàn theo chính sách. */
+  refundPercent: number;
+  /** Tiền hoàn dự kiến cho khách. */
+  refundAmount: number;
+  /** Phí hủy giữ lại (đền thợ). */
+  penaltyAmount: number;
+  /** Diễn giải chính sách để hiển thị cho khách. */
+  reason: string;
+}
+
 /** One service line inside a booking (a booking may have several). */
 export interface MyBookingItem {
   bookingItemId: number;

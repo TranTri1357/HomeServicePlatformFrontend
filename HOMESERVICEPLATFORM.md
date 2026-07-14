@@ -289,3 +289,46 @@ Azure App Service (PaaS). Sử dụng dịch vụ Azure SQL Database để đồ
 Microsoft.
 
 bây giờ bạn hãy đọc toàn bộ thông tin trên và các thông tin hổm giờ chúng đã bàn.
+
+
+CHỈNH SỬA YÊU CẦU ĐỒ ÁN
+
+Yêu cầu của thầy:
+1. Đánh giá Ưu - Khuyết điểm
+* Ưu điểm:
+• Xử lý dữ liệu không gian (Spatial Data) thông minh: Dựa vào danh mục tài liệu tham khảo, có thể thấy nhóm đã linh hoạt chuyển đổi từ việc phụ thuộc hoàn toàn vào API trả phí của Google Maps (như đăng ký ban đầu) sang sử dụng bộ công cụ mã nguồn mở Leaflet, OpenStreetMap và đặc biệt là PostGIS. Việc dùng PostGIS trong PostgreSQL để truy vấn khoảng cách/vị trí thợ gần nhất là một điểm cộng kỹ thuật cực kỳ lớn.
+• Tích hợp Real-time: Nhóm đã ứng dụng SignalR rất chuẩn xác trong hệ sinh thái của ASP.NET Core để giải quyết bài toán cốt lõi là Chat giữa thợ - khách hàng và Thông báo hệ thống theo thời gian thực.
+• Kiến trúc API-First: Việc tách biệt hoàn toàn Frontend (SPA) và Backend API giúp hệ thống có khả năng mở rộng tốt (Scale), sẵn sàng cho việc phát triển thêm Mobile App sau này.
+• Xử lý nghiệp vụ phức tạp: Thuật toán chống trùng lịch cho thợ và tính toán xếp hạng tín nhiệm là những luồng logic khó nhưng đã được nhóm đưa vào phạm vi giải quyết.
+* Khuyết điểm (Những điểm cần lưu ý):
+• Thời gian di chuyển của thợ: Thuật toán chống trùng lịch có thể mới chỉ kiểm tra khoảng thời gian (ví dụ: ca 8h-10h và 10h-12h). Tuy nhiên, trên thực tế, thợ cần thời gian di chuyển giữa 2 địa điểm của 2 khách hàng khác nhau. Nếu không tính toán "buffer time" (thời gian đệm di chuyển), thợ sẽ bị trễ giờ.
+• Bảo mật SignalR: Cần làm rõ cơ chế phân quyền khi dùng WebSocket/SignalR. Liệu người dùng khác có thể "lắng nghe" (listen) trộm tin nhắn của người khác nếu biết được tên của Hub hoặc Channel không?
+• Xử lý thanh toán ngoại lệ: Khi thanh toán qua MoMo/VNPay, nếu khách hàng đã thanh toán nhưng thợ hủy lịch phút chót do sự cố, luồng hoàn tiền (Refund) tự động hoặc chuyển job cho thợ khác chưa được làm rõ sâu sắc.
+2. Câu hỏi phản biện (Dành cho buổi bảo vệ)
+Để tự tin ra Hội đồng, nhóm (Trí và Thương) cần chuẩn bị kỹ các câu trả lời cho những vấn đề kỹ thuật sau:
+1. Về Database & Hệ thông tin địa lý (GIS): Thầy thấy trong tài liệu các em có sử dụng PostGIS. Các em có thể giải thích sự khác biệt về hiệu năng giữa việc dùng hàm của PostGIS (như ST_DWithin hoặc ST_Distance) để tìm thợ gần nhất ở tầng Database so với việc lấy toàn bộ tọa độ thợ về Backend rồi mới dùng code C# (công thức Haversine) để tính khoảng cách không?
+2. Về Real-time (SignalR): Khi khách hàng và thợ đang chat với nhau qua SignalR, nếu khách hàng lỡ đi vào vùng mất mạng (tắt 4G khoảng 1 phút), sau khi có mạng lại, hệ thống làm sao để tải lại những tin nhắn mà thợ đã gửi trong lúc khách hàng bị mất kết nối?
+3. Về Xử lý đồng thời (Concurrency): Giả sử Thợ A có một slot trống duy nhất vào lúc 14h chiều nay. Có 2 khách hàng cùng lúc vào xem hồ sơ và bấm "Đặt lịch" chính xác tại cùng một mili-giây. Ở tầng Backend ASP.NET Core hoặc ở Entity Framework Core, các em đã dùng cơ chế Locking nào (Pessimistic hay Optimistic concurrency) để đảm bảo không bị double-booking (2 người đều đặt thành công 1 thợ)?
+4. Về Nghiệp vụ: Nếu hệ thống cho phép thanh toán trước (MoMo/ZaloPay), cơ chế nào đảm bảo tiền sẽ được giữ lại (Tạm giữ/Escrow) và chỉ chuyển cho thợ khi khách hàng xác nhận "Công việc đã hoàn thành"? 
+
+tối ưu dự án (lấy bao nhiêu và phân trang):
+chọn thợ
+Đơn trong lịch đặt
+dịch vụ trong thợ khẩn cấp
+Đợn trong quản lý công việc
+ví kết hợp luôn cổng momo/zalopay
+đặt lịch khẩn cấp là khách đặt chọn vị trí thông báo cho toàn thợ trong bán kính ai chấp nhận trước là đơn của người đó
+thêm nhiều dữ liệu mẫu
+vấn đề xác minh thợ đang làm
+
+Yêu cầu của cô:
+Chỉnh sửa lại báo cáo
+chỉnh sửa lại các yêu cầu trong quá trình phản biện
+Xây dựng quy định hoàn tiền khi hủy đơn lịch
+Nghiên cứu việc tạo app di động từ web
+Đặt lịch:
+Thêm mặc định sđt vào thông tin liên hệ
+Thiết lập điều kiện hủy hoàn cọc (điều kiện)
+Hệ thống:
+Chuyển web thành moblie (bằng icon)
+

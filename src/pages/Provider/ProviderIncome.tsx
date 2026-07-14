@@ -159,7 +159,7 @@ export function ProviderIncome({ onNavigate: _onNavigate }: { onNavigate: (s: Sc
                           {e.serviceSummary || meta.label}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {isEarning && e.bookingId ? `BK${e.bookingId} · ` : ""}
+                          {e.bookingId ? `BK${e.bookingId} · ` : ""}
                           {formatDateVn(e.createdAt)}
                         </p>
                       </div>

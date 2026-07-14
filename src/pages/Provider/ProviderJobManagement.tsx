@@ -264,8 +264,9 @@ export function ProviderJobManagement({
                       </button>
                     )}
 
-                    {/* Decline — chỉ khi đơn còn Chờ xác nhận (backend chỉ cho hủy lúc Pending) */}
-                    {g.jobStatus === 0 && (
+                    {/* Từ chối (Pending) / Hủy đơn (đã nhận: Accepted/OnTheWay/InProgress).
+                        Thợ hủy đơn đã nhận -> khách được hoàn 100% và thợ bị ghi 1 lần hủy. */}
+                    {g.jobStatus >= 0 && g.jobStatus <= 3 && (
                       <button
                         onClick={() => {
                           setCancelJob(g);
@@ -275,7 +276,7 @@ export function ProviderJobManagement({
                         className="flex-1 py-2.5 bg-red-50 text-red-600 rounded-xl font-bold text-sm flex items-center justify-center gap-1 hover:bg-red-100 transition-colors disabled:opacity-60"
                       >
                         <X className="w-4 h-4" />
-                        Từ chối
+                        {g.jobStatus === 0 ? "Từ chối" : "Hủy đơn"}
                       </button>
                     )}
 
@@ -338,6 +339,12 @@ export function ProviderJobManagement({
               </h3>
               <p className="text-sm text-muted-foreground mt-1">Vui lòng cho biết lý do.</p>
             </div>
+            {cancelJob.jobStatus >= 1 && (
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+                Bạn đang hủy đơn đã nhận: khách sẽ được hoàn 100% và lần hủy này bị ghi nhận,
+                ảnh hưởng độ tin cậy của bạn. Hủy nhiều lần có thể bị tạm khóa nhận đơn.
+              </div>
+            )}
             <textarea
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}

@@ -14,6 +14,9 @@ const TX: Record<number, { label: string; credit: boolean }> = {
   1: { label: "Nạp tiền", credit: true },
   2: { label: "Thanh toán", credit: false },
   3: { label: "Hoàn tiền", credit: true },
+  4: { label: "Thu nhập", credit: true },
+  5: { label: "Rút tiền", credit: false },
+  6: { label: "Bồi thường", credit: true },
 };
 
 export function CustomerWallet({ onNavigate }: { onNavigate: (s: Screen, d?: object) => void }) {
@@ -123,7 +126,9 @@ export function CustomerWallet({ onNavigate }: { onNavigate: (s: Screen, d?: obj
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground">{meta.label}</p>
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {t.description || meta.label}
+                      </p>
                       <p className="text-xs text-muted-foreground">{formatDateVn(t.createdAt)}</p>
                     </div>
                     <div className="text-right">
