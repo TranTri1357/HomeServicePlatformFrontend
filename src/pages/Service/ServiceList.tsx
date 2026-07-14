@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, BookOpen, Wrench, Clock, AlertCircle } from "lucide-react";
+import { Search, BookOpen, Wrench, Clock, AlertCircle, Star } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { categoryApi, serviceApi } from "@/services/api";
 import { useGoBack } from "@/app/routes/useGoBack";
@@ -40,6 +40,10 @@ export function ServiceList({
   // Pre-select the category when arriving from a home-screen category tile.
   const [categoryId, setCategoryId] = useState<number | undefined>(data?.categoryId);
   const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none");
+  // Bộ lọc nâng cao: khoảng giá + đánh giá tối thiểu (0 = tất cả).
+  const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
+  const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
+  const [minRating, setMinRating] = useState<number>(0);
 
   const sortBy = priceSort === "asc" ? "price_asc" : priceSort === "desc" ? "price_desc" : undefined;
 
@@ -54,6 +58,9 @@ export function ServiceList({
       serviceApi.getServicesExplorer({
         searchTerm: search || undefined,
         categoryId,
+        minPrice,
+        maxPrice,
+        minRating: minRating || undefined,
         sortBy,
         pageSize: 20,
       }),
@@ -65,7 +72,7 @@ export function ServiceList({
       void refetch();
     }, 300);
     return () => clearTimeout(timer);
-  }, [search, categoryId, priceSort, refetch]);
+  }, [search, categoryId, priceSort, minPrice, maxPrice, minRating, refetch]);
 
   const items = paged?.items ?? [];
   const showSkeleton = !paged; // first load only; keep old data during refetch
@@ -119,6 +126,48 @@ export function ServiceList({
               {s === "none" ? "Tất cả" : s === "asc" ? "Giá tăng dần ↑" : "Giá giảm dần ↓"}
             </button>
           ))}
+        </div>
+
+        {/* Bộ lọc nâng cao: khoảng giá + đánh giá tối thiểu */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 border-t border-border">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Khoảng giá:</span>
+            <input
+              type="number"
+              min={0}
+              value={minPrice ?? ""}
+              onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : undefined)}
+              placeholder="Từ"
+              className="w-20 bg-muted rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <span className="text-xs text-muted-foreground">–</span>
+            <input
+              type="number"
+              min={0}
+              value={maxPrice ?? ""}
+              onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : undefined)}
+              placeholder="Đến"
+              className="w-20 bg-muted rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <span className="text-xs text-muted-foreground">đ</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Đánh giá:</span>
+            {[
+              { v: 0, l: "Tất cả" },
+              { v: 3, l: "≥3★" },
+              { v: 4, l: "≥4★" },
+              { v: 4.5, l: "≥4.5★" },
+            ].map((o) => (
+              <button
+                key={o.v}
+                onClick={() => setMinRating(o.v)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${minRating === o.v ? "bg-accent text-blue-600" : "text-muted-foreground"}`}
+              >
+                {o.l}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -174,9 +223,19 @@ export function ServiceList({
                   </div>
                   <div className="p-3">
                     <p className="font-bold text-sm text-foreground line-clamp-1">{svc.name}</p>
-                    <div className="flex items-center gap-1 mt-0.5 text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      <span className="text-xs">~{svc.durationMinutes} phút</span>
+                    <div className="flex items-center gap-2 mt-0.5 text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span className="text-xs">~{svc.durationMinutes} phút</span>
+                      </span>
+                      {svc.avgRating > 0 && (
+                        <span className="flex items-center gap-0.5">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          <span className="text-xs font-semibold text-foreground">
+                            {svc.avgRating.toFixed(1)}
+                          </span>
+                        </span>
+                      )}
                     </div>
                     <p className="text-blue-600 font-bold text-sm mt-1">
                       từ {formatVnd(svc.startingPrice)}đ

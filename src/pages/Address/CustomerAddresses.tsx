@@ -15,9 +15,24 @@ import {
 } from "@/services/vnAddress";
 import { LocationPicker } from "./LocationPicker";
 
-export function CustomerAddresses({ onNavigate }: { onNavigate: (s: Screen) => void }) {
-  const goBack = useGoBack("customerProfile");
-  const { data: addresses = [], loading, error, refetch } = useApi(() => addressApi.getMyAddresses());
+/**
+ * Trang quản lý địa chỉ dùng chung cho cả Khách và Thợ. Mặc định chạy với API
+ * địa chỉ của khách; truyền `api`/`backScreen`/`title` để tái dùng cho thợ
+ * (địa chỉ hoạt động — Phương án B, cùng bảng Address).
+ */
+export function CustomerAddresses({
+  onNavigate,
+  api = addressApi,
+  backScreen = "customerProfile",
+  title = "Địa chỉ đã lưu",
+}: {
+  onNavigate: (s: Screen) => void;
+  api?: typeof addressApi;
+  backScreen?: Screen;
+  title?: string;
+}) {
+  const goBack = useGoBack(backScreen);
+  const { data: addresses = [], loading, error, refetch } = useApi(() => api.getMyAddresses());
 
   // Add / edit modal.
   const [editing, setEditing] = useState<CustomerAddress | null>(null);
@@ -213,10 +228,10 @@ export function CustomerAddresses({ onNavigate }: { onNavigate: (s: Screen) => v
       };
 
       if (editing) {
-        await addressApi.updateAddress(editing.addressId, payload);
+        await api.updateAddress(editing.addressId, payload);
         notify.success("Cập nhật địa chỉ thành công");
       } else {
-        await addressApi.createAddress(payload);
+        await api.createAddress(payload);
         notify.success("Thêm địa chỉ thành công");
       }
       setShowForm(false);
@@ -232,7 +247,7 @@ export function CustomerAddresses({ onNavigate }: { onNavigate: (s: Screen) => v
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await addressApi.deleteAddress(deleteTarget.addressId);
+      await api.deleteAddress(deleteTarget.addressId);
       notify.success("Đã xóa địa chỉ");
       setDeleteTarget(null);
       void refetch();
@@ -246,7 +261,7 @@ export function CustomerAddresses({ onNavigate }: { onNavigate: (s: Screen) => v
   const makeAsDefault = async (addr: CustomerAddress) => {
     setBusyDefaultId(addr.addressId);
     try {
-      await addressApi.setDefaultAddress(addr.addressId);
+      await api.setDefaultAddress(addr.addressId);
       void refetch();
     } catch (err) {
       notify.error(err);
@@ -257,7 +272,7 @@ export function CustomerAddresses({ onNavigate }: { onNavigate: (s: Screen) => v
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar title="Địa chỉ đã lưu" onBack={goBack} />
+      <TopBar title={title} onBack={goBack} />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {loading && addresses.length === 0 ? (

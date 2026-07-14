@@ -55,6 +55,7 @@ export function AppRouter() {
               <Route path="income" element={<RouteScreen screen="providerIncome" />} />
               <Route path="services" element={<RouteScreen screen="providerServiceManagement" />} />
               <Route path="area" element={<RouteScreen screen="providerAreaRouting" />} />
+              <Route path="addresses" element={<RouteScreen screen="providerAddresses" />} />
               <Route path="profile" element={<RouteScreen screen="providerProfile" />} />
               <Route path="notifications" element={<RouteScreen screen="providerNotifications" />} />
               <Route path="chat" element={<RouteScreen screen="providerChat" />} />

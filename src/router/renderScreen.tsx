@@ -1,4 +1,5 @@
 import type { Screen } from "@/shared/types";
+import { taskerAddressApi } from "@/services/api";
 
 import { CustomerHome } from "@/pages/Customer";
 import { CustomerProfile, ProviderProfile } from "@/pages/Profile";
@@ -89,6 +90,15 @@ export function renderScreen(
       return <CustomerWallet onNavigate={navigate} />;
     case "customerAddresses":
       return <CustomerAddresses onNavigate={navigate} />;
+    case "providerAddresses":
+      return (
+        <CustomerAddresses
+          onNavigate={navigate}
+          api={taskerAddressApi}
+          backScreen="providerProfile"
+          title="Địa chỉ hoạt động"
+        />
+      );
     case "bookingManagement":
       return <BookingManagement onNavigate={navigate} />;
     case "notifications":

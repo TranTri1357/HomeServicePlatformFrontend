@@ -173,8 +173,11 @@ export function ProviderIncome({ onNavigate: _onNavigate }: { onNavigate: (s: Sc
 
                     {/* Chi tiết chỉ cho dòng thu nhập: gộp → hoa hồng → thực nhận */}
                     {isEarning ? (
-                      <div className="mt-2 ml-12 flex items-center gap-3 text-[11px] text-muted-foreground">
+                      <div className="mt-2 ml-12 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
                         <span>Gộp: {formatVnd(e.gross)}đ</span>
+                        {e.cashReceived > 0 && (
+                          <span>Tiền mặt: {formatVnd(e.cashReceived)}đ</span>
+                        )}
                         <span className="text-red-500">− Hoa hồng: {formatVnd(e.commission)}đ</span>
                         <span className="ml-auto">Số dư: {formatVnd(e.balanceAfter)}đ</span>
                       </div>

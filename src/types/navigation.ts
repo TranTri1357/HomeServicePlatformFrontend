@@ -28,6 +28,7 @@ export type Screen =
   | "technicianDetail"
   | "providerServiceManagement"
   | "providerAreaRouting"
+  | "providerAddresses"
   | "adminDashboard"
   | "adminOrders"
   | "adminProviders"

@@ -29,6 +29,8 @@ export interface ServiceExplorerItem {
   durationMinutes: number;
   totalBookings: number;
   startingPrice: number;
+  /** Điểm đánh giá TB của các thợ cung cấp dịch vụ; 0 = chưa có đánh giá. */
+  avgRating: number;
   /** Backend currently returns null; UI falls back to a placeholder. */
   imageUrl: string | null;
 }

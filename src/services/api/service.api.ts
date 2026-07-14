@@ -23,13 +23,15 @@ export async function getPopularServices(
   return unwrap(response);
 }
 
-export type ServiceSortBy = "price_asc" | "price_desc" | "popular";
+export type ServiceSortBy = "price_asc" | "price_desc" | "rating" | "popular";
 
 export type GetServicesExplorerParams = {
   searchTerm?: string;
   categoryId?: number;
   minPrice?: number;
   maxPrice?: number;
+  /** Lọc dịch vụ có điểm đánh giá TB ≥ giá trị này (0–5). */
+  minRating?: number;
   sortBy?: ServiceSortBy;
   pageIndex?: number;
   pageSize?: number;
