@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Calendar,
   MapPin,
@@ -9,12 +9,13 @@ import {
   CreditCard,
   AlertCircle,
   Loader2,
+  Search,
 } from "lucide-react";
 import type { Screen, MyBooking, CancellationPreview } from "@/shared/types";
 import { bookingApi } from "@/services/api";
 import { connectBookingStatus } from "@/services/realtime/bookingHub";
 import { useGoBack } from "@/app/routes/useGoBack";
-import { useApi } from "@/shared/hooks";
+import { useInfiniteList, useDebounced } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { formatVnd, notify } from "@/shared/lib";
 
@@ -72,7 +73,33 @@ export function BookingManagement({
 }) {
   const [activeTab, setActiveTab] = useState("all");
   const goBack = useGoBack("customerHome");
-  const { data: fetched = [], loading, error, refetch } = useApi(() => bookingApi.getMyBookings());
+
+  // Ô tìm kiếm (debounce) — tìm theo mã đơn hoặc tên dịch vụ, LỌC ở server.
+  const [searchInput, setSearchInput] = useState("");
+  const search = useDebounced(searchInput.trim());
+
+  // Danh sách phân trang "tải thêm" ở server (không tải toàn bộ đơn).
+  const fetchPage = useCallback(
+    (page: number) => {
+      const statuses = TABS.find((t) => t.key === activeTab)?.statuses ?? undefined;
+      return bookingApi.getMyBookings({
+        status: statuses ?? undefined,
+        search: search || undefined,
+        pageIndex: page,
+        pageSize: 10,
+      });
+    },
+    [activeTab, search],
+  );
+  const {
+    items: fetched,
+    hasNext,
+    loading,
+    loadingMore,
+    error,
+    loadMore,
+    reload: refetch,
+  } = useInfiniteList(fetchPage);
 
   // Realtime status pushes from the tasker, applied on top of the fetched list
   // so a single row updates in place without a full refetch (no empty-state flash).
@@ -139,9 +166,6 @@ export function BookingManagement({
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewing, setReviewing] = useState(false);
-
-  const activeStatuses = TABS.find((t) => t.key === activeTab)?.statuses ?? null;
-  const filtered = activeStatuses ? bookings.filter((b) => activeStatuses.includes(b.status)) : bookings;
 
   const confirmCancel = async () => {
     if (cancelTarget == null) return;
@@ -228,6 +252,19 @@ export function BookingManagement({
         ))}
       </div>
 
+      {/* Ô tìm kiếm */}
+      <div className="bg-white px-4 py-2 border-b border-border">
+        <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2.5">
+          <Search className="w-4 h-4 text-muted-foreground" />
+          <input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="flex-1 bg-transparent text-sm focus:outline-none"
+            placeholder="Tìm mã đơn (BK123) hoặc tên dịch vụ..."
+          />
+        </div>
+      </div>
+
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {loading && bookings.length === 0 ? (
           [1, 2, 3].map((i) => (
@@ -248,13 +285,16 @@ export function BookingManagement({
               Thử lại
             </button>
           </div>
-        ) : filtered.length === 0 ? (
+        ) : bookings.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
             <Calendar className="w-10 h-10 text-slate-300" />
-            <p className="text-sm text-muted-foreground">Chưa có đơn đặt lịch nào</p>
+            <p className="text-sm text-muted-foreground">
+              {search ? "Không tìm thấy đơn phù hợp" : "Chưa có đơn đặt lịch nào"}
+            </p>
           </div>
         ) : (
-          filtered.map((bk) => {
+          <>
+          {bookings.map((bk) => {
             const s = STATUS[bk.status] ?? STATUS[0];
             const discount = bk.discountAmount ?? 0;
             const canReview = bk.status === 4; // Chỉ đánh giá khi đơn đã hoàn thành.
@@ -401,7 +441,18 @@ export function BookingManagement({
                 </div>
               </div>
             );
-          })
+          })}
+          {hasNext && (
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="w-full py-2.5 rounded-xl bg-white border border-border text-sm font-semibold text-blue-600 flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
+              {loadingMore ? "Đang tải..." : "Tải thêm"}
+            </button>
+          )}
+          </>
         )}
       </div>
 

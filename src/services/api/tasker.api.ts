@@ -2,17 +2,29 @@ import { get, post, put, unwrap, type ApiResponse } from "./client";
 import type {
   CreateTaskerProfileInput,
   NearbyTasker,
+  PagedResult,
   TaskerAvailability,
   TaskerDashboard,
   TaskerDetail,
   TaskerIncome,
   TaskerJob,
+  TaskerJobGroup,
+  TaskerJobStats,
   TaskerProfileData,
   TaskerQuickInfo,
   TaskerServiceOption,
   TopTasker,
   UpdateTaskerProfileInput,
 } from "@/shared/types";
+
+export type GetTaskerJobsPagedParams = {
+  /** Lọc theo tập trạng thái (theo tab). Bỏ trống = tất cả. */
+  status?: number[];
+  /** Tìm theo mã đơn (BK123 / 123), tên khách hoặc tên dịch vụ. */
+  search?: string;
+  pageIndex?: number;
+  pageSize?: number;
+};
 
 /**
  * GET /api/tasker/profile/{id}/profile — the logged-in tasker's own profile
@@ -77,6 +89,25 @@ export async function getTaskerJobs(status?: number): Promise<TaskerJob[]> {
   const response = await get<ApiResponse<TaskerJob[]>>("/tasker/tasker-jobs", {
     params: status != null ? { status } : undefined,
   });
+  return unwrap(response);
+}
+
+/**
+ * GET /api/tasker/tasker-jobs/paged — việc của thợ, gộp theo đơn + LỌC + TÌM + PHÂN TRANG.
+ */
+export async function getTaskerJobsPaged(
+  params?: GetTaskerJobsPagedParams,
+): Promise<PagedResult<TaskerJobGroup>> {
+  const response = await get<ApiResponse<PagedResult<TaskerJobGroup>>>(
+    "/tasker/tasker-jobs/paged",
+    { params },
+  );
+  return unwrap(response);
+}
+
+/** GET /api/tasker/tasker-jobs/stats — đếm số đơn theo nhóm trạng thái (badge + số mỗi tab). */
+export async function getTaskerJobStats(): Promise<TaskerJobStats> {
+  const response = await get<ApiResponse<TaskerJobStats>>("/tasker/tasker-jobs/stats");
   return unwrap(response);
 }
 

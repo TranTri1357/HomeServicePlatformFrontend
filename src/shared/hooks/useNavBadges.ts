@@ -31,21 +31,19 @@ export function useNavBadges(role: NavRole, enabled = true): NavBadges {
   const isProvider = role === "provider";
   const notifDot = useHasUnreadNotifications(role, enabled);
 
-  const { data: jobs = [] } = useApi(() => taskerApi.getTaskerJobs(), {
+  // Thợ: đếm đơn đang xử lý = incoming (chờ nhận) + active (đang làm), lấy từ endpoint thống kê nhẹ.
+  const { data: jobStats } = useApi(() => taskerApi.getTaskerJobStats(), {
     immediate: enabled && isProvider,
-    initialData: [],
   });
-  const { data: bookings = [] } = useApi(() => bookingApi.getMyBookings(), {
-    immediate: enabled && !isProvider,
-    initialData: [],
-  });
+  // Khách: chỉ cần SỐ đơn đang hoạt động (status 0..3): hỏi server pageSize nhỏ, lấy totalCount.
+  const { data: activeBookings } = useApi(
+    () => bookingApi.getMyBookings({ status: [0, 1, 2, 3], pageSize: 1 }),
+    { immediate: enabled && !isProvider },
+  );
 
-  // "Active" = still in progress (status 0..3), i.e. work that needs attention.
-  // Provider jobs come as one row per service item, so count DISTINCT bookings
-  // to match the grouped "orders" display; customer bookings are already 1 row each.
   const jobBadge = isProvider
-    ? new Set(jobs.filter((j) => j.jobStatus <= 3).map((j) => j.bookingId)).size
-    : bookings.filter((b) => b.status <= 3).length;
+    ? (jobStats?.incoming ?? 0) + (jobStats?.active ?? 0)
+    : (activeBookings?.totalCount ?? 0);
 
   return { notifDot, jobBadge };
 }

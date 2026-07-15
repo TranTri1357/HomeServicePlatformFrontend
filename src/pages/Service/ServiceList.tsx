@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
-import { Search, BookOpen, Wrench, Clock, AlertCircle, Star } from "lucide-react";
+import { useCallback, useState } from "react";
+import { Search, BookOpen, Wrench, Clock, AlertCircle, Star, Loader2 } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { categoryApi, serviceApi } from "@/services/api";
 import { useGoBack } from "@/app/routes/useGoBack";
-import { useApi } from "@/shared/hooks";
+import { useApi, useInfiniteList, useDebounced } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { getApiAssetUrl, formatVnd } from "@/shared/lib";
 
@@ -52,30 +52,27 @@ export function ServiceList({
     initialData: [],
   });
 
-  // GET /api/Services/explorer — refetched (debounced) whenever a filter changes.
-  const { data: paged, loading, error, refetch } = useApi(
-    () =>
+  // GET /api/Services/explorer — phân trang "tải thêm", nạp lại trang 1 khi đổi lọc/từ khoá.
+  // Chỉ debounce ô tìm kiếm (gõ liên tục); các nút lọc đổi là nạp ngay.
+  const debouncedSearch = useDebounced(search);
+  const fetchPage = useCallback(
+    (page: number) =>
       serviceApi.getServicesExplorer({
-        searchTerm: search || undefined,
+        searchTerm: debouncedSearch || undefined,
         categoryId,
         minPrice,
         maxPrice,
         minRating: minRating || undefined,
         sortBy,
+        pageIndex: page,
         pageSize: 20,
       }),
-    { immediate: false },
+    [debouncedSearch, categoryId, minPrice, maxPrice, minRating, sortBy],
   );
+  const { items, total, hasNext, loading, loadingMore, error, loaded, loadMore, reload } =
+    useInfiniteList(fetchPage);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      void refetch();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search, categoryId, priceSort, minPrice, maxPrice, minRating, refetch]);
-
-  const items = paged?.items ?? [];
-  const showSkeleton = !paged; // first load only; keep old data during refetch
+  const showSkeleton = !loaded; // first load only; keep old data during refetch
 
   return (
     <div className="flex flex-col h-full">
@@ -191,7 +188,7 @@ export function ServiceList({
             <AlertCircle className="w-10 h-10 text-red-400" />
             <p className="text-sm text-muted-foreground">{error}</p>
             <button
-              onClick={() => void refetch()}
+              onClick={reload}
               className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
             >
               Thử lại
@@ -205,7 +202,7 @@ export function ServiceList({
         ) : (
           <>
             <p className="text-xs text-muted-foreground mb-3">
-              {paged?.totalCount ?? items.length} dịch vụ
+              {total} dịch vụ
               {loading && <span className="text-blue-500"> · đang cập nhật…</span>}
             </p>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
@@ -258,6 +255,16 @@ export function ServiceList({
                 </div>
               ))}
             </div>
+            {hasNext && (
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="mt-4 w-full py-2.5 rounded-xl bg-white border border-border text-sm font-semibold text-blue-600 flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
+                {loadingMore ? "Đang tải..." : "Tải thêm"}
+              </button>
+            )}
           </>
         )}
       </div>

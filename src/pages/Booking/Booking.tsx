@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Wrench, Star, AlertCircle, Check, MapPin, Loader2, Plus } from "lucide-react";
+import { Wrench, Star, AlertCircle, Check, MapPin, Loader2, Plus, Search } from "lucide-react";
 import type {
   Screen,
   CustomerAddress,
@@ -19,6 +19,9 @@ const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 // Fallback slots used only when no specific tasker is chosen (system auto-assigns).
 const DEFAULT_TIME_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
 const PHONE_REGEX = /^(03|05|07|08|09)\d{8}$/;
+// Số dịch vụ hiển thị trước khi phải bấm "Xem thêm"; và ngưỡng bắt đầu hiện ô tìm kiếm.
+const SERVICE_VISIBLE_LIMIT = 10;
+const SERVICE_SEARCH_THRESHOLD = 8;
 
 /** Local date → "yyyy-MM-dd" (VN date, no timezone shift) for the availability API. */
 function toDateParam(d: Date): string {
@@ -78,6 +81,9 @@ export function Booking({
   const [serviceOptions, setServiceOptions] = useState<TaskerServiceOption[]>([]);
   const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
+  // Tìm kiếm + giới hạn hiển thị danh sách "Dịch vụ của thợ" (tránh cuộn dài khi thợ có nhiều dịch vụ).
+  const [serviceSearch, setServiceSearch] = useState("");
+  const [showAllServices, setShowAllServices] = useState(false);
 
   // The chosen tasker's free/busy hours for the selected date.
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
@@ -97,6 +103,9 @@ export function Booking({
 
   // ── Load the tasker's service options when a specific tasker is picked ───────
   useEffect(() => {
+    // Đổi thợ -> làm mới danh sách dịch vụ: xoá từ khoá tìm và thu gọn lại.
+    setServiceSearch("");
+    setShowAllServices(false);
     if (taskerId == null) {
       setServiceOptions([]);
       setSelectedServiceIds([]);
@@ -199,6 +208,26 @@ export function Booking({
     ...chosenServices.filter((s) => s.serviceId === serviceId),
     ...chosenServices.filter((s) => s.serviceId !== serviceId),
   ];
+
+  // Danh sách "Dịch vụ của thợ" sau khi lọc theo từ khoá + giới hạn hiển thị.
+  // Dịch vụ chính LUÔN được giữ (không bị ẩn bởi tìm kiếm/giới hạn).
+  const kw = serviceSearch.trim().toLowerCase();
+  const matchedServices = serviceOptions
+    .filter(
+      (o) =>
+        o.serviceId === serviceId ||
+        !kw ||
+        o.serviceName.toLowerCase().includes(kw) ||
+        o.categoryName.toLowerCase().includes(kw),
+    )
+    // Ghim dịch vụ chính lên đầu để không bị ẩn bởi giới hạn hiển thị.
+    .sort((a, b) =>
+      a.serviceId === serviceId ? -1 : b.serviceId === serviceId ? 1 : 0,
+    );
+  const visibleServices = showAllServices
+    ? matchedServices
+    : matchedServices.slice(0, SERVICE_VISIBLE_LIMIT);
+  const hiddenServiceCount = matchedServices.length - visibleServices.length;
 
   // Estimated total: sum of chosen services when a tasker is picked, else the
   // service's starting price (system will assign a tasker & confirm final price).
@@ -401,8 +430,29 @@ export function Booking({
             ) : serviceOptions.length === 0 ? (
               <p className="text-sm text-muted-foreground py-2">Thợ chưa cấu hình dịch vụ nào.</p>
             ) : (
-              <div className="space-y-2">
-                {serviceOptions.map((o) => {
+              <>
+                {/* Ô tìm kiếm chỉ hiện khi thợ có nhiều dịch vụ */}
+                {serviceOptions.length > SERVICE_SEARCH_THRESHOLD && (
+                  <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2.5 mb-2">
+                    <Search className="w-4 h-4 text-muted-foreground" />
+                    <input
+                      value={serviceSearch}
+                      onChange={(e) => {
+                        setServiceSearch(e.target.value);
+                        setShowAllServices(false);
+                      }}
+                      className="flex-1 bg-transparent text-sm focus:outline-none"
+                      placeholder="Tìm dịch vụ của thợ..."
+                    />
+                  </div>
+                )}
+                {matchedServices.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-2">
+                    Không tìm thấy dịch vụ phù hợp.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {visibleServices.map((o) => {
                   const active = selectedServiceIds.includes(o.serviceId);
                   const isPrimary = o.serviceId === serviceId;
                   return (
@@ -444,7 +494,26 @@ export function Booking({
                     </button>
                   );
                 })}
-              </div>
+                  </div>
+                )}
+                {hiddenServiceCount > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllServices(true)}
+                    className="mt-2 w-full py-2 rounded-xl border border-border text-sm font-semibold text-blue-600 hover:bg-accent transition-colors"
+                  >
+                    Xem thêm {hiddenServiceCount} dịch vụ
+                  </button>
+                ) : showAllServices && matchedServices.length > SERVICE_VISIBLE_LIMIT ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllServices(false)}
+                    className="mt-2 w-full py-2 rounded-xl border border-border text-sm font-semibold text-muted-foreground hover:bg-accent transition-colors"
+                  >
+                    Thu gọn
+                  </button>
+                ) : null}
+              </>
             )}
           </div>
         )}

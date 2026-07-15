@@ -137,7 +137,13 @@ function buildUrl(path: string, params?: RequestOptions["params"]) {
   const url = new URL(path.startsWith("http") ? path : `${API_BASE_URL}${path}`);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
+      if (value === undefined || value === null || value === "") return;
+      // Mảng -> lặp lại key (status=0&status=1) để khớp binding mảng của ASP.NET.
+      if (Array.isArray(value)) {
+        value.forEach((v) => {
+          if (v !== undefined && v !== null && v !== "") url.searchParams.append(key, String(v));
+        });
+      } else {
         url.searchParams.set(key, String(value));
       }
     });
