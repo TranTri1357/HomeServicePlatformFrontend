@@ -44,8 +44,9 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
 }
 
 /**
- * POST /api/customer/bookings/emergency — call one nearby available tasker directly.
- * CustomerId comes from the JWT. Pays cash on completion (no upfront payment).
+ * POST /api/customer/bookings/emergency — BROADCAST: tạo 1 đơn treo mở rồi bắn yêu cầu tới mọi thợ
+ * rảnh trong bán kính đầu (5km). CustomerId lấy từ JWT. Thanh toán tiền mặt khi hoàn thành; giá chốt
+ * theo thợ nào nhận trước. Trả về danh sách thợ đã được bắn ở vòng này (có thể rỗng).
  */
 export async function createEmergencyBooking(
   input: EmergencyBookingInput,
@@ -53,6 +54,22 @@ export async function createEmergencyBooking(
   const response = await post<ApiResponse<EmergencyBookingResult>>(
     "/customer/bookings/emergency",
     input,
+  );
+  return unwrap(response);
+}
+
+/**
+ * POST /api/customer/bookings/emergency/{id}/broadcast?radiusKm= — nới bán kính quét cho đơn khẩn
+ * chưa ai nhận (5→10→15km). Gia hạn cửa sổ 30s và bắn yêu cầu tới các thợ trong vòng mới.
+ */
+export async function rebroadcastEmergencyBooking(
+  bookingId: number,
+  radiusKm: number,
+): Promise<EmergencyBookingResult> {
+  const response = await post<ApiResponse<EmergencyBookingResult>>(
+    `/customer/bookings/emergency/${bookingId}/broadcast`,
+    {},
+    { params: { radiusKm } },
   );
   return unwrap(response);
 }
