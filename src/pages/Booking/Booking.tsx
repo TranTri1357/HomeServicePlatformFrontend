@@ -8,7 +8,7 @@ import type {
   TaskerServiceOption,
   AvailabilitySlot,
 } from "@/shared/types";
-import { serviceApi, addressApi, taskerApi, bookingApi } from "@/services/api";
+import { serviceApi, addressApi, taskerApi, bookingApi, customerApi } from "@/services/api";
 import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { useAuth } from "@/app/providers";
@@ -96,10 +96,44 @@ export function Booking({
   });
   const [savedAddr, setSavedAddr] = useState<CustomerAddress | null>(null);
 
+  // Tọa độ ĐÍCH của đơn — chỉ có khi khách chọn một địa chỉ đã lưu (địa chỉ này kèm lat/lng).
+  // Có tọa độ thì khung giờ mới được lọc theo "thời gian đệm di chuyển" của thợ.
+  const destLat = savedAddr?.latitude;
+  const destLng = savedAddr?.longitude;
+
   const pickSavedAddress = (addr: CustomerAddress) => {
     setSavedAddr(addr);
     setAddress(addr.addressLine);
+    setTime(""); // đổi vị trí ⇒ khung giờ khả thi thay đổi, buộc chọn lại
   };
+
+  // Prefill số điện thoại (và tên) từ hồ sơ khách — đáp ứng "mặc định SĐT vào thông tin liên hệ".
+  useEffect(() => {
+    let alive = true;
+    customerApi
+      .getCustomerProfile()
+      .then((p) => {
+        if (!alive) return;
+        if (p.phone) setPhone((prev) => prev || p.phone);
+        if (p.fullName) setFullName((prev) => prev || p.fullName);
+      })
+      .catch(() => {
+        /* prefill là tiện ích, lỗi thì bỏ qua, khách tự nhập */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Tự chọn địa chỉ mặc định để có sẵn tọa độ đích ngay từ đầu (nếu khách có địa chỉ mặc định).
+  useEffect(() => {
+    if (savedAddr || savedAddresses.length === 0) return;
+    const def = savedAddresses.find((a) => a.isDefault) ?? savedAddresses[0];
+    if (def) {
+      setSavedAddr(def);
+      setAddress(def.addressLine);
+    }
+  }, [savedAddresses, savedAddr]);
 
   // ── Load the tasker's service options when a specific tasker is picked ───────
   useEffect(() => {
@@ -139,8 +173,9 @@ export function Booking({
     }
     let alive = true;
     setLoadingSlots(true);
+    // Truyền tọa độ đích (nếu có) để backend trừ thêm buffer di chuyển khi sinh khung giờ.
     taskerApi
-      .getTaskerAvailability(taskerId, toDateParam(dateOptions[dateIdx]))
+      .getTaskerAvailability(taskerId, toDateParam(dateOptions[dateIdx]), destLat, destLng)
       .then((av) => {
         if (!alive) return;
         setHasSchedule(av.hasSchedule);
@@ -151,7 +186,7 @@ export function Booking({
     return () => {
       alive = false;
     };
-  }, [taskerId, dateIdx, dateOptions]);
+  }, [taskerId, dateIdx, dateOptions, destLat, destLng]);
 
   // ── Guards ────────────────────────────────────────────────────────────────
   if (!serviceId) {
@@ -524,6 +559,70 @@ export function Booking({
           </div>
         )}
 
+        {/* Contact & address — ĐẶT TRƯỚC bước chọn ngày/giờ: hệ thống cần tọa độ điểm đến
+            để trừ "thời gian đệm di chuyển" của thợ khi hiện khung giờ trống. */}
+        <div className="bg-white rounded-2xl p-4 space-y-3">
+          <h3 className="font-bold text-foreground">Thông tin liên hệ</h3>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-muted-foreground">Người nhận</label>
+            <input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Nguyễn Văn A"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-muted-foreground">Số điện thoại</label>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              inputMode="tel"
+              className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="0901234567"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-muted-foreground">Địa chỉ chi tiết</label>
+            {savedAddresses.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                {savedAddresses.map((addr) => {
+                  const active = savedAddr?.addressId === addr.addressId;
+                  return (
+                    <button
+                      key={addr.addressId}
+                      type="button"
+                      onClick={() => pickSavedAddress(addr)}
+                      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${active ? "border-blue-600 bg-accent text-blue-600" : "border-border bg-muted text-foreground"}`}
+                    >
+                      <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="max-w-[160px] truncate">{addr.addressLine}</span>
+                      {addr.isDefault && (
+                        <span className="text-[10px] text-green-600 font-semibold">Mặc định</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <input
+              value={address}
+              onChange={(e) => {
+                setAddress(e.target.value);
+                setSavedAddr(null);
+                setTime("");
+              }}
+              className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="123 Lê Lợi, Quận 1, TP.HCM"
+            />
+            {hasTasker && destLat == null && (
+              <p className="text-[11px] text-amber-600">
+                Chọn một địa chỉ đã lưu (có ghim bản đồ) để hệ thống loại bỏ khung giờ thợ không kịp di chuyển tới.
+              </p>
+            )}
+          </div>
+        </div>
+
         {/* Date */}
         {hasTasker && (
         <div className="bg-white rounded-2xl p-4">
@@ -589,63 +688,6 @@ export function Booking({
           )}
         </div>
         )}
-
-        {/* Contact & address (required by backend) */}
-        <div className="bg-white rounded-2xl p-4 space-y-3">
-          <h3 className="font-bold text-foreground">Thông tin liên hệ</h3>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">Người nhận</label>
-            <input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Nguyễn Văn A"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">Số điện thoại</label>
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              inputMode="tel"
-              className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="0901234567"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">Địa chỉ chi tiết</label>
-            {savedAddresses.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {savedAddresses.map((addr) => {
-                  const active = savedAddr?.addressId === addr.addressId;
-                  return (
-                    <button
-                      key={addr.addressId}
-                      type="button"
-                      onClick={() => pickSavedAddress(addr)}
-                      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${active ? "border-blue-600 bg-accent text-blue-600" : "border-border bg-muted text-foreground"}`}
-                    >
-                      <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span className="max-w-[160px] truncate">{addr.addressLine}</span>
-                      {addr.isDefault && (
-                        <span className="text-[10px] text-green-600 font-semibold">Mặc định</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            <input
-              value={address}
-              onChange={(e) => {
-                setAddress(e.target.value);
-                setSavedAddr(null);
-              }}
-              className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="123 Lê Lợi, Quận 1, TP.HCM"
-            />
-          </div>
-        </div>
 
         {/* Notes */}
         <div className="bg-white rounded-2xl p-4">
