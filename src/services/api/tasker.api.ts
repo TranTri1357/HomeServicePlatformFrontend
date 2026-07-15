@@ -213,17 +213,28 @@ export async function getTaskerServiceOptions(taskerId: number): Promise<TaskerS
 }
 
 /**
- * GET /api/Taskers/{id}/availability?date=yyyy-MM-dd
+ * GET /api/Taskers/{id}/availability?date=yyyy-MM-dd&lat=..&lng=..
  * The tasker's free/busy hourly slots for a day (based on their working schedule,
  * time-offs and existing bookings/holds). Public.
+ *
+ * When the destination coordinates (lat/lng) are provided, the backend also subtracts
+ * a travel "buffer time" between the tasker's neighbouring jobs and this location, so
+ * the customer never picks a slot the tasker cannot physically reach in time.
  */
 export async function getTaskerAvailability(
   taskerId: number,
   date: string,
+  lat?: number,
+  lng?: number,
 ): Promise<TaskerAvailability> {
+  const params: Record<string, string | number> = { date };
+  if (lat != null && lng != null) {
+    params.lat = lat;
+    params.lng = lng;
+  }
   const response = await get<ApiResponse<TaskerAvailability>>(
     `/Taskers/${taskerId}/availability`,
-    { params: { date } },
+    { params },
   );
   return unwrap(response);
 }

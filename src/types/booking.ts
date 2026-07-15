@@ -52,10 +52,12 @@ export interface CreateBookingResult {
   finalAmount: number;
 }
 
-/** Body for POST /api/customer/bookings/emergency — direct request to one nearby tasker. */
+/**
+ * Body for POST /api/customer/bookings/emergency — BROADCAST tới mọi thợ rảnh trong bán kính.
+ * Không còn chọn 1 thợ hay gửi giá: giá chốt theo thợ nào bấm nhận trước.
+ */
 export interface EmergencyBookingInput {
   serviceId: number;
-  taskerId: number;
   latitude: number;
   longitude: number;
   fullName: string;
@@ -64,19 +66,30 @@ export interface EmergencyBookingInput {
   provinceCode?: string;
   districtCode?: string;
   wardCode?: string;
-  unitPrice: number;
   note?: string;
 }
 
-/** Response of POST /api/customer/bookings/emergency. */
+/** Một thợ được bắn yêu cầu trong một vòng broadcast (kèm giá riêng của thợ). */
+export interface EmergencyTaskerOffer {
+  taskerId: number;
+  fullName: string;
+  price: number;
+  distanceKm: number;
+}
+
+/**
+ * Response của POST /api/customer/bookings/emergency và POST .../emergency/{id}/broadcast.
+ * `taskers` là các thợ đã được bắn yêu cầu ở vòng này (có thể rỗng → frontend nới bán kính).
+ */
 export interface EmergencyBookingResult {
   bookingId: number;
-  taskerId: number;
   serviceName: string;
   addressLine: string;
-  amount: number;
-  distanceKm: number;
+  latitude: number;
+  longitude: number;
   expiresInSeconds: number;
+  radiusKm: number;
+  taskers: EmergencyTaskerOffer[];
 }
 
 /**
