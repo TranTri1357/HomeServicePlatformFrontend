@@ -5,6 +5,7 @@ import { adminCategoryApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
 import { notify, getErrorMessage, getApiAssetUrl } from "@/shared/lib";
 import { ConfirmModal, AdminPagination, AdminSearchBar } from "@/components/Admin";
+import { ImageUploader } from "@/shared/ui";
 
 const PAGE_SIZE = 10;
 const EMPTY_FORM = { name: "", slug: "", iconUrl: "", isActive: true };
@@ -338,13 +339,14 @@ export function ServiceCategories() {
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground mb-1 block">
-                      Icon URL
+                      Icon danh mục
                     </label>
-                    <input
-                      value={form.iconUrl}
-                      onChange={(e) => setForm((f) => ({ ...f, iconUrl: e.target.value }))}
-                      className="w-full bg-muted px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="/uploads/categories/icon.png (tuỳ chọn)"
+                    <ImageUploader
+                      value={form.iconUrl || null}
+                      onChange={(url) => setForm((f) => ({ ...f, iconUrl: url ?? "" }))}
+                      folder="categories"
+                      shape="circle"
+                      hint="Nên dùng icon nền trong suốt (PNG). Tối đa 3MB."
                     />
                   </div>
                   {editId != null && (

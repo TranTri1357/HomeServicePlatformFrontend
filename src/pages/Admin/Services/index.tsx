@@ -5,9 +5,10 @@ import { adminServiceApi, categoryApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
 import { notify, getErrorMessage } from "@/shared/lib";
 import { ConfirmModal, AdminPagination, AdminSearchBar } from "@/components/Admin";
+import { ImageUploader } from "@/shared/ui";
 
 const PAGE_SIZE = 10;
-const EMPTY_FORM = { name: "", categoryId: 0, durationMinutes: 60, description: "", isActive: true };
+const EMPTY_FORM = { name: "", categoryId: 0, durationMinutes: 60, description: "", imageUrl: "", isActive: true };
 
 export function Services() {
   const [search, setSearch] = useState("");
@@ -65,6 +66,7 @@ export function Services() {
         categoryId: d.categoryId,
         durationMinutes: d.durationMinutes,
         description: d.description ?? "",
+        imageUrl: d.imageUrl ?? "",
         isActive: d.isActive,
       });
     } catch (err) {
@@ -91,6 +93,7 @@ export function Services() {
           description: form.description.trim() || undefined,
           durationMinutes: form.durationMinutes,
           isActive: form.isActive,
+          imageUrl: form.imageUrl || undefined,
         });
         notify.success("Đã cập nhật dịch vụ.");
       } else {
@@ -99,6 +102,7 @@ export function Services() {
           name: form.name.trim(),
           description: form.description.trim() || undefined,
           durationMinutes: form.durationMinutes,
+          imageUrl: form.imageUrl || undefined,
         });
         notify.success("Đã thêm dịch vụ.");
       }
@@ -322,6 +326,18 @@ export function Services() {
                       rows={3}
                       className="w-full bg-muted px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                       placeholder="Mô tả ngắn về dịch vụ..."
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground mb-1 block">
+                      Ảnh dịch vụ
+                    </label>
+                    <ImageUploader
+                      value={form.imageUrl || null}
+                      onChange={(url) => setForm((f) => ({ ...f, imageUrl: url ?? "" }))}
+                      folder="services"
+                      shape="square"
+                      hint="Ảnh minh hoạ dịch vụ (JPG/PNG/WEBP). Tối đa 3MB."
                     />
                   </div>
                   {editId != null && (

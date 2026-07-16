@@ -165,6 +165,8 @@ export interface TaskerService {
   price: number;
   durationMinutes: number;
   isActive: boolean;
+  /** Ảnh dịch vụ đã upload (Cloudinary); null thì UI hiện icon mặc định. */
+  imageUrl: string | null;
 }
 
 /** A one-hour slot in the tasker's day. Status: 0 trống · 1 đã đặt · 2 nghỉ. */

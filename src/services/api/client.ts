@@ -271,7 +271,9 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   const token = getAccessToken();
   const finalHeaders = new Headers(headers);
-  if (!finalHeaders.has("Content-Type") && body !== undefined) {
+  // Với FormData (upload file) KHÔNG tự set Content-Type — để trình duyệt tự thêm
+  // boundary "multipart/form-data; boundary=…". Ép JSON sẽ làm hỏng request upload.
+  if (!finalHeaders.has("Content-Type") && body !== undefined && !(body instanceof FormData)) {
     finalHeaders.set("Content-Type", "application/json");
   }
   if (!skipAuth && !isPublicAuth && token) {
@@ -328,6 +330,18 @@ export function post<T>(
     method: "POST",
     body: data !== undefined ? JSON.stringify(data) : undefined,
   });
+}
+
+/**
+ * POST multipart/form-data (upload file). Truyền thẳng FormData làm body — interceptor
+ * tự gắn Bearer token, và KHÔNG ép Content-Type để trình duyệt tự set boundary.
+ */
+export function postForm<T>(
+  url: string,
+  formData: FormData,
+  config?: Omit<RequestOptions, "method" | "body">,
+): Promise<T> {
+  return request<T>(url, { ...config, method: "POST", body: formData });
 }
 
 export function put<T>(
