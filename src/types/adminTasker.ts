@@ -20,6 +20,10 @@ export interface AdminTaskerDetail {
   experienceYears: number;
   isVerified: boolean;
   verifiedAt: string | null;
+  /** Ảnh giấy tờ (CCCD/chứng chỉ) thợ nộp — null với hồ sơ tạo trước khi có tính năng này. */
+  verificationImageUrl: string | null;
+  /** Lý do lần từ chối gần nhất — null nếu chưa từng bị từ chối. */
+  rejectionReason: string | null;
   ratingAvg: number;
   totalReviews: number;
   /** 0 pending · 1 active · 2 blocked (nghề). */

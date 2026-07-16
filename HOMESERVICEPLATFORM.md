@@ -304,6 +304,7 @@ Yêu cầu của thầy:
 
 * Khuyết điểm (Những điểm cần lưu ý):
 • Thời gian di chuyển của thợ: Thuật toán chống trùng lịch có thể mới chỉ kiểm tra khoảng thời gian (ví dụ: ca 8h-10h và 10h-12h). Tuy nhiên, trên thực tế, thợ cần thời gian di chuyển giữa 2 địa điểm của 2 khách hàng khác nhau. Nếu không tính toán "buffer time" (thời gian đệm di chuyển), thợ sẽ bị trễ giờ.
+
 • Bảo mật SignalR: Cần làm rõ cơ chế phân quyền khi dùng WebSocket/SignalR. Liệu người dùng khác có thể "lắng nghe" (listen) trộm tin nhắn của người khác nếu biết được tên của Hub hoặc Channel không?
 
 • Xử lý thanh toán ngoại lệ: Khi thanh toán qua MoMo/VNPay, nếu khách hàng đã thanh toán nhưng thợ hủy lịch phút chót do sự cố, luồng hoàn tiền (Refund) tự động hoặc chuyển job cho thợ khác chưa được làm rõ sâu sắc.
@@ -322,10 +323,13 @@ dịch vụ trong thợ khẩn cấp
 Đợn trong quản lý công việc
 
 ví kết hợp luôn cổng momo/zalopay
+
 đặt lịch khẩn cấp là khách đặt chọn vị trí thông báo cho toàn thợ trong bán kính ai chấp nhận trước là đơn của người đó
 thêm nhiều dữ liệu mẫu
+
 vấn đề xác minh thợ đang làm
 duyệt thợ phải xác minh thợ 
+
 thêm ảnh dịch vụ, danh mục
 
 Yêu cầu của cô:
