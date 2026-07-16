@@ -6,6 +6,7 @@ export interface AdminServiceItem {
   totalTaskers: number;
   totalBookings: number;
   isActive: boolean;
+  imageUrl: string | null;
 }
 
 /** Full service detail for editing — GET /api/admin/services/{id}. */
@@ -16,6 +17,7 @@ export interface AdminServiceDetail {
   description: string | null;
   durationMinutes: number;
   isActive: boolean;
+  imageUrl: string | null;
 }
 
 /** Body for POST /api/admin/services. */
@@ -24,6 +26,7 @@ export interface CreateServiceInput {
   name: string;
   description?: string;
   durationMinutes: number;
+  imageUrl?: string;
 }
 
 /** Body for PUT /api/admin/services/{id}. */
@@ -33,4 +36,5 @@ export interface UpdateServiceInput {
   description?: string;
   durationMinutes: number;
   isActive: boolean;
+  imageUrl?: string;
 }

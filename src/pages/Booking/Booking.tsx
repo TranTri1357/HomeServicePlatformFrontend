@@ -13,7 +13,7 @@ import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { useAuth } from "@/app/providers";
 import { TopBar, Avatar } from "@/shared/ui";
-import { formatVnd, notify, getErrorMessage } from "@/shared/lib";
+import { formatVnd, notify, getErrorMessage, getApiAssetUrl } from "@/shared/lib";
 
 const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 // Fallback slots used only when no specific tasker is chosen (system auto-assigns).
@@ -383,9 +383,17 @@ export function Booking({
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Selected service */}
         <div className="bg-white rounded-2xl p-4 flex gap-3">
-          <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Wrench className="w-7 h-7 text-blue-600" />
-          </div>
+          {detail.imageUrl ? (
+            <img
+              src={getApiAssetUrl(detail.imageUrl)}
+              alt={detail.name}
+              className="w-14 h-14 rounded-xl object-cover flex-shrink-0 bg-blue-50"
+            />
+          ) : (
+            <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Wrench className="w-7 h-7 text-blue-600" />
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="font-bold text-foreground">{detail.name}</p>
             {detail.description && (

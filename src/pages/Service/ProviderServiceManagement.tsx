@@ -16,7 +16,7 @@ import { taskerServiceApi, serviceApi } from "@/services/api";
 import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
-import { formatVnd, notify, getErrorMessage } from "@/shared/lib";
+import { formatVnd, notify, getErrorMessage, getApiAssetUrl } from "@/shared/lib";
 
 export function ProviderServiceManagement({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const goBack = useGoBack("providerDashboard");
@@ -202,9 +202,17 @@ export function ProviderServiceManagement({ onNavigate }: { onNavigate: (s: Scre
             // for every row), so serviceId is the real unique id per registered service.
             <div key={svc.serviceId} className="bg-white rounded-2xl p-3 shadow-sm">
               <div className="flex gap-3">
-                <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                  <Wrench className="w-6 h-6 text-blue-600" />
-                </div>
+                {svc.imageUrl ? (
+                  <img
+                    src={getApiAssetUrl(svc.imageUrl)}
+                    alt={svc.serviceName}
+                    className="w-14 h-14 rounded-xl object-cover flex-shrink-0 bg-blue-50"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <Wrench className="w-6 h-6 text-blue-600" />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">

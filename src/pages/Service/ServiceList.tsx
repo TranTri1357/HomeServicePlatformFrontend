@@ -7,7 +7,7 @@ import { useApi, useInfiniteList, useDebounced } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { getApiAssetUrl, formatVnd } from "@/shared/lib";
 
-/** Service banner with a placeholder when the backend has no image yet. */
+/** Service banner: chỉ hiện ảnh khi đã upload, còn lại là placeholder gọn. */
 function ServiceImage({ imageUrl, name }: { imageUrl: string | null; name: string }) {
   const [broken, setBroken] = useState(false);
   const url = imageUrl ? getApiAssetUrl(imageUrl) : "";

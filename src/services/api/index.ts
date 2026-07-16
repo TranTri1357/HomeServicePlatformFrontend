@@ -22,5 +22,6 @@ export * as taskerAddressApi from "./taskerAddress.api";
 export * as taskerServiceApi from "./taskerService.api";
 export * as walletApi from "./wallet.api";
 export * as bookingApi from "./booking.api";
+export * as uploadApi from "./upload.api";
 export * from "./authErrors";
 export * from "./client";

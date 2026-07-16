@@ -19,6 +19,8 @@ export interface PopularService {
   totalBookings: number;
   /** Lowest effective tasker price for this service, in VND. */
   startingPrice: number;
+  /** Ảnh đã upload (Cloudinary); null thì UI dùng ảnh minh hoạ theo tên. */
+  imageUrl: string | null;
 }
 
 /** One service in the explorer list — GET /api/Services/explorer. */

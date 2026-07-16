@@ -26,7 +26,7 @@ import { categories as mockCategories } from "@/services/Service/category.data";
 import { topTaskers as mockTopTaskers } from "@/services/Technician/tasker.data";
 import { popularServices as mockPopularServices } from "@/services/Service/popular.data";
 
-/** Category thumbnail with a graceful fallback when the image is missing/broken. */
+/** Category thumbnail: chỉ hiện icon đã upload, còn lại là icon mặc định gọn. */
 function CategoryIcon({ iconUrl, name }: { iconUrl: string; name: string }) {
   const [broken, setBroken] = useState(false);
   const url = iconUrl ? getApiAssetUrl(iconUrl) : "";
@@ -390,9 +390,17 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
                     onClick={() => onNavigate("serviceDetail", { serviceId: svc.serviceId })}
                     className="w-full flex items-center gap-3 bg-white rounded-2xl p-3 shadow-sm hover:shadow-md transition-shadow text-left"
                   >
-                    <div className="w-16 h-16 rounded-xl flex-shrink-0 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                      <Sparkles className="w-7 h-7 text-white" />
-                    </div>
+                    {svc.imageUrl ? (
+                      <img
+                        src={getApiAssetUrl(svc.imageUrl)}
+                        alt={svc.name}
+                        className="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-blue-50"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-xl flex-shrink-0 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                        <Sparkles className="w-7 h-7 text-white" />
+                      </div>
+                    )}
                     <div className="flex-1">
                       <p className="font-bold text-sm text-foreground">{svc.name}</p>
                       <div className="flex items-center gap-1 mt-0.5">
