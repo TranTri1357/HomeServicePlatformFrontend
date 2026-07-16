@@ -3,7 +3,7 @@ import { Star, Shield, X, Wrench, Loader2, AlertCircle } from "lucide-react";
 import type { AdminTaskerItem, AdminTaskerDetail } from "@/shared/types";
 import { adminTaskerApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
-import { notify, formatDateVn } from "@/shared/lib";
+import { notify, formatDateVn, getApiAssetUrl } from "@/shared/lib";
 import { ConfirmModal, AdminPagination, AdminSearchBar } from "@/components/Admin";
 
 const PAGE_SIZE = 10;
@@ -68,6 +68,8 @@ export function Technicians() {
       experienceYears: 0,
       isVerified: false,
       verifiedAt: null,
+      verificationImageUrl: null,
+      rejectionReason: null,
       ratingAvg: t.ratingAvg,
       totalReviews: 0,
       taskerStatus: t.status,
@@ -343,6 +345,40 @@ export function Technicians() {
               )}
 
               {detail.bio && <p className="text-sm text-muted-foreground">{detail.bio}</p>}
+
+              {detail.rejectionReason && (
+                <div className="flex gap-2 bg-red-50 border border-red-200 rounded-xl p-3">
+                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold text-red-700">Lý do từ chối lần trước</p>
+                    <p className="text-xs text-red-600 mt-0.5">{detail.rejectionReason}</p>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <h4 className="text-sm font-bold text-foreground mb-2">Ảnh giấy tờ xác minh</h4>
+                {detail.verificationImageUrl ? (
+                  // Mở tab mới để admin phóng to đọc số CCCD trước khi duyệt.
+                  <a
+                    href={getApiAssetUrl(detail.verificationImageUrl)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block rounded-xl overflow-hidden border border-border hover:opacity-90 transition-opacity"
+                  >
+                    <img
+                      src={getApiAssetUrl(detail.verificationImageUrl)}
+                      alt="Ảnh giấy tờ xác minh"
+                      className="w-full max-h-64 object-contain bg-muted"
+                    />
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-2 bg-muted rounded-xl p-3 text-xs text-muted-foreground">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    Thợ chưa cung cấp ảnh giấy tờ (hồ sơ tạo trước khi có yêu cầu xác minh).
+                  </div>
+                )}
+              </div>
 
               <div>
                 {[

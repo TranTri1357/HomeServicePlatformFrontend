@@ -231,6 +231,8 @@ export interface CreateTaskerProfileInput {
   experienceYears: number;
   latitude: number;
   longitude: number;
+  /** URL ảnh giấy tờ (CCCD/chứng chỉ) đã tải lên — backend bắt buộc, thiếu là không tạo hồ sơ. */
+  verificationImageUrl: string;
 }
 
 /** One job of a tasker — GET /api/tasker/tasker-jobs. JobStatus uses BookingStatus codes. */

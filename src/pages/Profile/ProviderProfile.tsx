@@ -17,7 +17,7 @@ import type { Screen } from "@/shared/types";
 import { taskerApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
 import { useAuth } from "@/app/providers";
-import { Avatar } from "@/shared/ui";
+import { Avatar, ImageUploader } from "@/shared/ui";
 import { notify } from "@/shared/lib";
 
 // Status → nhãn hiển thị (0 chờ duyệt · 1 nhận việc · 2 khóa · 3 tạm nghỉ).
@@ -28,9 +28,8 @@ const STATUS_LABEL: Record<number, { label: string; online: boolean }> = {
   3: { label: "Tạm nghỉ", online: false },
 };
 
-// Toạ độ mặc định (trung tâm TP.HCM) khi không lấy được vị trí trình duyệt.
-const DEFAULT_LAT = 10.7769;
-const DEFAULT_LNG = 106.7009;
+// Không có toạ độ mặc định: vị trí phải do thợ cung cấp thật. Toạ độ mặc định sẽ khiến
+// thuật toán tìm thợ theo bán kính tin rằng thợ đang ở đó, nên "chưa có" phải là null.
 
 export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const { user, logout } = useAuth();
@@ -53,8 +52,9 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
   const [creating, setCreating] = useState(false);
   const [cBio, setCBio] = useState("");
   const [cExp, setCExp] = useState(0);
-  const [cLat, setCLat] = useState(DEFAULT_LAT);
-  const [cLng, setCLng] = useState(DEFAULT_LNG);
+  const [cLat, setCLat] = useState<number | null>(null);
+  const [cLng, setCLng] = useState<number | null>(null);
+  const [cImageUrl, setCImageUrl] = useState<string | null>(null);
   const [cLocating, setCLocating] = useState(false);
   const [cSubmitting, setCSubmitting] = useState(false);
 
@@ -105,20 +105,27 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
       },
       () => {
         setCLocating(false);
-        notify.error("Không lấy được vị trí. Đang dùng toạ độ mặc định.");
+        notify.error("Không lấy được vị trí. Vui lòng cho phép truy cập vị trí rồi thử lại.");
       },
     );
   };
 
   const submitCreate = async () => {
-    if (!cBio.trim()) return notify.error("Vui lòng nhập giới thiệu bản thân.");
+    // Gom mọi thứ còn thiếu báo một lần, đừng bắt thợ sửa từng cái rồi bấm gửi nhiều lần.
+    const missing: string[] = [];
+    if (!cBio.trim()) missing.push("giới thiệu bản thân");
+    if (!cImageUrl) missing.push("ảnh giấy tờ");
+    if (cLat === null || cLng === null) missing.push("vị trí làm việc");
+    if (missing.length > 0) return notify.error(`Vui lòng bổ sung: ${missing.join(", ")}.`);
+
     setCSubmitting(true);
     try {
       await taskerApi.createTaskerProfile({
         bio: cBio.trim(),
         experienceYears: cExp,
-        latitude: cLat,
-        longitude: cLng,
+        latitude: cLat!,
+        longitude: cLng!,
+        verificationImageUrl: cImageUrl!,
       });
       notify.success("Đã gửi hồ sơ. Vui lòng chờ quản trị viên phê duyệt.");
       setCreating(false);
@@ -193,8 +200,9 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
                 onClick={() => {
                   setCBio("");
                   setCExp(0);
-                  setCLat(DEFAULT_LAT);
-                  setCLng(DEFAULT_LNG);
+                  setCLat(null);
+                  setCLng(null);
+                  setCImageUrl(null);
                   setCreating(true);
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
@@ -377,12 +385,28 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Vị trí làm việc</label>
+              <label className="text-xs font-semibold text-muted-foreground">
+                Ảnh giấy tờ <span className="text-red-500">*</span>
+              </label>
+              <ImageUploader
+                value={cImageUrl}
+                onChange={setCImageUrl}
+                folder="taskers"
+                shape="square"
+                hint="Ảnh CCCD (và chứng chỉ nếu có) để quản trị viên đối chiếu. JPG, PNG, WEBP hoặc GIF, tối đa 3MB."
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">
+                Vị trí làm việc <span className="text-red-500">*</span>
+              </label>
               <div className="flex items-center gap-2">
                 <div className="flex-1 flex items-center gap-2 bg-muted rounded-xl px-3 py-2.5 text-xs text-muted-foreground">
                   <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                   <span className="truncate">
-                    {cLat.toFixed(4)}, {cLng.toFixed(4)}
+                    {cLat !== null && cLng !== null
+                      ? `${cLat.toFixed(4)}, ${cLng.toFixed(4)}`
+                      : "Chưa có vị trí"}
                   </span>
                 </div>
                 <button
