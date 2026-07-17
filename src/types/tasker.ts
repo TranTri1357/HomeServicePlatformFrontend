@@ -212,9 +212,11 @@ export interface TaskerProfileData {
   ratingAvg: number;
   totalReviews: number;
   completedJobsCount: number;
-  /** 0 = chờ duyệt · 1 = đang nhận việc · 2 = bị khóa · 3 = tạm nghỉ. */
+  /** 0 = chờ duyệt · 1 = đang nhận việc · 2 = bị khóa · 3 = tạm nghỉ · 4 = bị từ chối. */
   status: number;
   bio: string | null;
+  /** Lý do admin từ chối (chỉ có khi status = 4). */
+  rejectionReason: string | null;
 }
 
 /** Body for PUT /api/tasker/profile — the tasker updates their own account. */

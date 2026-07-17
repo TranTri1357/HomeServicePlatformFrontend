@@ -20,12 +20,13 @@ import { useAuth } from "@/app/providers";
 import { Avatar, ImageUploader } from "@/shared/ui";
 import { notify } from "@/shared/lib";
 
-// Status → nhãn hiển thị (0 chờ duyệt · 1 nhận việc · 2 khóa · 3 tạm nghỉ).
+// Status → nhãn hiển thị (0 chờ duyệt · 1 nhận việc · 2 khóa · 3 tạm nghỉ · 4 bị từ chối).
 const STATUS_LABEL: Record<number, { label: string; online: boolean }> = {
   0: { label: "Chờ duyệt", online: false },
   1: { label: "Đang nhận việc", online: true },
   2: { label: "Bị khóa", online: false },
   3: { label: "Tạm nghỉ", online: false },
+  4: { label: "Bị từ chối", online: false },
 };
 
 // Không có toạ độ mặc định: vị trí phải do thợ cung cấp thật. Toạ độ mặc định sẽ khiến
@@ -61,6 +62,18 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
   const name = profile?.fullName || user?.fullName || "Thợ";
   const st = STATUS_LABEL[profile?.status ?? 0] ?? STATUS_LABEL[0];
   const isOnline = st.online;
+  const isRejected = profile?.status === 4;
+
+  // Mở modal hồ sơ. Nộp lại (prefill = true) giữ bio/kinh nghiệm cũ để thợ chỉ sửa chỗ cần;
+  // ảnh và vị trí luôn nhập lại vì đó thường là thứ khiến hồ sơ bị từ chối.
+  const openProfileModal = (prefill: boolean) => {
+    setCBio(prefill ? profile?.bio ?? "" : "");
+    setCExp(prefill ? profile?.experienceYears ?? 0 : 0);
+    setCLat(null);
+    setCLng(null);
+    setCImageUrl(null);
+    setCreating(true);
+  };
 
   const openEdit = () => {
     if (!profile) return;
@@ -197,19 +210,35 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
                 Thử lại
               </button>
               <button
-                onClick={() => {
-                  setCBio("");
-                  setCExp(0);
-                  setCLat(null);
-                  setCLng(null);
-                  setCImageUrl(null);
-                  setCreating(true);
-                }}
+                onClick={() => openProfileModal(false)}
                 className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
               >
                 Tạo hồ sơ thợ
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Hồ sơ bị từ chối → hiện lý do + nút nộp lại (banner thường trực, không phụ thuộc thông báo) */}
+        {isRejected && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 space-y-3">
+            <div className="flex gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-red-700">Hồ sơ chưa được duyệt</p>
+                <p className="text-sm text-red-600 mt-0.5">
+                  {profile?.rejectionReason
+                    ? `Lý do: ${profile.rejectionReason}`
+                    : "Quản trị viên chưa duyệt hồ sơ của bạn. Vui lòng bổ sung thông tin và nộp lại."}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => openProfileModal(true)}
+              className="w-full py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors"
+            >
+              Nộp lại hồ sơ
+            </button>
           </div>
         )}
 
@@ -358,7 +387,7 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto">
             <div>
-              <h3 className="font-bold text-foreground">Tạo hồ sơ thợ</h3>
+              <h3 className="font-bold text-foreground">{isRejected ? "Nộp lại hồ sơ thợ" : "Tạo hồ sơ thợ"}</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Hồ sơ sẽ ở trạng thái chờ duyệt cho đến khi quản trị viên phê duyệt.
               </p>
