@@ -5,10 +5,14 @@
  */
 export type PaymentMethodCode = 1 | 2 | 3 | 4;
 
-/** Request body for POST /api/payments/checkout. CustomerId comes from the JWT. */
+/**
+ * Request body for POST /api/payments/checkout. CustomerId comes from the JWT.
+ * Số tiền do SERVER tự tính từ Booking.FinalAmount (chống giả mạo) — client KHÔNG
+ * gửi amount. `isDeposit=true` => chỉ thu cọc 30%, phần còn lại trả khi hoàn thành.
+ */
 export interface CheckoutInput {
   bookingId: number;
-  amount: number;
+  isDeposit: boolean;
   method: PaymentMethodCode;
 }
 
