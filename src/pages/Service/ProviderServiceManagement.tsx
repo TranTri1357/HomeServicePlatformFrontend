@@ -11,14 +11,14 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import type { Screen, TaskerService } from "@/shared/types";
+import type { TaskerService } from "@/shared/types";
 import { taskerServiceApi, serviceApi } from "@/services/api";
 import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { formatVnd, notify, getErrorMessage, getApiAssetUrl } from "@/shared/lib";
 
-export function ProviderServiceManagement({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+export function ProviderServiceManagement() {
   const goBack = useGoBack("providerDashboard");
   const [search, setSearch] = useState("");
 

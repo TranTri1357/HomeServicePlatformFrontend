@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Wallet as WalletIcon, Plus, ArrowUpRight, ArrowDownLeft, Loader2 } from "lucide-react";
-import type { Screen } from "@/shared/types";
 import { walletApi } from "@/services/api";
 import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
@@ -19,7 +18,7 @@ const TX: Record<number, { label: string; credit: boolean }> = {
   6: { label: "Bồi thường", credit: true },
 };
 
-export function CustomerWallet({ onNavigate }: { onNavigate: (s: Screen, d?: object) => void }) {
+export function CustomerWallet() {
   const goBack = useGoBack("customerProfile");
   const { data: wallet, loading, refetch } = useApi(() => walletApi.getMyWallet());
 

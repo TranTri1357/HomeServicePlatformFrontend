@@ -1,11 +1,10 @@
 ﻿import { useState } from "react";
 import { MapPin, X, CheckCircle, Route } from "lucide-react";
-import type { Screen } from "@/shared/types";
 import { districts, districtMapPositions } from "@/services/Provider/provider.data";
 import { TopBar } from "@/shared/ui";
 import { useGoBack } from "@/app/routes/useGoBack";
 
-export function ProviderAreaRouting({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+export function ProviderAreaRouting() {
   const goBack = useGoBack("providerDashboard");
   const [areas, setAreas] = useState(districts);
   const [radius, setRadius] = useState(8);

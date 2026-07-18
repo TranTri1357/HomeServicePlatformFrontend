@@ -1,5 +1,4 @@
-import { lazy, Suspense } from "react";
-import { Loader2 } from "lucide-react";
+import { Suspense } from "react";
 import type { Screen } from "@/shared/types";
 import { taskerAddressApi } from "@/services/api";
 
@@ -7,18 +6,7 @@ import { CustomerHome } from "@/pages/Customer";
 import { CustomerProfile, ProviderProfile } from "@/pages/Profile";
 import { ServiceList, ServiceDetail, ProviderServiceManagement } from "@/pages/Service";
 import { TechnicianDetail } from "@/pages/Technician";
-
-// Lazy: màn bản đồ thợ kéo theo Leaflet (~150KB) — tách thành chunk riêng, chỉ tải
-// khi khách thực sự mở màn tìm thợ trên bản đồ.
-const TechnicianMap = lazy(() =>
-  import("@/pages/Technician/TechnicianMap").then((m) => ({ default: m.TechnicianMap })),
-);
-
-const ScreenFallback = (
-  <div className="flex items-center justify-center py-20">
-    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-  </div>
-);
+import { TechnicianMap, ScreenFallback } from "./lazyScreens";
 import { Booking, BookingManagement } from "@/pages/Booking";
 import { EmergencyBooking } from "@/pages/Emergency";
 import { Payment, MockGateway } from "@/pages/Payment";
@@ -62,7 +50,7 @@ export function renderScreen(
       return <ServiceDetail onNavigate={navigate} data={screenData as { serviceId?: number }} />;
     case "technicianMap":
       return (
-        <Suspense fallback={ScreenFallback}>
+        <Suspense fallback={<ScreenFallback />}>
           <TechnicianMap onNavigate={navigate} data={screenData as { serviceId?: number }} />
         </Suspense>
       );
@@ -105,13 +93,12 @@ export function renderScreen(
     case "customerProfile":
       return <CustomerProfile onNavigate={navigate} />;
     case "customerWallet":
-      return <CustomerWallet onNavigate={navigate} />;
+      return <CustomerWallet />;
     case "customerAddresses":
-      return <CustomerAddresses onNavigate={navigate} />;
+      return <CustomerAddresses />;
     case "providerAddresses":
       return (
         <CustomerAddresses
-          onNavigate={navigate}
           api={taskerAddressApi}
           backScreen="providerProfile"
           title="Địa chỉ hoạt động"
@@ -120,13 +107,13 @@ export function renderScreen(
     case "bookingManagement":
       return <BookingManagement onNavigate={navigate} />;
     case "notifications":
-      return <Notifications onNavigate={navigate} />;
+      return <Notifications />;
     case "providerDashboard":
       return <ProviderDashboard onNavigate={navigate} />;
     case "providerJobSheet":
       return <ProviderJobSheet onNavigate={navigate} />;
     case "providerSchedule":
-      return <ProviderSchedule onNavigate={navigate} />;
+      return <ProviderSchedule />;
     case "providerChat":
       return (
         <Chat
@@ -138,15 +125,15 @@ export function renderScreen(
     case "providerProfile":
       return <ProviderProfile onNavigate={navigate} />;
     case "providerNotifications":
-      return <Notifications onNavigate={navigate} variant="provider" />;
+      return <Notifications variant="provider" />;
     case "providerJobManagement":
       return <ProviderJobManagement onNavigate={navigate} />;
     case "providerIncome":
       return <ProviderIncome onNavigate={navigate} />;
     case "providerServiceManagement":
-      return <ProviderServiceManagement onNavigate={navigate} />;
+      return <ProviderServiceManagement />;
     case "providerAreaRouting":
-      return <ProviderAreaRouting onNavigate={navigate} />;
+      return <ProviderAreaRouting />;
     case "adminDashboard":
       return <AdminDashboard onNavigate={navigate} />;
     case "adminOrders":

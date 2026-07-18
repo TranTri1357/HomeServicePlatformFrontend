@@ -8,7 +8,7 @@ import {
   Loader2,
   Check,
 } from "lucide-react";
-import type { Screen, WeeklyScheduleInput } from "@/shared/types";
+import type { WeeklyScheduleInput } from "@/shared/types";
 import { scheduleApi } from "@/services/api";
 import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
@@ -54,7 +54,7 @@ const SLOT_STYLE: Record<number, { cls: string; label?: string }> = {
   2: { cls: "bg-slate-200 text-slate-500", label: "Nghỉ" },
 };
 
-export function ProviderSchedule({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+export function ProviderSchedule() {
   const goBack = useGoBack("providerDashboard");
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const isoDate = toISODate(selectedDate);

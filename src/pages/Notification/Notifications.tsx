@@ -28,10 +28,8 @@ function parsePayload(payload: string | null): { title: string; body: string } {
 }
 
 export function Notifications({
-  onNavigate,
   variant = "customer",
 }: {
-  onNavigate: (s: Screen) => void;
   variant?: "customer" | "provider";
 }) {
   const isProvider = variant === "provider";
