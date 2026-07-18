@@ -57,3 +57,9 @@ Thumbs.db
 *.tmp
 *.temp
 *.local
+
+# ==========================
+# Stray .NET build artifacts (không thuộc frontend)
+# ==========================
+src/obj/
+obj/

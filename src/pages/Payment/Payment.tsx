@@ -80,10 +80,11 @@ export function Payment({
   const handleConfirm = async () => {
     setSubmitting(true);
     try {
-      // Charge either the deposit or the full amount of the existing order.
-      const payAmount =
-        payType === "deposit" ? Math.round(displayTotal * DEPOSIT_RATE) : displayTotal;
-      const res = await paymentApi.checkout({ bookingId, amount: payAmount, method });
+      // Số tiền do SERVER tự tính từ FinalAmount (chống giả mạo); client chỉ báo full/deposit.
+      // payAmount ở đây CHỈ để hiển thị / truyền sang màn cổng giả lập.
+      const isDeposit = payType === "deposit";
+      const payAmount = isDeposit ? Math.round(displayTotal * DEPOSIT_RATE) : displayTotal;
+      const res = await paymentApi.checkout({ bookingId, isDeposit, method });
 
       // Simulated MoMo/ZaloPay: open the in-app mock gateway screen.
       if (paymentApi.isMockGatewayUrl(res.paymentUrl)) {

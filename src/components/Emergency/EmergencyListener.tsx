@@ -1,19 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Siren, MapPin, Loader2, Check, X } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { taskerApi } from "@/services/api";
 import { connectEmergencyTasker, type EmergencyRequestPush } from "@/services/realtime/bookingHub";
 import { formatVnd, notify, getErrorMessage } from "@/shared/lib";
 
-const custIcon = L.divIcon({
-  className: "",
-  html: `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="42" viewBox="0 0 30 42"><path d="M15 0C6.7 0 0 6.7 0 15c0 10 15 27 15 27s15-17 15-27C30 6.7 23.3 0 15 0z" fill="#ef4444"/><circle cx="15" cy="15" r="6" fill="white"/></svg>`,
-  iconSize: [30, 42],
-  iconAnchor: [15, 42],
-});
+// Lazy: chỉ tải Leaflet khi có đơn khẩn thực sự hiện lên, thay vì kèm vào bundle
+// của layout thợ (listener luôn được mount).
+const EmergencyMiniMap = lazy(() =>
+  import("./EmergencyMiniMap").then((m) => ({ default: m.EmergencyMiniMap })),
+);
 
 /** Short repeating beep via Web Audio API — no audio file needed. */
 function useAlarm() {
@@ -182,21 +178,15 @@ export function EmergencyListener({ onNavigate }: { onNavigate: (s: Screen, d?: 
 
           {/* Mini map of the customer's location */}
           <div className="rounded-xl overflow-hidden border border-border" style={{ height: 150 }}>
-            <MapContainer
-              center={[req.latitude, req.longitude]}
-              zoom={15}
-              style={{ width: "100%", height: "100%" }}
-              scrollWheelZoom={false}
-              dragging={false}
-              doubleClickZoom={false}
-              zoomControl={false}
+            <Suspense
+              fallback={
+                <div className="w-full h-full bg-muted flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              }
             >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <Marker position={[req.latitude, req.longitude]} icon={custIcon} />
-            </MapContainer>
+              <EmergencyMiniMap latitude={req.latitude} longitude={req.longitude} />
+            </Suspense>
           </div>
 
           {/* Big action buttons */}

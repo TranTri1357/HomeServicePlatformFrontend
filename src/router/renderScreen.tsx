@@ -1,10 +1,24 @@
+import { lazy, Suspense } from "react";
+import { Loader2 } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { taskerAddressApi } from "@/services/api";
 
 import { CustomerHome } from "@/pages/Customer";
 import { CustomerProfile, ProviderProfile } from "@/pages/Profile";
 import { ServiceList, ServiceDetail, ProviderServiceManagement } from "@/pages/Service";
-import { TechnicianMap, TechnicianDetail } from "@/pages/Technician";
+import { TechnicianDetail } from "@/pages/Technician";
+
+// Lazy: màn bản đồ thợ kéo theo Leaflet (~150KB) — tách thành chunk riêng, chỉ tải
+// khi khách thực sự mở màn tìm thợ trên bản đồ.
+const TechnicianMap = lazy(() =>
+  import("@/pages/Technician/TechnicianMap").then((m) => ({ default: m.TechnicianMap })),
+);
+
+const ScreenFallback = (
+  <div className="flex items-center justify-center py-20">
+    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+  </div>
+);
 import { Booking, BookingManagement } from "@/pages/Booking";
 import { EmergencyBooking } from "@/pages/Emergency";
 import { Payment, MockGateway } from "@/pages/Payment";
@@ -47,7 +61,11 @@ export function renderScreen(
     case "serviceDetail":
       return <ServiceDetail onNavigate={navigate} data={screenData as { serviceId?: number }} />;
     case "technicianMap":
-      return <TechnicianMap onNavigate={navigate} data={screenData as { serviceId?: number }} />;
+      return (
+        <Suspense fallback={ScreenFallback}>
+          <TechnicianMap onNavigate={navigate} data={screenData as { serviceId?: number }} />
+        </Suspense>
+      );
     case "technicianDetail":
       return (
         <TechnicianDetail onNavigate={navigate} data={screenData as { taskerId?: number }} />

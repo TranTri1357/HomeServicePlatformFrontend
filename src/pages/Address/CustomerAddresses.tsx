@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { MapPin, Plus, Pencil, Trash2, Check, Star, Loader2, AlertCircle } from "lucide-react";
 import type { Screen, CustomerAddress, AddressInput } from "@/shared/types";
 import { useGoBack } from "@/app/routes/useGoBack";
@@ -13,7 +13,10 @@ import {
   geocodeAddress,
   type AdminUnit,
 } from "@/services/vnAddress";
-import { LocationPicker } from "./LocationPicker";
+// Lazy: LocationPicker kéo theo Leaflet — tách chunk, chỉ tải khi mở form địa chỉ.
+const LocationPicker = lazy(() =>
+  import("./LocationPicker").then((m) => ({ default: m.LocationPicker })),
+);
 
 /**
  * Trang quản lý địa chỉ dùng chung cho cả Khách và Thợ. Mặc định chạy với API
@@ -440,16 +443,24 @@ export function CustomerAddresses({
               <label className="text-xs font-semibold text-muted-foreground">
                 Vị trí trên bản đồ
               </label>
-              <LocationPicker
-                value={lat != null && lng != null ? { lat, lng } : null}
-                onChange={(la, ln) => {
-                  setLat(la);
-                  setLng(ln);
-                }}
-                fallbackQuery={[line, ward?.name, district?.name, province?.name, "Việt Nam"]
-                  .filter(Boolean)
-                  .join(", ")}
-              />
+              <Suspense
+                fallback={
+                  <div className="h-48 rounded-xl bg-muted flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  </div>
+                }
+              >
+                <LocationPicker
+                  value={lat != null && lng != null ? { lat, lng } : null}
+                  onChange={(la, ln) => {
+                    setLat(la);
+                    setLng(ln);
+                  }}
+                  fallbackQuery={[line, ward?.name, district?.name, province?.name, "Việt Nam"]
+                    .filter(Boolean)
+                    .join(", ")}
+                />
+              </Suspense>
             </div>
 
             <label className="flex items-center gap-2 cursor-pointer">

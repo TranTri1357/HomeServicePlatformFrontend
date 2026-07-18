@@ -20,6 +20,7 @@ import { customerApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
 import { useAuth } from "@/app/providers";
 import { getAvatarUrl, notify, getErrorMessage } from "@/shared/lib";
+import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 
 const PHONE_REGEX = /^(03|05|07|08|09)\d{8}$/;
 
@@ -32,6 +33,9 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
   const email = profile?.email || "";
   const phone = profile?.phone || "";
   const address = profile?.defaultAddress || "Chưa cập nhật địa chỉ";
+
+  // Change-password modal state.
+  const [changingPassword, setChangingPassword] = useState(false);
 
   // Edit-profile modal state.
   const [editing, setEditing] = useState(false);
@@ -81,7 +85,7 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
     { label: "Lịch sử đặt lịch", icon: BookOpen, onClick: () => onNavigate("bookingManagement") },
     { label: "Địa chỉ đã lưu", icon: MapPin, onClick: () => onNavigate("customerAddresses") },
     { label: "Thông báo", icon: Bell, onClick: () => onNavigate("notifications") },
-    
+    { label: "Đổi mật khẩu", icon: Shield, onClick: () => setChangingPassword(true) },
   ];
 
   return (
@@ -252,6 +256,8 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
           </div>
         </div>
       )}
+
+      <ChangePasswordModal open={changingPassword} onClose={() => setChangingPassword(false)} />
     </div>
   );
 }
