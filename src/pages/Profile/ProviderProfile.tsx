@@ -12,6 +12,7 @@ import {
   MapPin,
   ChevronRight,
   Loader2,
+  Lock,
 } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { taskerApi } from "@/services/api";
@@ -19,6 +20,7 @@ import { useApi } from "@/shared/hooks";
 import { useAuth } from "@/app/providers";
 import { Avatar, ImageUploader } from "@/shared/ui";
 import { notify } from "@/shared/lib";
+import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 
 // Status → nhãn hiển thị (0 chờ duyệt · 1 nhận việc · 2 khóa · 3 tạm nghỉ · 4 bị từ chối).
 const STATUS_LABEL: Record<number, { label: string; online: boolean }> = {
@@ -40,6 +42,8 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
     () => taskerApi.getMyTaskerProfile(taskerId!),
     { immediate: Boolean(taskerId) },
   );
+
+  const [changingPassword, setChangingPassword] = useState(false);
 
   // ── Edit-account modal ──────────────────────────────────────────────────
   const [editing, setEditing] = useState(false);
@@ -299,6 +303,21 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
           <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         </button>
 
+        {/* Đổi mật khẩu */}
+        <button
+          onClick={() => setChangingPassword(true)}
+          className="w-full bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:bg-muted transition-colors"
+        >
+          <div className="w-9 h-9 bg-accent rounded-xl flex items-center justify-center flex-shrink-0">
+            <Lock className="w-4 h-4 text-blue-600" />
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-sm font-semibold text-foreground">Đổi mật khẩu</p>
+            <p className="text-xs text-muted-foreground">Cập nhật mật khẩu đăng nhập</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+        </button>
+
         {/* Verification note */}
         <div className="bg-blue-50 rounded-2xl px-4 py-3 flex items-center gap-3">
           <BadgeCheck className="w-5 h-5 text-blue-600 flex-shrink-0" />
@@ -468,6 +487,8 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
           </div>
         </div>
       )}
+
+      <ChangePasswordModal open={changingPassword} onClose={() => setChangingPassword(false)} />
     </div>
   );
 }

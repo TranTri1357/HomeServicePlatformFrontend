@@ -30,6 +30,12 @@ export interface RefreshTokenPayload {
   refreshToken: string;
 }
 
+export interface ChangePasswordPayload {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export interface TokenPair {
   accessToken: string;
   refreshToken: string;
@@ -190,6 +196,23 @@ export async function refreshToken(token: string): Promise<TokenPair> {
 
   setTokens(pair.accessToken, pair.refreshToken);
   return pair;
+}
+
+/**
+ * Đổi mật khẩu khi đã đăng nhập — POST /api/Auth/change-password.
+ * UserId lấy từ token phía server. Thành công thì backend thu hồi các refresh token cũ
+ * (đăng xuất thiết bị khác); phiên hiện tại vẫn dùng access token tới khi hết hạn.
+ */
+export async function changePassword(payload: ChangePasswordPayload): Promise<boolean> {
+  const response = await post<ApiResponse<boolean>>("/Auth/change-password", payload, {
+    retryOnUnauthorized: false,
+  });
+
+  if (!response?.succeeded) {
+    throw new Error(getFailedMessage(response, "Đổi mật khẩu thất bại"));
+  }
+
+  return Boolean(response.data);
 }
 
 /**
