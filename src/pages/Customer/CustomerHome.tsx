@@ -13,6 +13,7 @@ import {
   Bell,
   Siren,
   LogIn,
+  AlertCircle,
 } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { categoryApi, serviceApi, taskerApi, searchApi } from "@/services/api";
@@ -21,10 +22,29 @@ import { useAuth } from "@/app/providers";
 import { Avatar } from "@/shared/ui";
 import { getApiAssetUrl, getUnsplashUrl, formatVnd } from "@/shared/lib";
 
-// Mock fallback so the UI keeps rendering while backend endpoints are wired up.
-import { categories as mockCategories } from "@/services/Service/category.data";
-import { topTaskers as mockTopTaskers } from "@/services/Technician/tasker.data";
-import { popularServices as mockPopularServices } from "@/services/Service/popular.data";
+/**
+ * Thông báo cho một mục khi tải xong mà không có dữ liệu, hoặc gọi API lỗi.
+ * Trước đây màn này seed dữ liệu giả làm `initialData`, nên backend chết thì khách
+ * vẫn thấy danh mục/thợ "ảo" như thật — nay hiển thị đúng trạng thái thực.
+ */
+function SectionMessage({ error, onRetry }: { error?: string | null; onRetry?: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+      <AlertCircle className={`w-8 h-8 ${error ? "text-red-400" : "text-slate-300"}`} />
+      <p className="text-sm text-muted-foreground">
+        {error ?? "Chưa có dữ liệu để hiển thị."}
+      </p>
+      {error && onRetry && (
+        <button
+          onClick={onRetry}
+          className="px-4 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-semibold"
+        >
+          Thử lại
+        </button>
+      )}
+    </div>
+  );
+}
 
 /** Category thumbnail: chỉ hiện icon đã upload, còn lại là icon mặc định gọn. */
 function CategoryIcon({ iconUrl, name }: { iconUrl: string; name: string }) {
@@ -41,24 +61,30 @@ function CategoryIcon({ iconUrl, name }: { iconUrl: string; name: string }) {
 export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: object) => void }) {
   const { user, isAuthenticated } = useAuth();
   // Reference example for teammates: fetch each resource through `useApi`.
-  // `initialData` seeds the mock so the screen never flashes empty, and on an
-  // API error the hook keeps the last value (the mock) while exposing `error`.
+  // Khởi tạo bằng mảng RỖNG (không phải dữ liệu giả): trong lúc tải thì hiện skeleton,
+  // tải xong mà rỗng/lỗi thì hiện đúng trạng thái đó — không bịa dữ liệu cho khách xem.
   //
   // Service categories — GET /api/Categories/active (real endpoint).
-  const { data: categories = mockCategories, loading: loadingCategories } = useApi(
-    () => categoryApi.getActiveCategories(),
-    { initialData: mockCategories },
-  );
+  const {
+    data: categories = [],
+    loading: loadingCategories,
+    error: errorCategories,
+    refetch: refetchCategories,
+  } = useApi(() => categoryApi.getActiveCategories(), { initialData: [] });
   // Featured taskers — GET /api/Taskers/top (real endpoint).
-  const { data: taskers = mockTopTaskers, loading: loadingTaskers } = useApi(
-    () => taskerApi.getTopTaskers({ limit: 10 }),
-    { initialData: mockTopTaskers },
-  );
+  const {
+    data: taskers = [],
+    loading: loadingTaskers,
+    error: errorTaskers,
+    refetch: refetchTaskers,
+  } = useApi(() => taskerApi.getTopTaskers({ limit: 10 }), { initialData: [] });
   // Popular services — GET /api/Services/popular (real endpoint).
-  const { data: popularServices = mockPopularServices, loading: loadingPopular } = useApi(
-    () => serviceApi.getPopularServices({ limit: 5 }),
-    { initialData: mockPopularServices },
-  );
+  const {
+    data: popularServices = [],
+    loading: loadingPopular,
+    error: errorPopular,
+    refetch: refetchPopular,
+  } = useApi(() => serviceApi.getPopularServices({ limit: 5 }), { initialData: [] });
 
   // Global search — GET /api/Search?keyword= (debounced, dropdown results).
   const [keyword, setKeyword] = useState("");
@@ -281,6 +307,8 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
                 </div>
               ))}
             </div>
+          ) : categories.length === 0 ? (
+            <SectionMessage error={errorCategories} onRetry={() => void refetchCategories()} />
           ) : (
             <div className="grid grid-cols-3 gap-3">
               {categories.map((cat) => (
@@ -325,6 +353,12 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
                     <div className="h-2.5 w-16 bg-slate-200 rounded" />
                   </div>
                 ))
+              : taskers.length === 0
+              ? [
+                  <div key="empty" className="w-full">
+                    <SectionMessage error={errorTaskers} onRetry={() => void refetchTaskers()} />
+                  </div>,
+                ]
               : taskers.map((t) => (
                   <button
                     key={t.taskerId}
@@ -384,6 +418,14 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
                     </div>
                   </div>
                 ))
+              : popularServices.length === 0
+              ? [
+                  <SectionMessage
+                    key="empty"
+                    error={errorPopular}
+                    onRetry={() => void refetchPopular()}
+                  />,
+                ]
               : popularServices.map((svc) => (
                   <button
                     key={svc.serviceId}

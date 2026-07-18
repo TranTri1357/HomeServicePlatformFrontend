@@ -14,14 +14,8 @@ import { CustomerWallet } from "@/pages/Wallet";
 import { CustomerAddresses } from "@/pages/Address";
 import { Chat } from "@/pages/Chat";
 import { Notifications } from "@/pages/Notification";
-import {
-  ProviderDashboard,
-  ProviderJobSheet,
-  ProviderJobManagement,
-  ProviderIncome,
-} from "@/pages/Provider";
+import { ProviderDashboard, ProviderJobManagement, ProviderIncome } from "@/pages/Provider";
 import { ProviderSchedule } from "@/pages/Calendar";
-import { ProviderAreaRouting } from "@/pages/Area";
 import {
   AdminDashboard,
   AdminOrders,
@@ -111,8 +105,6 @@ export function renderScreen(
       return <Notifications />;
     case "providerDashboard":
       return <ProviderDashboard onNavigate={navigate} />;
-    case "providerJobSheet":
-      return <ProviderJobSheet onNavigate={navigate} />;
     case "providerSchedule":
       return <ProviderSchedule />;
     case "providerChat":
@@ -133,8 +125,6 @@ export function renderScreen(
       return <ProviderIncome onNavigate={navigate} />;
     case "providerServiceManagement":
       return <ProviderServiceManagement />;
-    case "providerAreaRouting":
-      return <ProviderAreaRouting />;
     case "adminDashboard":
       return <AdminDashboard onNavigate={navigate} />;
     case "adminOrders":
