@@ -1,13 +1,19 @@
 import { useState } from "react";
-import { Wallet as WalletIcon, Plus, ArrowUpRight, ArrowDownLeft, Loader2 } from "lucide-react";
+import { Wallet as WalletIcon, ArrowUpRight, ArrowDownLeft, QrCode } from "lucide-react";
 import type { Screen } from "@/shared/types";
 import { walletApi } from "@/services/api";
 import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
-import { formatVnd, formatDateVn, notify, getErrorMessage } from "@/shared/lib";
+import { formatVnd, formatDateVn, notify } from "@/shared/lib";
 
 const QUICK_AMOUNTS = [100_000, 200_000, 500_000, 1_000_000];
+
+// Hai cổng giả lập được backend chấp nhận cho việc nạp ví.
+const GATEWAYS = [
+  { id: "momo" as const, name: "MoMo", color: "#a50064" },
+  { id: "zalopay" as const, name: "ZaloPay", color: "#0068ff" },
+];
 
 // Wallet transaction type → label + whether it credits the balance.
 const TX: Record<number, { label: string; credit: boolean }> = {
@@ -21,26 +27,19 @@ const TX: Record<number, { label: string; credit: boolean }> = {
 
 export function CustomerWallet({ onNavigate }: { onNavigate: (s: Screen, d?: object) => void }) {
   const goBack = useGoBack("customerProfile");
-  const { data: wallet, loading, refetch } = useApi(() => walletApi.getMyWallet());
+  const { data: wallet, loading } = useApi(() => walletApi.getMyWallet());
 
   const [amount, setAmount] = useState<number>(QUICK_AMOUNTS[0]);
-  const [toppingUp, setToppingUp] = useState(false);
+  const [gateway, setGateway] = useState<"momo" | "zalopay">("momo");
 
-  const handleTopUp = async () => {
+  // Không gọi API ở đây: mở màn cổng giả lập (dùng chung với luồng thanh toán đơn) và chỉ
+  // khi người dùng bấm "Tôi đã thanh toán" ở đó thì tiền mới thực sự vào ví.
+  const handleTopUp = () => {
     if (amount <= 0) {
       notify.error("Vui lòng chọn hoặc nhập số tiền nạp.");
       return;
     }
-    setToppingUp(true);
-    try {
-      const newBalance = await walletApi.topUpWallet(amount);
-      notify.success(`Nạp thành công! Số dư: ${formatVnd(newBalance)}đ`);
-      void refetch();
-    } catch (err) {
-      notify.error(getErrorMessage(err));
-    } finally {
-      setToppingUp(false);
-    }
+    onNavigate("mockGateway", { mode: "topup", amount, provider: gateway });
   };
 
   const transactions = wallet?.recentTransactions ?? [];
@@ -86,16 +85,34 @@ export function CustomerWallet({ onNavigate }: { onNavigate: (s: Screen, d?: obj
             />
             <span className="text-sm text-muted-foreground">đ</span>
           </div>
+
+          {/* Chọn cổng nạp */}
+          <p className="text-xs font-semibold text-muted-foreground mb-2">Chọn cổng thanh toán</p>
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            {GATEWAYS.map((g) => {
+              const active = gateway === g.id;
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => setGateway(g.id)}
+                  className={`py-2.5 rounded-xl text-sm font-bold border-2 transition-colors ${active ? "text-white" : "border-transparent bg-muted text-foreground"}`}
+                  style={active ? { background: g.color, borderColor: g.color } : undefined}
+                >
+                  {g.name}
+                </button>
+              );
+            })}
+          </div>
+
           <button
             onClick={handleTopUp}
-            disabled={toppingUp}
-            className="w-full py-3 bg-blue-600 disabled:opacity-70 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
           >
-            {toppingUp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            {toppingUp ? "Đang nạp..." : `Nạp ${formatVnd(amount)}đ`}
+            <QrCode className="w-4 h-4" />
+            {`Nạp ${formatVnd(amount)}đ qua ${GATEWAYS.find((g) => g.id === gateway)?.name}`}
           </button>
           <p className="text-[11px] text-muted-foreground mt-2">
-            Chế độ demo: tiền được cộng thẳng vào ví, chưa qua cổng thật.
+            Bạn sẽ được chuyển tới cổng giả lập để quét mã QR và xác nhận thanh toán.
           </p>
         </div>
 
