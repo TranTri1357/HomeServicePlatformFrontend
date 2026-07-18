@@ -1,40 +1,65 @@
 import { useState } from "react";
 import { QrCode, ShieldCheck, Loader2, AlertCircle, X } from "lucide-react";
-import type { Screen } from "@/shared/types";
-import { paymentApi } from "@/services/api";
+import type { Screen, TopUpMethodCode } from "@/shared/types";
+import { paymentApi, walletApi } from "@/services/api";
 import { formatVnd, notify, getErrorMessage } from "@/shared/lib";
 
 type Provider = "momo" | "zalopay";
+
+/**
+ * "booking" — xác nhận khoản thanh toán đơn đã tạo sẵn (đóng vai IPN của cổng).
+ * "topup"   — nạp ví: chưa có bản ghi nào ở backend, tiền chỉ được cộng khi bấm xác nhận.
+ */
+type GatewayMode = "booking" | "topup";
 
 const BRAND: Record<Provider, { name: string; color: string; text: string }> = {
   momo: { name: "MoMo", color: "#a50064", text: "text-white" },
   zalopay: { name: "ZaloPay", color: "#0068ff", text: "text-white" },
 };
 
+const METHOD_CODE: Record<Provider, TopUpMethodCode> = { momo: 3, zalopay: 4 };
+
 export function MockGateway({
   onNavigate,
   data,
 }: {
   onNavigate: (s: Screen, d?: object) => void;
-  data?: { paymentId?: number; bookingId?: number; amount?: number; provider?: Provider };
+  data?: {
+    mode?: GatewayMode;
+    paymentId?: number;
+    bookingId?: number;
+    amount?: number;
+    provider?: Provider;
+  };
 }) {
+  const mode: GatewayMode = data?.mode === "topup" ? "topup" : "booking";
   const paymentId = data?.paymentId;
   const amount = data?.amount ?? 0;
   const provider: Provider = data?.provider === "zalopay" ? "zalopay" : "momo";
   const brand = BRAND[provider];
 
+  const isTopUp = mode === "topup";
+  const returnScreen: Screen = isTopUp ? "customerWallet" : "bookingManagement";
+
   const [busy, setBusy] = useState<"none" | "pay" | "cancel">("none");
 
-  if (!paymentId) {
+  // Nạp ví thì chưa có paymentId (chưa có gì ở backend), chỉ cần số tiền hợp lệ.
+  const invalid = isTopUp ? amount <= 0 : !paymentId;
+
+  if (invalid) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
         <AlertCircle className="w-10 h-10 text-red-400" />
-        <p className="text-sm text-muted-foreground">Không xác định được giao dịch thanh toán.</p>
+        <p className="text-sm text-muted-foreground">
+          {isTopUp
+            ? "Không xác định được số tiền cần nạp."
+            : "Không xác định được giao dịch thanh toán."}
+        </p>
         <button
-          onClick={() => onNavigate("bookingManagement")}
+          onClick={() => onNavigate(returnScreen)}
           className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
         >
-          Về lịch đặt
+          {isTopUp ? "Về ví của tôi" : "Về lịch đặt"}
         </button>
       </div>
     );
@@ -43,9 +68,18 @@ export function MockGateway({
   const handlePay = async () => {
     setBusy("pay");
     try {
-      await paymentApi.confirmMockPayment(paymentId, true);
-      notify.success(`Thanh toán ${brand.name} thành công!`);
-      onNavigate("bookingManagement");
+      if (isTopUp) {
+        // Đây là lần gọi backend DUY NHẤT của luồng nạp: tiền vào ví ngay tại đây.
+        const newBalance = await walletApi.topUpWallet({
+          amount,
+          method: METHOD_CODE[provider],
+        });
+        notify.success(`Nạp ${formatVnd(amount)}đ qua ${brand.name} thành công! Số dư: ${formatVnd(newBalance)}đ`);
+      } else {
+        await paymentApi.confirmMockPayment(paymentId!, true);
+        notify.success(`Thanh toán ${brand.name} thành công!`);
+      }
+      onNavigate(returnScreen);
     } catch (err) {
       notify.error(getErrorMessage(err));
       setBusy("none");
@@ -55,10 +89,15 @@ export function MockGateway({
   const handleCancel = async () => {
     setBusy("cancel");
     try {
-      await paymentApi.confirmMockPayment(paymentId, false);
-      // Đơn đã được tạo ở trạng thái Chờ; hủy thanh toán thì về xem lịch đặt.
-      notify.info("Đã hủy giao dịch. Đơn của bạn đang chờ thanh toán.");
-      onNavigate("bookingManagement");
+      if (isTopUp) {
+        // Chưa có giao dịch nào ở backend nên hủy chỉ là quay lại màn ví.
+        notify.info("Đã hủy giao dịch nạp tiền.");
+      } else {
+        await paymentApi.confirmMockPayment(paymentId!, false);
+        // Đơn đã được tạo ở trạng thái Chờ; hủy thanh toán thì về xem lịch đặt.
+        notify.info("Đã hủy giao dịch. Đơn của bạn đang chờ thanh toán.");
+      }
+      onNavigate(returnScreen);
     } catch (err) {
       notify.error(getErrorMessage(err));
       setBusy("none");
@@ -90,11 +129,15 @@ export function MockGateway({
           MÔI TRƯỜNG GIẢ LẬP – DEMO
         </span>
 
-        <p className="mt-6 text-sm text-muted-foreground">Số tiền cần thanh toán</p>
+        <p className="mt-6 text-sm text-muted-foreground">
+          {isTopUp ? "Số tiền nạp vào ví" : "Số tiền cần thanh toán"}
+        </p>
         <p className="text-3xl font-extrabold" style={{ color: brand.color }}>
           {formatVnd(amount)}đ
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">Mã giao dịch: MOCK{paymentId}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {isTopUp ? "Giao dịch nạp ví" : `Mã giao dịch: MOCK${paymentId}`}
+        </p>
 
         {/* Fake QR */}
         <div className="mt-6 w-52 h-52 rounded-2xl border-2 border-dashed border-border bg-white flex items-center justify-center">

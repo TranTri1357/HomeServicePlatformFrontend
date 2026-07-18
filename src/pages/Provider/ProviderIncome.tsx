@@ -32,6 +32,9 @@ export function ProviderIncome({ onNavigate: _onNavigate }: { onNavigate: (s: Sc
   const { data: income, loading, refetch } = useApi(() => taskerApi.getTaskerIncome());
 
   const [amount, setAmount] = useState<number>(QUICK_AMOUNTS[0]);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
   const [withdrawing, setWithdrawing] = useState(false);
 
   const balance = income?.balance ?? 0;
@@ -46,10 +49,30 @@ export function ProviderIncome({ onNavigate: _onNavigate }: { onNavigate: (s: Sc
       notify.error("Số dư ví không đủ để rút số tiền này.");
       return;
     }
+    // Kiểm tra trước ở client cho phản hồi nhanh; backend vẫn xác thực lại bằng validator.
+    if (!/^0\d{9}$/.test(phoneNumber)) {
+      notify.error("Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0.");
+      return;
+    }
+    if (!bankName.trim()) {
+      notify.error("Vui lòng nhập tên ngân hàng thụ hưởng.");
+      return;
+    }
+    if (!/^\d{6,20}$/.test(accountNumber)) {
+      notify.error("Số tài khoản phải gồm 6-20 chữ số.");
+      return;
+    }
+
     setWithdrawing(true);
     try {
-      const newBalance = await taskerApi.withdrawIncome(amount);
-      notify.success(`Rút thành công! Số dư còn lại: ${formatVnd(newBalance)}đ`);
+      const newBalance = await taskerApi.withdrawIncome({
+        amount,
+        phoneNumber,
+        bankName: bankName.trim(),
+        accountNumber,
+      });
+      notify.success(`Đã chuyển ${formatVnd(amount)}đ về tài khoản. Số dư còn lại: ${formatVnd(newBalance)}đ`);
+      setAccountNumber("");
       void refetch();
     } catch (err) {
       notify.error(getErrorMessage(err));
@@ -103,6 +126,35 @@ export function ProviderIncome({ onNavigate: _onNavigate }: { onNavigate: (s: Sc
             />
             <span className="text-sm text-muted-foreground">đ</span>
           </div>
+
+          {/* Tài khoản nhận tiền */}
+          <p className="text-xs font-semibold text-muted-foreground mb-2">Tài khoản nhận tiền</p>
+          <div className="space-y-2 mb-3">
+            <input
+              type="tel"
+              inputMode="numeric"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
+              className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none text-foreground"
+              placeholder="Số điện thoại (vd 0901234567)"
+            />
+            <input
+              type="text"
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value.slice(0, 100))}
+              className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none text-foreground"
+              placeholder="Ngân hàng (vd Vietcombank)"
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 20))}
+              className="w-full bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none text-foreground"
+              placeholder="Số tài khoản"
+            />
+          </div>
+
           <button
             onClick={handleWithdraw}
             disabled={withdrawing || balance <= 0}
@@ -116,8 +168,8 @@ export function ProviderIncome({ onNavigate: _onNavigate }: { onNavigate: (s: Sc
             {withdrawing ? "Đang rút..." : `Rút ${formatVnd(amount)}đ`}
           </button>
           <p className="text-[11px] text-muted-foreground mt-2">
-            Chế độ demo: tiền được trừ thẳng khỏi ví, chưa chuyển qua ngân hàng thật. Tối thiểu{" "}
-            {formatVnd(MIN_WITHDRAW)}đ/lần.
+            Chế độ demo: chưa có lệnh chuyển khoản thật. Hệ thống chỉ lưu 4 số cuối của tài khoản
+            và số điện thoại vào lịch sử giao dịch. Tối thiểu {formatVnd(MIN_WITHDRAW)}đ/lần.
           </p>
         </div>
 

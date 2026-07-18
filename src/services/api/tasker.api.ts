@@ -15,6 +15,7 @@ import type {
   TaskerServiceOption,
   TopTasker,
   UpdateTaskerProfileInput,
+  WithdrawInput,
 } from "@/shared/types";
 
 export type GetTaskerJobsPagedParams = {
@@ -70,11 +71,13 @@ export async function getTaskerIncome(page = 1, pageSize = 20): Promise<TaskerIn
 }
 
 /**
- * POST /api/tasker/wallet/withdraw — rút tiền khỏi ví thu nhập (demo: trừ thẳng
- * số dư). Trả về số dư mới sau khi rút.
+ * POST /api/tasker/wallet/withdraw — rút tiền khỏi ví thu nhập. Trả về số dư mới.
+ *
+ * Demo: không có lệnh chi thật sang ngân hàng (môi trường sandbox không hỗ trợ chi tiền).
+ * Backend trừ số dư và lưu đích đến ĐÃ CHE SỐ — chỉ 4 số cuối của tài khoản/điện thoại.
  */
-export async function withdrawIncome(amount: number): Promise<number> {
-  const response = await post<ApiResponse<number>>("/tasker/wallet/withdraw", { amount });
+export async function withdrawIncome(input: WithdrawInput): Promise<number> {
+  const response = await post<ApiResponse<number>>("/tasker/wallet/withdraw", input);
   return unwrap(response);
 }
 
