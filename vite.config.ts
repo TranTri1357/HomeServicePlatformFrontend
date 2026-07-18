@@ -33,4 +33,19 @@ export default defineConfig({
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
+
+  build: {
+    rollupOptions: {
+      output: {
+        // Tách Leaflet (~140KB) ra chunk riêng. Vì chỉ được import bởi các màn
+        // lazy (bản đồ thợ, chọn vị trí, mini-map đơn khẩn), chunk này chỉ tải
+        // khi người dùng thực sự mở một màn có bản đồ — không nằm trong bundle đầu.
+        manualChunks(id: string) {
+          if (/node_modules\/(leaflet|react-leaflet|@react-leaflet)\//.test(id)) {
+            return 'leaflet'
+          }
+        },
+      },
+    },
+  },
 })

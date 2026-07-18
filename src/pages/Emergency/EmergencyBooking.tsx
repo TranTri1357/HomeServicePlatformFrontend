@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Siren, Loader2, Phone, X, Radar } from "lucide-react";
 import type { Screen, CustomerAddress } from "@/shared/types";
 import { serviceApi, addressApi, bookingApi } from "@/services/api";
@@ -8,7 +8,10 @@ import { useAuth } from "@/app/providers";
 import { useGoBack } from "@/app/routes/useGoBack";
 import { TopBar } from "@/shared/ui";
 import { notify, getErrorMessage } from "@/shared/lib";
-import { LocationPicker } from "@/pages/Address/LocationPicker";
+// Lazy: LocationPicker kéo theo Leaflet — tách chunk, chỉ tải khi mở màn đơn khẩn.
+const LocationPicker = lazy(() =>
+  import("@/pages/Address/LocationPicker").then((m) => ({ default: m.LocationPicker })),
+);
 import { geocodeAddress, reverseGeocode } from "@/services/vnAddress";
 
 // Các vòng bán kính quét thợ (km) — nới dần khi hết một vòng mà chưa ai nhận.
@@ -277,11 +280,19 @@ export function EmergencyBooking({
         {/* Location */}
         <div className="bg-white rounded-2xl p-4 space-y-2">
           <label className="text-sm font-bold text-foreground">Vị trí của bạn</label>
-          <LocationPicker
-            value={coord}
-            onChange={(lat, lng) => void handleMapPick(lat, lng)}
-            fallbackQuery={address}
-          />
+          <Suspense
+            fallback={
+              <div className="h-48 rounded-xl bg-muted flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            }
+          >
+            <LocationPicker
+              value={coord}
+              onChange={(lat, lng) => void handleMapPick(lat, lng)}
+              fallbackQuery={address}
+            />
+          </Suspense>
         </div>
 
         {/* Contact */}
