@@ -17,3 +17,24 @@ export interface Wallet {
   balance: number;
   recentTransactions: WalletTransaction[];
 }
+
+/** Cổng nạp ví giả lập — backend chỉ chấp nhận MoMo (3) hoặc ZaloPay (4). */
+export type TopUpMethodCode = 3 | 4;
+
+/** Body của POST /api/customer/wallet/topup. CustomerId lấy từ JWT. */
+export interface TopUpInput {
+  amount: number;
+  method: TopUpMethodCode;
+}
+
+/**
+ * Body của POST /api/tasker/wallet/withdraw.
+ * Demo: không có lệnh chi thật sang ngân hàng — backend chỉ lưu đích đến ĐÃ CHE SỐ
+ * (4 số cuối) vào lịch sử giao dịch.
+ */
+export interface WithdrawInput {
+  amount: number;
+  phoneNumber: string;
+  bankName: string;
+  accountNumber: string;
+}

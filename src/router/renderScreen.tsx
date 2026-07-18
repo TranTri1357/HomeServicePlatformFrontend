@@ -74,6 +74,7 @@ export function renderScreen(
           onNavigate={navigate}
           data={
             screenData as {
+              mode?: "booking" | "topup";
               paymentId?: number;
               bookingId?: number;
               amount?: number;
