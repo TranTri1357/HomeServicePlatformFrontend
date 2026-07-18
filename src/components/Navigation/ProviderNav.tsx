@@ -1,4 +1,4 @@
-import { BarChart2, Briefcase, Package, Route, Calendar, Wallet } from "lucide-react";
+import { BarChart2, Briefcase, Package, Calendar, Wallet } from "lucide-react";
 import type { Screen } from "@/shared/types";
 
 interface ProviderNavProps {
@@ -12,7 +12,6 @@ const ITEMS = [
   { screen: "providerDashboard" as Screen, icon: BarChart2, label: "Dashboard" },
   { screen: "providerJobManagement" as Screen, icon: Briefcase, label: "Công việc" },
   { screen: "providerServiceManagement" as Screen, icon: Package, label: "Dịch vụ" },
-  { screen: "providerAreaRouting" as Screen, icon: Route, label: "Khu vực" },
   { screen: "providerSchedule" as Screen, icon: Calendar, label: "Lịch" },
   { screen: "providerIncome" as Screen, icon: Wallet, label: "Ví" },
 ];

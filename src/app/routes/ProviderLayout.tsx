@@ -57,7 +57,7 @@ export function ProviderLayout() {
           <Outlet />
         </div>
 
-        {!["providerJobSheet", "auth"].includes(screen) && (
+        {screen !== "auth" && (
           <ProviderNav current={screen} onNavigate={onNavigate} jobBadge={jobBadge} />
         )}
       </div>

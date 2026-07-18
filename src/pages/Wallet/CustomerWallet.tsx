@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Wallet as WalletIcon, ArrowUpRight, ArrowDownLeft, QrCode } from "lucide-react";
-import type { Screen } from "@/shared/types";
 import { walletApi } from "@/services/api";
 import { useGoBack } from "@/app/routes/useGoBack";
+import { useGatedNavigate } from "@/app/routes/useGatedNavigate";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { formatVnd, formatDateVn, notify } from "@/shared/lib";
@@ -25,8 +25,9 @@ const TX: Record<number, { label: string; credit: boolean }> = {
   6: { label: "Bồi thường", credit: true },
 };
 
-export function CustomerWallet({ onNavigate }: { onNavigate: (s: Screen, d?: object) => void }) {
+export function CustomerWallet() {
   const goBack = useGoBack("customerProfile");
+  const navigate = useGatedNavigate();
   const { data: wallet, loading } = useApi(() => walletApi.getMyWallet());
 
   const [amount, setAmount] = useState<number>(QUICK_AMOUNTS[0]);
@@ -39,7 +40,7 @@ export function CustomerWallet({ onNavigate }: { onNavigate: (s: Screen, d?: obj
       notify.error("Vui lòng chọn hoặc nhập số tiền nạp.");
       return;
     }
-    onNavigate("mockGateway", { mode: "topup", amount, provider: gateway });
+    navigate("mockGateway", { mode: "topup", amount, provider: gateway });
   };
 
   const transactions = wallet?.recentTransactions ?? [];

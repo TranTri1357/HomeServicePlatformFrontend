@@ -8,7 +8,6 @@ export const NO_BOTTOM_NAV_SCREENS: Screen[] = [
   "technicianMap",
   "notifications",
   "auth",
-  "providerJobSheet",
   "providerIncome",
 ];
 
@@ -33,12 +32,10 @@ export const CUSTOMER_PROTECTED_SCREENS: Screen[] = [
 
 export const PROVIDER_SCREENS: Screen[] = [
   "providerDashboard",
-  "providerJobSheet",
   "providerSchedule",
   "providerChat",
   "providerProfile",
   "providerJobManagement",
   "providerServiceManagement",
-  "providerAreaRouting",
   "providerIncome",
 ];

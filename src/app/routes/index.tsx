@@ -49,12 +49,10 @@ export function AppRouter() {
             <Route path="provider" element={<ProviderLayout />}>
               <Route index element={<RouteScreen screen="providerDashboard" />} />
               <Route path="dashboard" element={<RouteScreen screen="providerDashboard" />} />
-              <Route path="job/detail" element={<RouteScreen screen="providerJobSheet" />} />
               <Route path="schedule" element={<RouteScreen screen="providerSchedule" />} />
               <Route path="jobs" element={<RouteScreen screen="providerJobManagement" />} />
               <Route path="income" element={<RouteScreen screen="providerIncome" />} />
               <Route path="services" element={<RouteScreen screen="providerServiceManagement" />} />
-              <Route path="area" element={<RouteScreen screen="providerAreaRouting" />} />
               <Route path="addresses" element={<RouteScreen screen="providerAddresses" />} />
               <Route path="profile" element={<RouteScreen screen="providerProfile" />} />
               <Route path="notifications" element={<RouteScreen screen="providerNotifications" />} />

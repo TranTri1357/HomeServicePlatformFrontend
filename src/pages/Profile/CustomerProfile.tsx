@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  Settings,
   Camera,
   Edit3,
   User,

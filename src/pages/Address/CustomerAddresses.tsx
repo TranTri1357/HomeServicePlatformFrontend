@@ -24,12 +24,10 @@ const LocationPicker = lazy(() =>
  * (địa chỉ hoạt động — Phương án B, cùng bảng Address).
  */
 export function CustomerAddresses({
-  onNavigate,
   api = addressApi,
   backScreen = "customerProfile",
   title = "Địa chỉ đã lưu",
 }: {
-  onNavigate: (s: Screen) => void;
   api?: typeof addressApi;
   backScreen?: Screen;
   title?: string;
