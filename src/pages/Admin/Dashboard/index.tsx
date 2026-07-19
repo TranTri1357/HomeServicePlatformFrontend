@@ -14,7 +14,8 @@ const STATUS: Record<number, { label: string; cls: string; bar: string }> = {
   3: { label: "Đang thực hiện", cls: "bg-purple-100 text-purple-700", bar: "bg-purple-400" },
   4: { label: "Hoàn thành", cls: "bg-green-100 text-green-700", bar: "bg-green-400" },
   5: { label: "Đã hủy", cls: "bg-red-100 text-red-700", bar: "bg-red-400" },
-  6: { label: "Hoàn tiền", cls: "bg-orange-100 text-orange-700", bar: "bg-orange-400" },
+  6: { label: "Đã hoàn tiền", cls: "bg-orange-100 text-orange-700", bar: "bg-orange-400" },
+  7: { label: "Khiếu nại bị từ chối", cls: "bg-slate-200 text-slate-600", bar: "bg-slate-400" },
 };
 
 export function Dashboard({ onNavigate }: { onNavigate: (s: Screen) => void }) {
