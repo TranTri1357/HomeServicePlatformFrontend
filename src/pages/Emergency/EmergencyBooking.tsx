@@ -190,7 +190,6 @@ export function EmergencyBooking({
                 onNavigate("bookingManagement");
               }
             },
-            onDeclined: () => {}, // broadcast: bỏ qua từ chối lẻ
           });
         } else {
           const res = await bookingApi.rebroadcastEmergencyBooking(bookingIdRef.current!, radiusKm);

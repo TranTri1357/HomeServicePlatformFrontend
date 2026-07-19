@@ -155,10 +155,16 @@ export async function cancelJob(bookingId: number, cancelReason: string): Promis
   return unwrap(response);
 }
 
-/** Decline an emergency request (tasker rejects or the 30s window expires). */
-export async function declineEmergencyJob(bookingId: number): Promise<boolean> {
-  const response = await post<ApiResponse<{ customerId: number; taskerId: number }>>(
-    `/tasker/bookings/emergency/${bookingId}/decline`,
+/**
+ * Bỏ qua một đơn khẩn cấp. KHÔNG hủy đơn — đơn vẫn treo cho thợ khác nhận, việc này chỉ đóng
+ * modal của riêng thợ này và ghi nhận để không mời lại ở các vòng nới bán kính sau.
+ *
+ * `timedOut` phân biệt hết-30s với bấm-từ-chối: chỉ từ chối CHỦ ĐỘNG mới bị loại khỏi vòng sau,
+ * thợ lỡ mất vì đang bận tay thì vẫn được mời lại.
+ */
+export async function declineEmergencyJob(bookingId: number, timedOut = false): Promise<boolean> {
+  const response = await post<ApiResponse<boolean>>(
+    `/tasker/bookings/emergency/${bookingId}/decline?timedOut=${timedOut}`,
     {},
   );
   return Boolean(unwrap(response));
