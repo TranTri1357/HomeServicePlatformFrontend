@@ -360,7 +360,7 @@ export function EmergencyBooking({
 
       {/* Waiting / searching overlay */}
       {search && (
-        <div className="absolute inset-0 z-50 bg-black/50 flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-6">
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm text-center space-y-4">
             <div className="relative w-24 h-24 mx-auto">
               <div className="absolute inset-0 rounded-full border-4 border-red-100" />
