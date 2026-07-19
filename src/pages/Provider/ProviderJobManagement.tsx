@@ -27,12 +27,14 @@ const STATUS: Record<number, { label: string; cls: string; dot: string }> = {
   3: { label: "Đang làm", cls: "bg-purple-100 text-purple-700", dot: "bg-purple-500" },
   4: { label: "Hoàn thành", cls: "bg-green-100 text-green-700", dot: "bg-green-500" },
   5: { label: "Đã hủy", cls: "bg-red-100 text-red-700", dot: "bg-red-500" },
+  6: { label: "Đã hoàn tiền", cls: "bg-orange-100 text-orange-700", dot: "bg-orange-500" },
+  7: { label: "Khiếu nại bị từ chối", cls: "bg-slate-200 text-slate-600", dot: "bg-slate-500" },
 };
 
 const TABS: { key: string; label: string; statuses: number[] }[] = [
   { key: "incoming", label: "Yêu cầu mới", statuses: [0] },
   { key: "active", label: "Đang làm", statuses: [1, 2, 3] },
-  { key: "history", label: "Lịch sử", statuses: [4, 5, 6] },
+  { key: "history", label: "Lịch sử", statuses: [4, 5, 6, 7] },
 ];
 
 function formatDateTime(iso: string): string {
