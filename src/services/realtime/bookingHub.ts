@@ -38,13 +38,15 @@ export async function connectBookingStatus(
 }
 
 /**
- * Customer-side listener for the emergency booking waiting screen. Fires
- * `onStatus` on any booking status change (accept = status 1) and `onDeclined`
- * when the chosen tasker rejects. Returns a disposer that stops the connection.
+ * Customer-side listener for the emergency booking waiting screen. Fires `onStatus`
+ * on any booking status change (accept = status 1). Returns a disposer that stops
+ * the connection.
+ *
+ * Không còn sự kiện "thợ từ chối": đơn khẩn là broadcast tới nhiều thợ, một thợ bỏ qua
+ * không ảnh hưởng gì tới khách — khách chỉ quan tâm có ai NHẬN hay không.
  */
 export async function connectEmergencyCustomer(handlers: {
   onStatus: (bookingId: number, status: number) => void;
-  onDeclined: (bookingId: number) => void;
 }): Promise<() => void> {
   const connection: HubConnection = new HubConnectionBuilder()
     .withUrl(`${HUB_BASE}/booking-hub`, {
@@ -57,9 +59,6 @@ export async function connectEmergencyCustomer(handlers: {
 
   connection.on("ReceiveBookingStatus", (p: { bookingId: number; status: number }) => {
     handlers.onStatus(p.bookingId, p.status);
-  });
-  connection.on("ReceiveEmergencyDeclined", (p: { bookingId: number }) => {
-    handlers.onDeclined(p.bookingId);
   });
 
   await connection.start();

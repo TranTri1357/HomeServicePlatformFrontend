@@ -65,11 +65,20 @@ export function EmergencyListener({ onNavigate }: { onNavigate: (s: Screen, d?: 
   const [acting, setActing] = useState(false);
   const alarm = useAlarm();
 
+  // Các đơn thợ này đã CHỦ ĐỘNG từ chối. Server đã lọc chúng khỏi vòng nới bán kính, nhưng vẫn còn
+  // một khe hở: thợ bấm từ chối ở giây 29 trong khi khách re-broadcast ở giây 30 — nếu truy vấn
+  // quét thợ chạy trước khi bản ghi từ chối kịp commit thì push vẫn tới. Chặn nốt ở client.
+  const declinedRef = useRef<Set<number>>(new Set());
+
   // Connect to the hub once while this layout is mounted.
   useEffect(() => {
     let dispose: (() => void) | null = null;
     connectEmergencyTasker({
-      onRequest: (incoming) => setReq((prev) => prev ?? incoming), // ignore new while one is active
+      onRequest: (incoming) =>
+        setReq((prev) => {
+          if (declinedRef.current.has(incoming.bookingId)) return prev; // đã từ chối đơn này
+          return prev ?? incoming; // ignore new while one is active
+        }),
       onCancelled: (bookingId) =>
         setReq((prev) => (prev && prev.bookingId === bookingId ? null : prev)),
     })
@@ -134,11 +143,13 @@ export function EmergencyListener({ onNavigate }: { onNavigate: (s: Screen, d?: 
   const handleDecline = async (timedOut = false) => {
     if (!req) return;
     const id = req.bookingId;
+    // Chỉ ghi nhớ khi thợ CHỦ ĐỘNG từ chối — hết giờ thì vẫn cho phép mời lại ở vòng sau.
+    if (!timedOut) declinedRef.current.add(id);
     close();
     try {
-      await taskerApi.declineEmergencyJob(id);
+      await taskerApi.declineEmergencyJob(id, timedOut);
     } catch {
-      /* already cancelled/expired — ignore */
+      /* đơn đã bị hủy/hết hạn — không ảnh hưởng gì tới thợ, bỏ qua */
     }
     if (timedOut) notify.error("Bạn đã bỏ lỡ một đơn khẩn cấp.");
   };
