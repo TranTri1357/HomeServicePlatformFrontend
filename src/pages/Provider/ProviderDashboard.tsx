@@ -5,7 +5,7 @@ import { taskerApi } from "@/services/api";
 import { useApi, useHasUnreadNotifications } from "@/shared/hooks";
 import { useAuth } from "@/app/providers";
 import { Avatar } from "@/shared/ui";
-import { formatVnd, notify } from "@/shared/lib";
+import { formatVnd, formatVndCompact, notify } from "@/shared/lib";
 
 const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
@@ -248,17 +248,30 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
               </p>
             </div>
           ) : (
-            <div className="flex items-end gap-2 h-24">
+            /* Cột phải cao bằng cả khung (items-stretch) và vùng vẽ cột dùng flex-1 để có
+               chiều cao XÁC ĐỊNH. Nếu để cột cao "auto" thì height tính theo % của thanh bar
+               không có mốc quy chiếu và bị trình duyệt thu về 0 — biểu đồ trắng trơn. */
+            <div className="flex items-stretch gap-2 h-32">
               {weekly.map((d, i) => {
                 const pct = Math.round((d.amount / maxRevenue) * 100);
                 const isLast = i === weekly.length - 1;
                 return (
                   <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
-                    <div
-                      className={`w-full rounded-t-lg transition-all ${isLast ? "bg-blue-600" : "bg-blue-100"}`}
-                      style={{ height: `${Math.max(pct, 4)}%` }}
-                      title={`${formatVnd(d.amount)}đ`}
-                    />
+                    {/* Số tiền của ngày, đặt ngay trên đầu cột */}
+                    <span
+                      className={`text-[10px] font-semibold ${isLast ? "text-blue-600" : "text-muted-foreground"}`}
+                    >
+                      {formatVndCompact(d.amount)}
+                    </span>
+                    <div className="flex-1 w-full flex items-end">
+                      <div
+                        className={`w-full rounded-t-lg transition-all ${isLast ? "bg-blue-600" : "bg-blue-100"}`}
+                        // Cột có doanh thu luôn hiện tối thiểu 4% để không biến mất hẳn;
+                        // ngày không có doanh thu thì để trống đúng nghĩa.
+                        style={{ height: d.amount > 0 ? `${Math.max(pct, 4)}%` : 0 }}
+                        title={`${formatVnd(d.amount)}đ`}
+                      />
+                    </div>
                     <span className="text-[10px] text-muted-foreground">
                       {WEEKDAYS[new Date(d.date).getDay()]}
                     </span>
