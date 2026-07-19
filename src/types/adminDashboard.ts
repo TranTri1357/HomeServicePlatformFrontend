@@ -18,6 +18,7 @@ export interface AdminRecentBooking {
 
 /** Admin dashboard stats — GET /api/admin/dashboard. */
 export interface AdminDashboard {
+  /** GMV hôm nay — tổng tiền khách trả, KHÔNG phải tiền của sàn. */
   todayRevenue: number;
   todayBookings: number;
   totalCustomers: number;
@@ -25,7 +26,12 @@ export interface AdminDashboard {
   activeTaskers: number;
   pendingTaskers: number;
   totalBookings: number;
+  /** GMV luỹ kế — phần lớn khoản này thuộc về thợ. */
   totalRevenue: number;
+  /** Doanh thu THẬT của sàn hôm nay (hoa hồng + phí hủy), đọc từ ví doanh thu. */
+  todayPlatformRevenue: number;
+  /** Doanh thu THẬT của sàn luỹ kế. */
+  totalPlatformRevenue: number;
   openDisputes: number;
   weeklyRevenue: AdminDailyRevenue[];
   bookingsByStatus: AdminStatusCount[];

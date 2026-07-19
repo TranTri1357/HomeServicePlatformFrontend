@@ -1,4 +1,13 @@
-import { DollarSign, FileText, Users, Wrench, Flag, Loader2, AlertCircle } from "lucide-react";
+import {
+  DollarSign,
+  FileText,
+  Users,
+  Wrench,
+  Flag,
+  Loader2,
+  AlertCircle,
+  TrendingUp,
+} from "lucide-react";
 import type { Screen, AdminTaskerItem } from "@/shared/types";
 import { adminDashboardApi, adminTaskerApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
@@ -70,10 +79,20 @@ export function Dashboard({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const maxStatus = Math.max(1, ...d.bookingsByStatus.map((x) => x.count));
 
   const kpis = [
+    // GMV — tổng tiền khách trả. Phần lớn thuộc về thợ, nên KHÔNG gọi là "doanh thu".
     {
-      label: "Doanh thu hôm nay",
+      label: "Giá trị giao dịch hôm nay",
       value: `${formatVnd(d.todayRevenue)}đ`,
-      sub: `Tổng: ${formatVnd(d.totalRevenue)}đ`,
+      sub: `Tổng GMV: ${formatVnd(d.totalRevenue)}đ`,
+      icon: TrendingUp,
+      color: "text-indigo-600",
+      bg: "bg-indigo-100",
+    },
+    // Tiền sàn thực sự thu được (hoa hồng + phí hủy), đọc thẳng từ ví doanh thu.
+    {
+      label: "Doanh thu sàn hôm nay",
+      value: `${formatVnd(d.todayPlatformRevenue)}đ`,
+      sub: `Tổng: ${formatVnd(d.totalPlatformRevenue)}đ`,
       icon: DollarSign,
       color: "text-green-600",
       bg: "bg-green-100",
@@ -112,7 +131,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (s: Screen) => void }) {
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {kpis.map((kpi) => (
           <div key={kpi.label} className="bg-white rounded-2xl p-4 shadow-sm">
             <div className={`w-10 h-10 ${kpi.bg} rounded-xl flex items-center justify-center mb-3`}>
@@ -128,7 +147,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (s: Screen) => void }) {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Revenue chart */}
         <div className="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-foreground mb-1">Doanh thu 7 ngày gần nhất</h3>
+          <h3 className="font-bold text-foreground mb-1">Giá trị giao dịch 7 ngày gần nhất</h3>
           <p className="text-xs text-muted-foreground mb-5">
             Tổng: {formatVnd(weekly.reduce((a, x) => a + x.amount, 0))}đ
           </p>
