@@ -2,7 +2,7 @@ import { DollarSign, FileText, Users, Wrench, Flag, Loader2, AlertCircle } from 
 import type { Screen, AdminTaskerItem } from "@/shared/types";
 import { adminDashboardApi, adminTaskerApi } from "@/services/api";
 import { useApi } from "@/shared/hooks";
-import { formatVnd, formatDateVn, notify } from "@/shared/lib";
+import { formatVnd, formatVndCompact, formatDateVn, notify } from "@/shared/lib";
 import { useState } from "react";
 
 const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
@@ -131,19 +131,27 @@ export function Dashboard({ onNavigate }: { onNavigate: (s: Screen) => void }) {
           <p className="text-xs text-muted-foreground mb-5">
             Tổng: {formatVnd(weekly.reduce((a, x) => a + x.amount, 0))}đ
           </p>
-          <div className="flex items-end gap-2 h-36">
+          {/* Cột phải cao bằng cả khung (items-stretch) và vùng vẽ cột dùng flex-1 để có chiều
+              cao XÁC ĐỊNH. Nếu để cột cao "auto" thì height tính theo % của thanh bar không có
+              mốc quy chiếu và bị trình duyệt thu về 0 — biểu đồ trắng trơn. */}
+          <div className="flex items-stretch gap-2 h-36">
             {weekly.map((x) => {
               const pct = Math.round((x.amount / maxRev) * 100);
               return (
                 <div key={x.date} className="flex-1 flex flex-col items-center gap-1.5">
+                  {/* Số tiền của ngày, đặt ngay trên đầu cột */}
                   <span className="text-[10px] text-muted-foreground font-medium">
-                    {x.amount > 0 ? `${(x.amount / 1_000_000).toFixed(1)}M` : ""}
+                    {formatVndCompact(x.amount)}
                   </span>
-                  <div
-                    className="w-full rounded-t-lg bg-blue-500 transition-all"
-                    style={{ height: `${Math.max(pct, 2)}%` }}
-                    title={`${formatVnd(x.amount)}đ`}
-                  />
+                  <div className="flex-1 w-full flex items-end">
+                    <div
+                      className="w-full rounded-t-lg bg-blue-500 transition-all"
+                      // Ngày có doanh thu luôn hiện tối thiểu 2% để không biến mất hẳn;
+                      // ngày không có doanh thu thì để trống đúng nghĩa.
+                      style={{ height: x.amount > 0 ? `${Math.max(pct, 2)}%` : 0 }}
+                      title={`${formatVnd(x.amount)}đ`}
+                    />
+                  </div>
                   <span className="text-[10px] text-muted-foreground">
                     {WEEKDAYS[new Date(x.date).getDay()]}
                   </span>
