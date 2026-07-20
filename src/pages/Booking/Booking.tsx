@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Wrench, Star, AlertCircle, Check, MapPin, Loader2, Plus, Search } from "lucide-react";
 import type {
   Screen,
@@ -7,10 +7,12 @@ import type {
   BookingItemInput,
   TaskerServiceOption,
   AvailabilitySlot,
+  ServiceTaskerSuggestion,
+  PagedResult,
 } from "@/shared/types";
 import { serviceApi, addressApi, taskerApi, bookingApi, customerApi } from "@/services/api";
 import { useGoBack } from "@/app/routes/useGoBack";
-import { useApi } from "@/shared/hooks";
+import { useApi, useInfiniteList } from "@/shared/hooks";
 import { useAuth } from "@/app/providers";
 import { TopBar, Avatar } from "@/shared/ui";
 import { formatVnd, notify, getErrorMessage, getApiAssetUrl } from "@/shared/lib";
@@ -135,6 +137,58 @@ export function Booking({
     }
   }, [savedAddresses, savedAddr]);
 
+  // ── Danh sách thợ nhận dịch vụ này: sắp theo đánh giá, phân trang "tải thêm" (5/trang) ──
+  // Trước đây lấy detail.suggestedTaskers (chốt cứng top 5, không xem thêm được).
+  const fetchTaskerPage = useCallback(
+    (page: number): Promise<PagedResult<ServiceTaskerSuggestion>> =>
+      serviceId == null
+        ? Promise.resolve({
+            items: [],
+            totalCount: 0,
+            pageIndex: page,
+            pageSize: 5,
+            totalPages: 0,
+            hasPreviousPage: false,
+            hasNextPage: false,
+          })
+        : taskerApi.getTaskersByService(serviceId, page, 5),
+    [serviceId],
+  );
+  const {
+    items: taskerItems,
+    hasNext: hasMoreTaskers,
+    loading: loadingTaskers,
+    loadingMore: loadingMoreTaskers,
+    loadMore: loadMoreTaskers,
+  } = useInfiniteList(fetchTaskerPage);
+
+  // Ghim thẻ thợ khách chọn sẵn (vào đặt lịch từ trang hồ sơ thợ) lên đầu — thợ đó có thể
+  // xếp hạng thấp, nằm ở trang sau nên không lọt vào 5 người đầu.
+  const [pinnedTasker, setPinnedTasker] = useState<ServiceTaskerSuggestion | null>(null);
+  useEffect(() => {
+    const pre = data?.taskerId;
+    if (pre == null || serviceId == null) return;
+    let alive = true;
+    taskerApi
+      .getServiceTaskerCard(serviceId, pre)
+      .then((card) => alive && setPinnedTasker(card))
+      .catch(() => {
+        /* không ghim được thì thôi, thợ vẫn nằm trong danh sách phân trang */
+      });
+    return () => {
+      alive = false;
+    };
+  }, [data?.taskerId, serviceId]);
+
+  // Thợ hiển thị = thẻ ghim (nếu có) + danh sách phân trang, bỏ trùng theo taskerId.
+  const displayedTaskers = useMemo(
+    () =>
+      pinnedTasker
+        ? [pinnedTasker, ...taskerItems.filter((t) => t.taskerId !== pinnedTasker.taskerId)]
+        : taskerItems,
+    [pinnedTasker, taskerItems],
+  );
+
   // ── Load the tasker's service options when a specific tasker is picked ───────
   useEffect(() => {
     // Đổi thợ -> làm mới danh sách dịch vụ: xoá từ khoá tìm và thu gọn lại.
@@ -232,7 +286,6 @@ export function Booking({
     );
   }
 
-  const taskers = detail.suggestedTaskers ?? [];
   const hasTasker = taskerId != null;
 
   // Services actually going on the order, ordered so the primary one comes first.
@@ -420,42 +473,62 @@ export function Booking({
             Vui lòng chọn thợ để tiếp tục chọn ngày và giờ làm.
           </p>
           <div className="space-y-2">
-            {taskers.length === 0 && (
+            {loadingTaskers && displayedTaskers.length === 0 ? (
+              [1, 2, 3].map((i) => (
+                <div key={i} className="h-16 bg-muted rounded-xl animate-pulse" />
+              ))
+            ) : displayedTaskers.length === 0 ? (
               <p className="text-sm text-muted-foreground py-2">
                 Hiện chưa có thợ nào nhận dịch vụ này. Vui lòng chọn dịch vụ khác.
               </p>
+            ) : (
+              displayedTaskers.map((t) => (
+                <button
+                  key={t.taskerId}
+                  onClick={() => setTaskerId(t.taskerId)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${
+                    taskerId === t.taskerId
+                      ? "border-blue-600 bg-accent"
+                      : "border-transparent bg-muted"
+                  }`}
+                >
+                  {t.avatarUrl ? (
+                    <img
+                      src={t.avatarUrl}
+                      alt={t.fullName}
+                      className="rounded-full object-cover"
+                      style={{ width: 44, height: 44 }}
+                    />
+                  ) : (
+                    <Avatar size={44} name={t.fullName} />
+                  )}
+                  <div className="flex-1 text-left">
+                    <p className="font-semibold text-sm text-foreground">{t.fullName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t.experienceYears} năm KN
+                      {t.currentPrice > 0 && <> · {formatVnd(t.currentPrice)}đ</>}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    <span className="text-sm font-bold">{t.ratingAvg}</span>
+                  </div>
+                </button>
+              ))
             )}
-            {taskers.map((t) => (
+
+            {/* Tải thêm thợ (mỗi lần 5 người, sắp theo đánh giá) */}
+            {hasMoreTaskers && (
               <button
-                key={t.taskerId}
-                onClick={() => setTaskerId(t.taskerId)}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${
-                  taskerId === t.taskerId ? "border-blue-600 bg-accent" : "border-transparent bg-muted"
-                }`}
+                type="button"
+                onClick={loadMoreTaskers}
+                disabled={loadingMoreTaskers}
+                className="mt-1 w-full py-2 rounded-xl border border-border text-sm font-semibold text-blue-600 hover:bg-accent transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
               >
-                {t.avatarUrl ? (
-                  <img
-                    src={t.avatarUrl}
-                    alt={t.fullName}
-                    className="rounded-full object-cover"
-                    style={{ width: 44, height: 44 }}
-                  />
-                ) : (
-                  <Avatar size={44} name={t.fullName} />
-                )}
-                <div className="flex-1 text-left">
-                  <p className="font-semibold text-sm text-foreground">{t.fullName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {t.experienceYears} năm KN
-                    {t.currentPrice > 0 && <> · {formatVnd(t.currentPrice)}đ</>}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  <span className="text-sm font-bold">{t.ratingAvg}</span>
-                </div>
+                {loadingMoreTaskers && <Loader2 className="w-4 h-4 animate-spin" />}
+                {loadingMoreTaskers ? "Đang tải..." : "Xem thêm thợ"}
               </button>
-            ))}
+            )}
           </div>
         </div>
 

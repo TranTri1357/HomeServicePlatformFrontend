@@ -23,44 +23,48 @@ export function ProviderLayout() {
     i.screen === "providerJobManagement" && jobBadge > 0 ? { ...i, badge: jobBadge } : i,
   );
 
+  // ⚠️ MỘT <Outlet/> DUY NHẤT — xem giải thích trong CustomerLayout: hai Outlet ẩn/hiện
+  // bằng CSS khiến mọi màn con mount hai lần (2 kết nối SignalR → toast nhân đôi, API gọi 2 lần).
   return (
-    <div className="w-full h-full flex flex-col" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div
+      className="w-full h-full flex flex-col bg-background"
+      style={{ fontFamily: "'Inter', sans-serif" }}
+    >
       {/* Global emergency request modal (SignalR-driven) */}
       <EmergencyListener onNavigate={onNavigate} />
 
-      {/* Desktop */}
-      <div className="hidden lg:flex flex-col h-full">
+      {/* Thanh điều hướng trên cùng — chỉ desktop */}
+      <div className="hidden lg:block flex-shrink-0">
         <DesktopTopNav
           screen={screen}
           currentNavItems={navItems}
           onNavigate={onNavigate}
           notifDot={notifDot}
         />
-        <div className="flex-1 overflow-hidden bg-slate-100">
-          <div className="h-full max-w-5xl mx-auto flex flex-col">
-            <Outlet />
-          </div>
+      </div>
+
+      {/* Thanh trạng thái giả lập — chỉ mobile */}
+      <div className="lg:hidden flex items-center justify-between px-4 py-2 flex-shrink-0 text-xs font-semibold z-20 bg-slate-900 text-white">
+        <span>9:41</span>
+        <div className="flex items-center gap-1">
+          <Wifi className="w-3 h-3" />
+          <span>5G</span>
         </div>
       </div>
 
-      {/* Mobile */}
-      <div className="lg:hidden w-full h-full flex flex-col bg-background">
-        <div className="flex items-center justify-between px-4 py-2 flex-shrink-0 text-xs font-semibold z-20 bg-slate-900 text-white">
-          <span>9:41</span>
-          <div className="flex items-center gap-1">
-            <Wifi className="w-3 h-3" />
-            <span>5G</span>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-hidden flex flex-col">
+      {/* Nội dung dùng chung */}
+      <div className="flex-1 overflow-hidden lg:bg-slate-100">
+        <div className="h-full flex flex-col lg:max-w-5xl lg:mx-auto">
           <Outlet />
         </div>
-
-        {screen !== "auth" && (
-          <ProviderNav current={screen} onNavigate={onNavigate} jobBadge={jobBadge} />
-        )}
       </div>
+
+      {/* Thanh điều hướng dưới — chỉ mobile */}
+      {screen !== "auth" && (
+        <div className="lg:hidden flex-shrink-0">
+          <ProviderNav current={screen} onNavigate={onNavigate} jobBadge={jobBadge} />
+        </div>
+      )}
     </div>
   );
 }

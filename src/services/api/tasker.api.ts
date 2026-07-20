@@ -16,6 +16,7 @@ import type {
   TopTasker,
   UpdateTaskerProfileInput,
   WithdrawInput,
+  ServiceTaskerSuggestion,
 } from "@/shared/types";
 
 export type GetTaskerJobsPagedParams = {
@@ -182,6 +183,38 @@ export type GetTopTaskersParams = {
  */
 export async function getTopTaskers(params?: GetTopTaskersParams): Promise<TopTasker[]> {
   const response = await get<ApiResponse<TopTasker[]>>("/Taskers/top", { params });
+  return unwrap(response);
+}
+
+/**
+ * GET /api/Taskers/by-service/{serviceId}?pageIndex=&pageSize=5
+ * Thợ nhận dịch vụ này, sắp theo đánh giá (giảm dần) + phân trang "tải thêm".
+ * Dùng cho bước "Chọn thợ" ở trang đặt lịch khi dịch vụ có nhiều thợ.
+ */
+export async function getTaskersByService(
+  serviceId: number,
+  pageIndex = 1,
+  pageSize = 5,
+): Promise<PagedResult<ServiceTaskerSuggestion>> {
+  const response = await get<ApiResponse<PagedResult<ServiceTaskerSuggestion>>>(
+    `/Taskers/by-service/${serviceId}`,
+    { params: { pageIndex, pageSize } },
+  );
+  return unwrap(response);
+}
+
+/**
+ * GET /api/Taskers/by-service/{serviceId}/tasker/{taskerId}
+ * Thẻ của đúng một thợ cho dịch vụ — để ghim thợ khách chọn sẵn lên đầu danh sách.
+ * Trả null nếu thợ không (còn) nhận dịch vụ này.
+ */
+export async function getServiceTaskerCard(
+  serviceId: number,
+  taskerId: number,
+): Promise<ServiceTaskerSuggestion | null> {
+  const response = await get<ApiResponse<ServiceTaskerSuggestion | null>>(
+    `/Taskers/by-service/${serviceId}/tasker/${taskerId}`,
+  );
   return unwrap(response);
 }
 

@@ -109,12 +109,14 @@ export interface CancellationPreview {
   status: number;
   /** Tổng đã thanh toán qua hệ thống. */
   totalPaid: number;
-  /** % hoàn theo chính sách. */
+  /** % được hoàn TRÊN TIỀN CỌC (không phải trên tổng đã trả) — không hiển thị, dễ gây hiểu nhầm. */
   refundPercent: number;
   /** Tiền hoàn dự kiến cho khách. */
   refundAmount: number;
-  /** Phí hủy giữ lại (đền thợ). */
+  /** Phí hủy giữ lại (đền thợ) — luôn ≤ tiền cọc. */
   penaltyAmount: number;
+  /** Tiền cọc = phần DUY NHẤT chịu rủi ro khi hủy, bất kể khách trả cọc hay trả hết. */
+  depositAtRisk: number;
   /** Diễn giải chính sách để hiển thị cho khách. */
   reason: string;
 }
