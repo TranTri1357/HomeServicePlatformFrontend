@@ -21,6 +21,9 @@ const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 // Fallback slots used only when no specific tasker is chosen (system auto-assigns).
 const DEFAULT_TIME_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
 const PHONE_REGEX = /^(03|05|07|08|09)\d{8}$/;
+// Khách phải đặt trước ít nhất bằng này phút — thợ cần thời gian chuẩn bị & di chuyển.
+// Mọi khung giờ bắt đầu sớm hơn (now + LEAD_TIME) đều bị khóa trên giao diện.
+const LEAD_TIME_MINUTES = 60;
 // Số dịch vụ hiển thị trước khi phải bấm "Xem thêm"; và ngưỡng bắt đầu hiện ô tìm kiếm.
 const SERVICE_VISIBLE_LIMIT = 10;
 const SERVICE_SEARCH_THRESHOLD = 8;
@@ -70,6 +73,33 @@ export function Booking({
   const [dateIdx, setDateIdx] = useState(0);
   // Không chọn sẵn khung giờ; khách phải tự chọn (bấm lại để bỏ chọn).
   const [time, setTime] = useState("");
+
+  // Mốc "bây giờ" tick mỗi phút để các khung giờ tự khóa dần khi khách mở form lâu,
+  // thay vì chỉ tính một lần lúc render đầu tiên.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  /** Thời điểm sớm nhất được phép hẹn (ms epoch). */
+  const earliestStart = now + LEAD_TIME_MINUTES * 60_000;
+
+  /** Khung giờ "HH:mm" của ngày đang chọn → mốc bắt đầu (ms epoch). */
+  const slotStartMs = useCallback(
+    (value: string) => {
+      const d = new Date(dateOptions[dateIdx]);
+      const [h, m] = value.split(":").map(Number);
+      d.setHours(h, m, 0, 0);
+      return d.getTime();
+    },
+    [dateOptions, dateIdx],
+  );
+
+  // Khung giờ đang chọn trôi vào quá khứ (khách để form mở lâu) ⇒ tự bỏ chọn để không
+  // gửi đi một giờ hẹn mà server chắc chắn từ chối.
+  useEffect(() => {
+    if (time && slotStartMs(time) < earliestStart) setTime("");
+  }, [time, slotStartMs, earliestStart]);
   // Pre-select the tasker when the customer arrived from a technician's profile.
   const [taskerId, setTaskerId] = useState<number | undefined>(data?.taskerId);
   const [fullName, setFullName] = useState(user?.fullName ?? "");
@@ -352,9 +382,19 @@ export function Booking({
   };
 
   // Time slots to render: from the tasker's availability, else the static fallback.
-  const timeChoices = hasTasker
-    ? slots.map((s) => ({ label: hhmm(s.time), value: hhmm(s.time), free: s.isFree }))
-    : DEFAULT_TIME_SLOTS.map((t) => ({ label: t, value: t, free: true }));
+  // Một khung giờ chỉ chọn được khi thợ rảnh (`isFree`) VÀ chưa quá hạn đặt trước
+  // (`!past`) — hai lý do khóa được tách riêng để hiển thị đúng thông báo cho khách.
+  const timeChoices = (
+    hasTasker
+      ? slots.map((s) => ({ label: hhmm(s.time), value: hhmm(s.time), isFree: s.isFree }))
+      : DEFAULT_TIME_SLOTS.map((t) => ({ label: t, value: t, isFree: true }))
+  ).map((t) => {
+    const past = slotStartMs(t.value) < earliestStart;
+    return { ...t, past, free: t.isFree && !past };
+  });
+
+  // Ngày đang chọn đã trôi qua hết khung giờ khả dụng (thường là hôm nay, về chiều tối).
+  const allSlotsPast = timeChoices.length > 0 && timeChoices.every((t) => t.past);
 
   /** Build the (possibly multi-service) booking items, chained sequentially so a
    *  single tasker never has two overlapping items. */
@@ -406,11 +446,10 @@ export function Booking({
     if (!address.trim()) return setFormError("Vui lòng nhập địa chỉ chi tiết.");
     if (!time) return setFormError("Vui lòng chọn giờ hẹn.");
 
-    const base = new Date(dateOptions[dateIdx]);
-    const [h, m] = time.split(":").map(Number);
-    base.setHours(h, m, 0, 0);
-    if (base.getTime() <= Date.now())
-      return setFormError("Vui lòng chọn thời gian hẹn trong tương lai.");
+    if (slotStartMs(time) < Date.now() + LEAD_TIME_MINUTES * 60_000)
+      return setFormError(
+        `Vui lòng đặt trước ít nhất ${LEAD_TIME_MINUTES} phút. Hãy chọn khung giờ muộn hơn.`,
+      );
 
     // Guard: the chosen slot must be free (when booking a specific tasker).
     if (hasTasker) {
@@ -793,6 +832,10 @@ export function Booking({
             <p className="text-sm text-amber-600 py-2">Thợ không làm việc vào ngày này. Chọn ngày khác.</p>
           ) : hasTasker && timeChoices.length === 0 ? (
             <p className="text-sm text-muted-foreground py-2">Không có khung giờ trống trong ngày này.</p>
+          ) : allSlotsPast ? (
+            <p className="text-sm text-amber-600 py-2">
+              Đã qua giờ làm việc của thợ hôm nay. Vui lòng chọn ngày khác.
+            </p>
           ) : (
             <div className="grid grid-cols-4 gap-2">
               {timeChoices.map((t) => {
@@ -802,12 +845,21 @@ export function Booking({
                     key={t.value}
                     onClick={() => t.free && setTime((prev) => (prev === t.value ? "" : t.value))}
                     disabled={!t.free}
+                    title={
+                      t.past
+                        ? `Đã qua giờ đặt (cần đặt trước ít nhất ${LEAD_TIME_MINUTES} phút)`
+                        : !t.isFree
+                          ? "Thợ đã bận khung giờ này"
+                          : undefined
+                    }
                     className={`py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                       active
                         ? "bg-blue-600 text-white"
                         : t.free
                           ? "bg-muted text-foreground hover:bg-accent"
-                          : "bg-slate-100 text-slate-300 line-through cursor-not-allowed"
+                          : t.past
+                            ? "bg-slate-100 text-slate-300 cursor-not-allowed"
+                            : "bg-slate-100 text-slate-300 line-through cursor-not-allowed"
                     }`}
                   >
                     {t.label}
