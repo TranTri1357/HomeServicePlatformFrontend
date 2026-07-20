@@ -12,7 +12,7 @@ import type {
 } from "@/shared/types";
 import { serviceApi, addressApi, taskerApi, bookingApi, customerApi } from "@/services/api";
 import { useGoBack } from "@/app/routes/useGoBack";
-import { useApi, useInfiniteList } from "@/shared/hooks";
+import { useApi, useInfiniteList, useAreaLabels } from "@/shared/hooks";
 import { useAuth } from "@/app/providers";
 import { TopBar, Avatar } from "@/shared/ui";
 import { formatVnd, notify, getErrorMessage, getApiAssetUrl } from "@/shared/lib";
@@ -139,6 +139,10 @@ export function Booking({
 
   // ── Danh sách thợ nhận dịch vụ này: sắp theo đánh giá, phân trang "tải thêm" (5/trang) ──
   // Trước đây lấy detail.suggestedTaskers (chốt cứng top 5, không xem thêm được).
+  // 📍 Chỉ lấy thợ CÙNG TỈNH với địa chỉ khách đặt (và kèm khoảng cách). Không lọc thì khách
+  // Cà Mau vẫn thấy thợ TP.HCM, chọn xong mới biết quá xa. Khi khách chưa chọn địa chỉ đã lưu
+  // thì destProvince = undefined -> trả toàn bộ thợ như trước, không chặn khách xem.
+  const destProvince = savedAddr?.provinceCode ?? undefined;
   const fetchTaskerPage = useCallback(
     (page: number): Promise<PagedResult<ServiceTaskerSuggestion>> =>
       serviceId == null
@@ -151,8 +155,12 @@ export function Booking({
             hasPreviousPage: false,
             hasNextPage: false,
           })
-        : taskerApi.getTaskersByService(serviceId, page, 5),
-    [serviceId],
+        : taskerApi.getTaskersByService(serviceId, page, 5, {
+            provinceCode: destProvince,
+            lat: destLat,
+            lng: destLng,
+          }),
+    [serviceId, destProvince, destLat, destLng],
   );
   const {
     items: taskerItems,
@@ -170,7 +178,7 @@ export function Booking({
     if (pre == null || serviceId == null) return;
     let alive = true;
     taskerApi
-      .getServiceTaskerCard(serviceId, pre)
+      .getServiceTaskerCard(serviceId, pre, { lat: destLat, lng: destLng })
       .then((card) => alive && setPinnedTasker(card))
       .catch(() => {
         /* không ghim được thì thôi, thợ vẫn nằm trong danh sách phân trang */
@@ -178,7 +186,7 @@ export function Booking({
     return () => {
       alive = false;
     };
-  }, [data?.taskerId, serviceId]);
+  }, [data?.taskerId, serviceId, destLat, destLng]);
 
   // Thợ hiển thị = thẻ ghim (nếu có) + danh sách phân trang, bỏ trùng theo taskerId.
   const displayedTaskers = useMemo(
@@ -187,6 +195,19 @@ export function Booking({
         ? [pinnedTasker, ...taskerItems.filter((t) => t.taskerId !== pinnedTasker.taskerId)]
         : taskerItems,
     [pinnedTasker, taskerItems],
+  );
+
+  // Tên tỉnh/quận để hiện trên thẻ thợ (backend chỉ trả mã hành chính).
+  const areaLabel = useAreaLabels(useMemo(
+    () => displayedTaskers.map((t) => t.provinceCode),
+    [displayedTaskers],
+  ));
+
+  // Thợ đang chọn có ở khác tỉnh với điểm đến không? Chỉ xảy ra với thẻ GHIM (khách vào
+  // đặt lịch từ trang hồ sơ thợ) — danh sách thường đã lọc cùng tỉnh.
+  const selectedTasker = displayedTaskers.find((t) => t.taskerId === taskerId);
+  const taskerOutOfProvince = Boolean(
+    selectedTasker?.provinceCode && destProvince && selectedTasker.provinceCode !== destProvince,
   );
 
   // ── Load the tasker's service options when a specific tasker is picked ───────
@@ -470,8 +491,17 @@ export function Booking({
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-1">Chọn thợ</h3>
           <p className="text-xs text-muted-foreground mb-3">
-            Vui lòng chọn thợ để tiếp tục chọn ngày và giờ làm.
+            {destProvince
+              ? "Chỉ hiện thợ trong cùng tỉnh/thành với địa chỉ bạn đặt."
+              : "Chọn một địa chỉ đã lưu ở dưới để chỉ hiện thợ gần bạn."}
           </p>
+
+          {taskerOutOfProvince && (
+            <div className="mb-3 p-3 bg-amber-50 text-amber-700 text-xs rounded-xl border border-amber-100">
+              Thợ bạn chọn ở tỉnh/thành khác với địa chỉ đặt. Thợ có thể không nhận đơn vì quá xa —
+              cân nhắc chọn thợ trong danh sách bên dưới.
+            </div>
+          )}
           <div className="space-y-2">
             {loadingTaskers && displayedTaskers.length === 0 ? (
               [1, 2, 3].map((i) => (
@@ -479,7 +509,9 @@ export function Booking({
               ))
             ) : displayedTaskers.length === 0 ? (
               <p className="text-sm text-muted-foreground py-2">
-                Hiện chưa có thợ nào nhận dịch vụ này. Vui lòng chọn dịch vụ khác.
+                {destProvince
+                  ? "Chưa có thợ nào nhận dịch vụ này ở khu vực của bạn. Thử đổi địa chỉ đặt hoặc chọn dịch vụ khác."
+                  : "Hiện chưa có thợ nào nhận dịch vụ này. Vui lòng chọn dịch vụ khác."}
               </p>
             ) : (
               displayedTaskers.map((t) => (
@@ -502,12 +534,29 @@ export function Booking({
                   ) : (
                     <Avatar size={44} name={t.fullName} />
                   )}
-                  <div className="flex-1 text-left">
+                  <div className="flex-1 text-left min-w-0">
                     <p className="font-semibold text-sm text-foreground">{t.fullName}</p>
                     <p className="text-xs text-muted-foreground">
                       {t.experienceYears} năm KN
                       {t.currentPrice > 0 && <> · {formatVnd(t.currentPrice)}đ</>}
                     </p>
+                    {/* Khu vực + khoảng cách: để khách biết thợ ở đâu TRƯỚC khi đặt và trả tiền.
+                        Chỉ tới cấp quận/huyện — số nhà của thợ là thông tin riêng tư. */}
+                    {(() => {
+                      const area = areaLabel(t.provinceCode, t.districtCode);
+                      if (!area && t.distanceKm == null) return null;
+                      return (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{area ?? "Chưa rõ khu vực"}</span>
+                          {t.distanceKm != null && (
+                            <span className="flex-shrink-0 font-medium text-foreground">
+                              · ~{t.distanceKm} km
+                            </span>
+                          )}
+                        </p>
+                      );
+                    })()}
                   </div>
                   <div className="flex items-center gap-1">
                     <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />

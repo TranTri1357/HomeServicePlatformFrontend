@@ -148,10 +148,27 @@ export async function completeWork(bookingId: number): Promise<boolean> {
   return unwrap(response);
 }
 
-/** Cancel/decline a booking with a reason. */
+/**
+ * Hủy một đơn ĐÃ NHẬN (Accepted/OnTheWay/InProgress) kèm lý do.
+ * Khách được hoàn 100% và thợ bị ghi nhận 1 lần hủy (hạ độ tin cậy, quá ngưỡng thì khóa tài khoản).
+ *
+ * ⚠️ KHÔNG dùng cho đơn Pending — backend trả 400. Đơn chưa nhận dùng `declineJob`.
+ */
 export async function cancelJob(bookingId: number, cancelReason: string): Promise<boolean> {
   const response = await put<ApiResponse<boolean>>(`/tasker/bookings/${bookingId}/cancel`, {
     cancelReason,
+  });
+  return unwrap(response);
+}
+
+/**
+ * Từ chối một đơn thường CHƯA NHẬN (Pending) kèm lý do.
+ * Đơn bị hủy, khách được hoàn 100%, và thợ KHÔNG bị ghi nhận lần hủy nào — từ chối là quyền
+ * bình thường của thợ, khác hẳn việc bỏ đơn đã nhận giữa chừng.
+ */
+export async function declineJob(bookingId: number, declineReason: string): Promise<boolean> {
+  const response = await put<ApiResponse<boolean>>(`/tasker/bookings/${bookingId}/decline`, {
+    declineReason,
   });
   return unwrap(response);
 }
@@ -186,19 +203,39 @@ export async function getTopTaskers(params?: GetTopTaskersParams): Promise<TopTa
   return unwrap(response);
 }
 
+/** Vị trí điểm đến của đơn, để lọc/xếp thợ theo khu vực. */
+export type TaskerAreaParams = {
+  /** Mã tỉnh/thành của địa chỉ khách đặt — có thì CHỈ trả thợ cùng tỉnh. */
+  provinceCode?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+};
+
 /**
- * GET /api/Taskers/by-service/{serviceId}?pageIndex=&pageSize=5
+ * GET /api/Taskers/by-service/{serviceId}?pageIndex=&pageSize=5&provinceCode=&lat=&lng=
  * Thợ nhận dịch vụ này, sắp theo đánh giá (giảm dần) + phân trang "tải thêm".
  * Dùng cho bước "Chọn thợ" ở trang đặt lịch khi dịch vụ có nhiều thợ.
+ *
+ * Truyền `area` để khách không thấy thợ ở tỉnh khác (khách Cà Mau lỡ chọn thợ TP.HCM
+ * thì đơn gần như chắc chắn bị từ chối). Bỏ trống thì trả toàn bộ như trước.
  */
 export async function getTaskersByService(
   serviceId: number,
   pageIndex = 1,
   pageSize = 5,
+  area?: TaskerAreaParams,
 ): Promise<PagedResult<ServiceTaskerSuggestion>> {
   const response = await get<ApiResponse<PagedResult<ServiceTaskerSuggestion>>>(
     `/Taskers/by-service/${serviceId}`,
-    { params: { pageIndex, pageSize } },
+    {
+      params: {
+        pageIndex,
+        pageSize,
+        provinceCode: area?.provinceCode ?? undefined,
+        lat: area?.lat ?? undefined,
+        lng: area?.lng ?? undefined,
+      },
+    },
   );
   return unwrap(response);
 }
@@ -211,9 +248,11 @@ export async function getTaskersByService(
 export async function getServiceTaskerCard(
   serviceId: number,
   taskerId: number,
+  area?: Pick<TaskerAreaParams, "lat" | "lng">,
 ): Promise<ServiceTaskerSuggestion | null> {
   const response = await get<ApiResponse<ServiceTaskerSuggestion | null>>(
     `/Taskers/by-service/${serviceId}/tasker/${taskerId}`,
+    { params: { lat: area?.lat ?? undefined, lng: area?.lng ?? undefined } },
   );
   return unwrap(response);
 }
