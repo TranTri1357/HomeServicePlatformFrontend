@@ -75,3 +75,24 @@ try {
 - `src/pages/` — màn hình theo vai trò (Customer / Provider / Admin)
 - `src/services/api/` — lớp gọi API tập trung (client, interceptor, endpoint)
 - `src/shared/` — hooks (`useApi`), lib (`notify`, `getErrorMessage`, `cn`), types, ui, auth
+
+## PWA (cài lên màn hình chính điện thoại)
+
+App chạy được như ứng dụng di động qua `vite-plugin-pwa`. Bộ icon sinh lại bằng
+`npm run icons` (script Node thuần trong `scripts/`, không cần thư viện ngoài).
+
+Ba điểm dễ gãy nếu sửa cấu hình:
+
+- **`injectRegister: null` trong `vite.config.ts` là bắt buộc**, không phải tùy
+  chọn. CSP `script-src 'self'` ở `vercel.json` chặn script inline mà plugin
+  chèn mặc định; gỡ dòng này thì service worker im lặng không đăng ký trên
+  production. Việc đăng ký do `src/app/components/pwa/UpdatePrompt.tsx` lo.
+- **`/sw.js` phải giữ header `Cache-Control: max-age=0, must-revalidate`** trong
+  `vercel.json`. Nếu CDN hay trình duyệt giữ bản cũ, người dùng kẹt vĩnh viễn ở
+  phiên bản cũ vì service worker cũ tự phục vụ chính nó.
+- **Không cache response `/api`** trong `workbox.runtimeCaching`. Hầu hết
+  endpoint đi kèm `Authorization`; cache theo URL sẽ khiến tài khoản đăng nhập
+  sau đọc trúng đơn/ví/hồ sơ của tài khoản trước trên cùng máy.
+
+Lưu ý `vercel.json` không nhận comment: Vercel validate theo schema nghiêm ngặt
+và từ chối mọi property lạ (kể cả khóa `"//"` quen dùng để chú thích).
