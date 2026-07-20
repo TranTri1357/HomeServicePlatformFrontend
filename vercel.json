@@ -17,7 +17,6 @@
       ]
     },
     {
-      "//": "sw.js phải luôn được tải lại từ server. Nếu CDN/trình duyệt giữ bản cũ, người dùng sẽ kẹt vĩnh viễn ở phiên bản cũ vì SW cũ tự phục vụ chính nó.",
       "source": "/sw.js",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
