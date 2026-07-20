@@ -16,7 +16,9 @@
       <meta name="theme-color" content="#2563eb" />
       <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
 
-      <!-- iOS không đọc manifest: phải khai báo riêng thì mới chạy fullscreen -->
+      <!-- iOS không đọc manifest: phải khai báo riêng thì mới chạy fullscreen.
+           Bản apple-* đã deprecated nhưng Safari cũ vẫn chỉ hiểu nó, nên giữ cả hai. -->
+      <meta name="mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       <meta name="apple-mobile-web-app-title" content="HomeService" />

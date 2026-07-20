@@ -1,5 +1,4 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { Wifi } from "lucide-react";
 import { NO_BOTTOM_NAV_SCREENS } from "@/shared/constants";
 import { CUSTOMER_NAV_ITEMS, GUEST_NAV_ITEMS } from "@/app/config";
 import { DesktopTopNav } from "@/layouts";
@@ -53,14 +52,9 @@ export function CustomerLayout() {
         />
       </div>
 
-      {/* Thanh trạng thái giả lập — chỉ mobile */}
-      <div className="lg:hidden flex items-center justify-between px-4 py-2 flex-shrink-0 text-xs font-semibold z-20 bg-white text-foreground border-b border-border">
-        <span>9:41</span>
-        <div className="flex items-center gap-1">
-          <Wifi className="w-3 h-3" />
-          <span>5G</span>
-        </div>
-      </div>
+      {/* Chừa chỗ cho status bar THẬT của máy khi chạy standalone. Cao 0px ở
+          trình duyệt thường nên không tạo khoảng trắng thừa. */}
+      <div className="lg:hidden flex-shrink-0 safe-area-top bg-white" />
 
       {/* Nội dung dùng chung */}
       <div className="flex-1 overflow-hidden">

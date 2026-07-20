@@ -13,6 +13,15 @@
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+  /*
+   * Vùng đệm cho status bar thật của máy khi app chạy standalone (đã cài lên màn
+   * hình chính). Trên iOS có tai thỏ, inset này khác 0 và nội dung sẽ chui lên
+   * dưới đồng hồ/pin nếu không chừa chỗ. Trên trình duyệt thường và trên Android
+   * inset = 0 nên phần tử co lại còn 0px, không để lại khoảng trắng thừa.
+   */
+  .safe-area-top {
+    height: env(safe-area-inset-top, 0px);
+  }
 }
 
 body {
