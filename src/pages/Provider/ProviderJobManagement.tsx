@@ -119,10 +119,19 @@ export function ProviderJobManagement({
       notify.error("Vui lòng nhập lý do.");
       return;
     }
+    // Đơn CHƯA NHẬN (Pending) đi đường /decline: hoàn 100% cho khách và KHÔNG ghi nhận lần hủy.
+    // Đơn ĐÃ NHẬN đi đường /cancel: cũng hoàn 100% nhưng thợ bị hạ độ tin cậy.
+    // Trước đây cả hai cùng gọi /cancel, mà backend chặn Pending nên nút "Từ chối" luôn lỗi 400.
+    const isPending = cancelJob.jobStatus === 0;
     setCancelling(true);
     try {
-      await taskerApi.cancelJob(cancelJob.bookingId, cancelReason.trim());
-      notify.success("Đã hủy đơn.");
+      if (isPending) {
+        await taskerApi.declineJob(cancelJob.bookingId, cancelReason.trim());
+        notify.success("Đã từ chối đơn. Khách được hoàn tiền đầy đủ.");
+      } else {
+        await taskerApi.cancelJob(cancelJob.bookingId, cancelReason.trim());
+        notify.success("Đã hủy đơn.");
+      }
       setCancelJob(null);
       setCancelReason("");
       refresh();
@@ -360,7 +369,12 @@ export function ProviderJobManagement({
               </h3>
               <p className="text-sm text-muted-foreground mt-1">Vui lòng cho biết lý do.</p>
             </div>
-            {cancelJob.jobStatus >= 1 && (
+            {cancelJob.jobStatus === 0 ? (
+              <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
+                Bạn chưa nhận đơn này nên từ chối KHÔNG ảnh hưởng độ tin cậy của bạn. Khách sẽ được
+                hoàn 100% và có thể đặt lại với thợ khác.
+              </div>
+            ) : (
               <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
                 Bạn đang hủy đơn đã nhận: khách sẽ được hoàn 100% và lần hủy này bị ghi nhận,
                 ảnh hưởng độ tin cậy của bạn. Hủy nhiều lần có thể bị tạm khóa nhận đơn.

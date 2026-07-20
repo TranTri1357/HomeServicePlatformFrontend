@@ -45,6 +45,14 @@ export interface ServiceTaskerSuggestion {
   experienceYears: number;
   ratingAvg: number;
   currentPrice: number;
+  /**
+   * Khu vực hoạt động của thợ (mã hành chính GSO, tra tên qua `services/vnAddress`).
+   * Backend chỉ trả mã tỉnh/quận, KHÔNG trả số nhà của thợ. Null khi thợ chưa khai địa chỉ.
+   */
+  provinceCode: string | null;
+  districtCode: string | null;
+  /** Khoảng cách đường chim bay tới địa chỉ đặt của khách (km); null khi thiếu tọa độ. */
+  distanceKm: number | null;
 }
 
 /** Service detail — GET /api/Services/{id}. */
