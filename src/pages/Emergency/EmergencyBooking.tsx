@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Siren, Loader2, Phone, X, Radar } from "lucide-react";
 import type { Screen, CustomerAddress } from "@/shared/types";
-import { serviceApi, addressApi, bookingApi } from "@/services/api";
+import { serviceApi, addressApi, bookingApi, customerApi } from "@/services/api";
 import { connectEmergencyCustomer } from "@/services/realtime/bookingHub";
 import { useApi } from "@/shared/hooks";
 import { useAuth } from "@/app/providers";
@@ -42,7 +42,21 @@ export function EmergencyBooking({
     { initialData: [] },
   );
 
-  // Prefill contact + location from the default saved address — ONCE, so editing
+  // Prefill contact (tên + SĐT) từ hồ sơ khách — đây là nguồn DUY NHẤT có số điện thoại:
+  // phiên đăng nhập chỉ mang userId/fullName/roles, còn địa chỉ đã lưu không có SĐT.
+  // Điền sẵn để khách gọi thợ khẩn cấp nhanh hơn, nhưng vẫn cho sửa tự do.
+  const { data: profile } = useApi(() => customerApi.getCustomerProfile());
+  const contactPrefilledRef = useRef(false);
+  useEffect(() => {
+    // Cờ riêng, KHÔNG dùng chung với prefill địa chỉ: khách chưa lưu địa chỉ nào
+    // thì effect kia thoát sớm, và SĐT sẽ không bao giờ được điền.
+    if (contactPrefilledRef.current || !profile) return;
+    contactPrefilledRef.current = true;
+    if (profile.fullName) setFullName(profile.fullName);
+    if (profile.phone) setPhone(profile.phone);
+  }, [profile]);
+
+  // Prefill location from the default saved address — ONCE, so editing
   // the address field later isn't overwritten.
   const { data: savedAddresses = [] } = useApi(() => addressApi.getMyAddresses(), {
     initialData: [],

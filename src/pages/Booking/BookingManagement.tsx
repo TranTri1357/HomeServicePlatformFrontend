@@ -482,14 +482,8 @@ export function BookingManagement({
                     <span className="text-muted-foreground">Đã thanh toán</span>
                     <span className="font-medium">{formatVnd(cancelPreview.totalPaid)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      Hoàn lại ({cancelPreview.refundPercent}%)
-                    </span>
-                    <span className="font-semibold text-green-600">
-                      {formatVnd(cancelPreview.refundAmount)}
-                    </span>
-                  </div>
+                  {/* Cố ý KHÔNG hiện con số %: nó là % trên TIỀN CỌC, không phải trên tổng đã
+                      trả — hiện ra dễ khiến khách tưởng bị trừ nhiều hơn thực tế. Chỉ hiện tiền. */}
                   {cancelPreview.penaltyAmount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Phí hủy (đền thợ)</span>
@@ -498,6 +492,12 @@ export function BookingManagement({
                       </span>
                     </div>
                   )}
+                  <div className="flex justify-between pt-1.5 border-t border-border/60">
+                    <span className="font-semibold text-foreground">Hoàn lại</span>
+                    <span className="font-bold text-green-600">
+                      {formatVnd(cancelPreview.refundAmount)}
+                    </span>
+                  </div>
                   <p className="pt-1 text-xs text-muted-foreground border-t border-border/60">
                     {cancelPreview.reason}
                   </p>
