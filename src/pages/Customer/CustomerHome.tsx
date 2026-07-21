@@ -270,11 +270,11 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
               HOT
             </span>
             <h3 className="text-white text-lg font-bold mt-2">
-              Vệ sinh sạch sẻ
+              Vệ sinh sạch sẽ
               <br />
               Dọn dẹp ngăn nắp
             </h3>
-            <p className="text-white/80 text-xs mt-1 mb-3">mại vô mại vô</p>
+            <p className="text-white/80 text-xs mt-1 mb-3"></p>
 
           </div>
         </div>
