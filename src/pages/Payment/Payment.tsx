@@ -21,15 +21,15 @@ type PaymentMethodOption = {
   desc: string;
 };
 
-// Ví (1) trừ số dư ngay; MoMo (3) & ZaloPay (4) qua cổng giả lập (demo, chưa có
-// merchant credentials). Đã bỏ phương thức "Tiền mặt" theo yêu cầu nghiệp vụ.
+
+
 const METHODS: PaymentMethodOption[] = [
   { id: 1, label: "Ví hệ thống", icon: Wallet, desc: "Trừ trực tiếp từ số dư ví, xác nhận ngay" },
   { id: 3, label: "MoMo", icon: Smartphone, desc: "Cổng giả lập (demo)" },
   { id: 4, label: "ZaloPay", icon: Smartphone, desc: "Cổng giả lập (demo)" },
 ];
 
-const DEPOSIT_RATE = 0.3; // Đặt cọc 30%, phần còn lại trả tiền mặt khi hoàn thành.
+const DEPOSIT_RATE = 0.3; 
 type PayType = "deposit" | "full";
 
 export function Payment({
@@ -38,8 +38,8 @@ export function Payment({
 }: {
   onNavigate: (s: Screen, d?: object) => void;
   data?: {
-    // The order already exists (created as a "hold" at booking time, or an
-    // earlier payment was cancelled). Payment only checks it out — never creates.
+    
+    
     bookingId?: number;
     finalAmount?: number;
   };
@@ -52,7 +52,7 @@ export function Payment({
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ isPaid: boolean; bookingId: number } | null>(null);
 
-  // ── No context (no order to pay — e.g. page refreshed) ──────────────────────
+  
   if (bookingId == null) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
@@ -80,13 +80,13 @@ export function Payment({
   const handleConfirm = async () => {
     setSubmitting(true);
     try {
-      // Số tiền do SERVER tự tính từ FinalAmount (chống giả mạo); client chỉ báo full/deposit.
-      // payAmount ở đây CHỈ để hiển thị / truyền sang màn cổng giả lập.
+      
+      
       const isDeposit = payType === "deposit";
       const payAmount = isDeposit ? Math.round(displayTotal * DEPOSIT_RATE) : displayTotal;
       const res = await paymentApi.checkout({ bookingId, isDeposit, method });
 
-      // Simulated MoMo/ZaloPay: open the in-app mock gateway screen.
+      
       if (paymentApi.isMockGatewayUrl(res.paymentUrl)) {
         onNavigate("mockGateway", {
           paymentId: res.paymentId,
@@ -96,7 +96,7 @@ export function Payment({
         });
         return;
       }
-      // A real third-party gateway would return an http(s) redirect URL.
+      
       if (res.paymentUrl) {
         window.location.href = res.paymentUrl;
         return;
@@ -113,7 +113,7 @@ export function Payment({
     }
   };
 
-  // ── Success / recorded ────────────────────────────────────────────────────
+  
   if (done) {
     return (
       <div className="flex flex-col h-full items-center justify-center p-8 bg-background">
@@ -161,7 +161,7 @@ export function Payment({
     <div className="flex flex-col h-full">
       <TopBar title="Thanh toán" onBack={goBack} />
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Amount */}
+        {}
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Tóm tắt đơn hàng</h3>
           <div className="flex justify-between items-center">
@@ -175,7 +175,7 @@ export function Payment({
           </div>
         </div>
 
-        {/* Deposit vs Full */}
+        {}
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Hình thức thanh toán</h3>
           <div className="grid grid-cols-2 gap-3">
@@ -210,7 +210,7 @@ export function Payment({
           </div>
         </div>
 
-        {/* Payment Methods */}
+        {}
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Phương thức thanh toán</h3>
           <div className="space-y-2">

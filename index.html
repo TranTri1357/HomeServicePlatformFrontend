@@ -4,20 +4,14 @@
     <head>
       
       <meta charset="UTF-8" />
-      <!-- viewport-fit=cover là điều kiện để env(safe-area-inset-*) có giá trị
-           khác 0 trên máy có tai thỏ / thanh gesture. -->
       <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
       <title>HomeService - Dịch vụ gia đình</title>
       <meta name="description" content="Đặt thợ sửa chữa, dọn dẹp, điện nước tại nhà. Theo dõi đơn và thanh toán ngay trên điện thoại." />
       <meta name="robots" content="noindex, nofollow" />
 
-      <!-- PWA: thẻ link manifest do vite-plugin-pwa tự chèn lúc build,
-           không khai báo ở đây kẻo bị trùng. -->
       <meta name="theme-color" content="#2563eb" />
       <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
 
-      <!-- iOS không đọc manifest: phải khai báo riêng thì mới chạy fullscreen.
-           Bản apple-* đã deprecated nhưng Safari cũ vẫn chỉ hiểu nó, nên giữ cả hai. -->
       <meta name="mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -27,10 +21,7 @@
       <style>
         html, body { height: 100%; margin: 0; }
         #root { height: 100%; }
-        /* Chặn pull-to-refresh vô ý khi vuốt danh sách trong chế độ standalone,
-           và chặn overscroll ngang gây cảm giác "trôi" trang. */
         html, body { overscroll-behavior-y: contain; }
-        /* Bỏ highlight xanh khi chạm nút trên Android WebView/Chrome. */
         * { -webkit-tap-highlight-color: transparent; }
       </style>
       

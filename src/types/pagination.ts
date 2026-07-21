@@ -1,4 +1,4 @@
-/** Standard paged result envelope returned by the backend (PagedResult<T>). */
+
 export interface PagedResult<T> {
   items: T[];
   totalCount: number;

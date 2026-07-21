@@ -6,10 +6,7 @@ import { formatVnd, notify, getErrorMessage } from "@/shared/lib";
 
 type Provider = "momo" | "zalopay";
 
-/**
- * "booking" — xác nhận khoản thanh toán đơn đã tạo sẵn (đóng vai IPN của cổng).
- * "topup"   — nạp ví: chưa có bản ghi nào ở backend, tiền chỉ được cộng khi bấm xác nhận.
- */
+
 type GatewayMode = "booking" | "topup";
 
 const BRAND: Record<Provider, { name: string; color: string; text: string }> = {
@@ -43,7 +40,7 @@ export function MockGateway({
 
   const [busy, setBusy] = useState<"none" | "pay" | "cancel">("none");
 
-  // Nạp ví thì chưa có paymentId (chưa có gì ở backend), chỉ cần số tiền hợp lệ.
+  
   const invalid = isTopUp ? amount <= 0 : !paymentId;
 
   if (invalid) {
@@ -69,7 +66,7 @@ export function MockGateway({
     setBusy("pay");
     try {
       if (isTopUp) {
-        // Đây là lần gọi backend DUY NHẤT của luồng nạp: tiền vào ví ngay tại đây.
+        
         const newBalance = await walletApi.topUpWallet({
           amount,
           method: METHOD_CODE[provider],
@@ -90,11 +87,11 @@ export function MockGateway({
     setBusy("cancel");
     try {
       if (isTopUp) {
-        // Chưa có giao dịch nào ở backend nên hủy chỉ là quay lại màn ví.
+        
         notify.info("Đã hủy giao dịch nạp tiền.");
       } else {
         await paymentApi.confirmMockPayment(paymentId!, false);
-        // Đơn đã được tạo ở trạng thái Chờ; hủy thanh toán thì về xem lịch đặt.
+        
         notify.info("Đã hủy giao dịch. Đơn của bạn đang chờ thanh toán.");
       }
       onNavigate(returnScreen);
@@ -108,7 +105,7 @@ export function MockGateway({
 
   return (
     <div className="flex flex-col h-full bg-background">
-      {/* Gateway brand header */}
+      {}
       <div className="px-4 py-4 flex items-center justify-between" style={{ background: brand.color }}>
         <div className={`flex items-center gap-2 font-extrabold text-lg ${brand.text}`}>
           <ShieldCheck className="w-5 h-5" />
@@ -139,7 +136,7 @@ export function MockGateway({
           {isTopUp ? "Giao dịch nạp ví" : `Mã giao dịch: MOCK${paymentId}`}
         </p>
 
-        {/* Fake QR */}
+        {}
         <div className="mt-6 w-52 h-52 rounded-2xl border-2 border-dashed border-border bg-white flex items-center justify-center">
           <QrCode className="w-28 h-28 text-foreground/80" />
         </div>
@@ -149,7 +146,7 @@ export function MockGateway({
         </p>
       </div>
 
-      {/* Actions */}
+      {}
       <div className="bg-white border-t border-border px-4 py-4 space-y-2">
         <button
           onClick={handlePay}

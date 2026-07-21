@@ -6,11 +6,11 @@ import { Loader2, LocateFixed, Search, MapPin, X } from "lucide-react";
 import { notify } from "@/shared/lib";
 import { searchAddresses, type GeoResult } from "@/services/vnAddress";
 
-const DEFAULT_CENTER = { lat: 10.7769, lng: 106.7009 }; // TP.HCM
+const DEFAULT_CENTER = { lat: 10.7769, lng: 106.7009 }; 
 
 type LatLng = { lat: number; lng: number };
 
-/** Colored circle pin as an inline SVG divIcon (avoids Leaflet's broken asset paths). */
+
 const pinIcon = L.divIcon({
   className: "",
   html: `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="42" viewBox="0 0 30 42"><path d="M15 0C6.7 0 0 6.7 0 15c0 10 15 27 15 27s15-17 15-27C30 6.7 23.3 0 15 0z" fill="#2563eb"/><circle cx="15" cy="15" r="6" fill="white"/></svg>`,
@@ -18,7 +18,7 @@ const pinIcon = L.divIcon({
   iconAnchor: [15, 42],
 });
 
-/** Recenter the map imperatively whenever `center` changes (react-leaflet ignores prop changes). */
+
 function Recenter({ center }: { center: LatLng }) {
   const map = useMap();
   useEffect(() => {
@@ -27,7 +27,7 @@ function Recenter({ center }: { center: LatLng }) {
   return null;
 }
 
-/** Place the pin wherever the user clicks the map. */
+
 function ClickToPlace({ onPick }: { onPick: (lat: number, lng: number) => void }) {
   useMapEvents({
     click(e) {
@@ -38,18 +38,14 @@ function ClickToPlace({ onPick }: { onPick: (lat: number, lng: number) => void }
 }
 
 interface LocationPickerProps {
-  /** Currently chosen coordinate, or null when none picked yet. */
+  
   value: LatLng | null;
   onChange: (lat: number, lng: number) => void;
-  /** Free-text address used to center the map on first open when there is no value. */
+  
   fallbackQuery?: string;
 }
 
-/**
- * Pick coordinates for ANY location (not just the device's current position):
- * search an address, click/drag a pin on the map, or use current GPS.
- * Uses Leaflet + OpenStreetMap tiles — free, no API key required.
- */
+
 export function LocationPicker({ value, onChange, fallbackQuery }: LocationPickerProps) {
   const [center, setCenter] = useState<LatLng>(value ?? DEFAULT_CENTER);
   const [query, setQuery] = useState("");
@@ -58,7 +54,7 @@ export function LocationPicker({ value, onChange, fallbackQuery }: LocationPicke
   const [locating, setLocating] = useState(false);
   const didInit = useRef(false);
 
-  // First open with no pin: center the map near the chosen Tỉnh/Quận/Phường.
+  
   useEffect(() => {
     if (didInit.current) return;
     didInit.current = true;
@@ -70,19 +66,19 @@ export function LocationPicker({ value, onChange, fallbackQuery }: LocationPicke
       searchAddresses(fallbackQuery, 1)
         .then((r) => r[0] && setCenter({ lat: r[0].lat, lng: r[0].lng }))
         .catch(() => {
-          /* keep default center */
+          
         });
     }
   }, [value, fallbackQuery]);
 
-  // Follow an externally-updated value (e.g. the parent geocoded a typed address)
-  // by recentering the map on it.
+  
+  
   useEffect(() => {
     if (value) setCenter(value);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [value?.lat, value?.lng]);
 
-  // Debounced address search for the suggestions dropdown.
+  
   useEffect(() => {
     if (query.trim().length < 3) {
       setResults([]);
@@ -93,7 +89,7 @@ export function LocationPicker({ value, onChange, fallbackQuery }: LocationPicke
       try {
         setResults(await searchAddresses(query, 5));
       } catch {
-        /* ignore transient search errors */
+        
       } finally {
         setSearching(false);
       }
@@ -127,7 +123,7 @@ export function LocationPicker({ value, onChange, fallbackQuery }: LocationPicke
 
   return (
     <div className="space-y-2">
-      {/* Search box with suggestions */}
+      {}
       <div className="relative">
         <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2">
           <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -172,7 +168,7 @@ export function LocationPicker({ value, onChange, fallbackQuery }: LocationPicke
         )}
       </div>
 
-      {/* Map with a draggable pin */}
+      {}
       <div className="rounded-xl overflow-hidden" style={{ height: 200 }}>
         <MapContainer
           center={[center.lat, center.lng]}

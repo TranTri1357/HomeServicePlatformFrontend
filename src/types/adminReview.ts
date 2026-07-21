@@ -1,4 +1,4 @@
-/** A row in the admin review list — GET /api/admin/reviews. */
+
 export interface AdminReviewItem {
   reviewId: number;
   customerName: string;

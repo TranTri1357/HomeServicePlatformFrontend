@@ -13,16 +13,12 @@ import {
   geocodeAddress,
   type AdminUnit,
 } from "@/services/vnAddress";
-// Lazy: LocationPicker kéo theo Leaflet — tách chunk, chỉ tải khi mở form địa chỉ.
+
 const LocationPicker = lazy(() =>
   import("./LocationPicker").then((m) => ({ default: m.LocationPicker })),
 );
 
-/**
- * Trang quản lý địa chỉ dùng chung cho cả Khách và Thợ. Mặc định chạy với API
- * địa chỉ của khách; truyền `api`/`backScreen`/`title` để tái dùng cho thợ
- * (địa chỉ hoạt động — Phương án B, cùng bảng Address).
- */
+
 export function CustomerAddresses({
   api = addressApi,
   backScreen = "customerProfile",
@@ -35,11 +31,11 @@ export function CustomerAddresses({
   const goBack = useGoBack(backScreen);
   const { data: addresses = [], loading, error, refetch } = useApi(() => api.getMyAddresses());
 
-  // Add / edit modal.
+  
   const [editing, setEditing] = useState<CustomerAddress | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [line, setLine] = useState("");
-  // Administrative selection — codes are saved to the backend, names drive display + geocoding.
+  
   const [province, setProvince] = useState<AdminUnit | null>(null);
   const [district, setDistrict] = useState<AdminUnit | null>(null);
   const [ward, setWard] = useState<AdminUnit | null>(null);
@@ -54,24 +50,24 @@ export function CustomerAddresses({
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Human-readable "Ward · District · Province" label per address, for the list card.
+  
   const [labels, setLabels] = useState<Record<number, string>>({});
 
-  // Delete confirm.
+  
   const [deleteTarget, setDeleteTarget] = useState<CustomerAddress | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [busyDefaultId, setBusyDefaultId] = useState<number | null>(null);
 
-  // Load the province list once (also used to resolve names for the list cards).
+  
   useEffect(() => {
     fetchProvinces()
       .then(setProvinces)
       .catch(() => notify.error("Không tải được danh sách Tỉnh/Thành."));
   }, []);
 
-  // Resolve code → name for every saved address so cards show real place names.
-  // Depend on a stable content signature (not the array identity, which changes
-  // every render because of the `= []` default) to avoid a setState render loop.
+  
+  
+  
   const addressSig = addresses
     .map((a) => `${a.addressId}:${a.provinceCode}:${a.districtCode}:${a.wardCode}`)
     .join("|");
@@ -93,7 +89,7 @@ export function CustomerAddresses({
           const label = [wName, dName, pName].filter(Boolean).join(" · ");
           if (label) next[addr.addressId] = label;
         } catch {
-          /* fall back to nothing for this address */
+          
         }
       }
       if (alive) setLabels(next);
@@ -101,7 +97,7 @@ export function CustomerAddresses({
     return () => {
       alive = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [addressSig, provinces]);
 
   const resetGeoFields = () => {
@@ -126,13 +122,13 @@ export function CustomerAddresses({
   const openEdit = async (addr: CustomerAddress) => {
     setEditing(addr);
     setLine(addr.addressLine);
-    setLat(addr.latitude || null); // 0 = chưa có toạ độ
+    setLat(addr.latitude || null); 
     setLng(addr.longitude || null);
     setMakeDefault(addr.isDefault);
     setFormError(null);
     setShowForm(true);
 
-    // Prefill the cascading selects from the saved codes.
+    
     setProvince(addr.provinceCode ? { code: addr.provinceCode, name: "" } : null);
     setDistrict(addr.districtCode ? { code: addr.districtCode, name: "" } : null);
     setWard(addr.wardCode ? { code: addr.wardCode, name: "" } : null);
@@ -155,7 +151,7 @@ export function CustomerAddresses({
         }
       }
     } catch {
-      /* selects stay partially filled; user can re-pick */
+      
     }
   };
 
@@ -199,8 +195,8 @@ export function CustomerAddresses({
 
     setSaving(true);
     try {
-      // Coordinates: prefer any already captured (geolocation / edit), otherwise
-      // geocode the chosen address so nearby-tasker matching keeps working.
+      
+      
       let latitude = lat ?? undefined;
       let longitude = lng ?? undefined;
       if (latitude == null || longitude == null) {
@@ -214,7 +210,7 @@ export function CustomerAddresses({
             longitude = geo.lng;
           }
         } catch {
-          /* geocoding is best-effort; save without coords if it fails */
+          
         }
       }
 
@@ -352,7 +348,7 @@ export function CustomerAddresses({
         )}
       </div>
 
-      {/* Add button */}
+      {}
       <div className="bg-white border-t border-border px-4 py-4">
         <button
           onClick={openAdd}
@@ -363,7 +359,7 @@ export function CustomerAddresses({
         </button>
       </div>
 
-      {/* Add / edit modal */}
+      {}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4 max-h-[85vh] overflow-y-auto">
@@ -382,7 +378,7 @@ export function CustomerAddresses({
               />
             </div>
 
-            {/* Administrative selects — cascading Tỉnh → Quận → Phường; store codes. */}
+            {}
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground">Tỉnh/Thành</label>
               <select
@@ -436,7 +432,7 @@ export function CustomerAddresses({
               </div>
             </div>
 
-            {/* Coordinates (used to match nearby taskers) — pick any location on the map. */}
+            {}
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground">
                 Vị trí trên bản đồ
@@ -499,7 +495,7 @@ export function CustomerAddresses({
         </div>
       )}
 
-      {/* Delete confirm modal */}
+      {}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">

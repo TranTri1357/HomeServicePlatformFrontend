@@ -9,13 +9,13 @@ import { formatVnd, formatDateVn, notify } from "@/shared/lib";
 
 const QUICK_AMOUNTS = [100_000, 200_000, 500_000, 1_000_000];
 
-// Hai cổng giả lập được backend chấp nhận cho việc nạp ví.
+
 const GATEWAYS = [
   { id: "momo" as const, name: "MoMo", color: "#a50064" },
   { id: "zalopay" as const, name: "ZaloPay", color: "#0068ff" },
 ];
 
-// Wallet transaction type → label + whether it credits the balance.
+
 const TX: Record<number, { label: string; credit: boolean }> = {
   1: { label: "Nạp tiền", credit: true },
   2: { label: "Thanh toán", credit: false },
@@ -33,8 +33,8 @@ export function CustomerWallet() {
   const [amount, setAmount] = useState<number>(QUICK_AMOUNTS[0]);
   const [gateway, setGateway] = useState<"momo" | "zalopay">("momo");
 
-  // Không gọi API ở đây: mở màn cổng giả lập (dùng chung với luồng thanh toán đơn) và chỉ
-  // khi người dùng bấm "Tôi đã thanh toán" ở đó thì tiền mới thực sự vào ví.
+  
+  
   const handleTopUp = () => {
     if (amount <= 0) {
       notify.error("Vui lòng chọn hoặc nhập số tiền nạp.");
@@ -50,7 +50,7 @@ export function CustomerWallet() {
       <TopBar title="Ví của tôi" onBack={goBack} />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Balance card */}
+        {}
         <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-5 text-white shadow-lg shadow-blue-200">
           <div className="flex items-center gap-2 text-blue-100 text-sm mb-1">
             <WalletIcon className="w-4 h-4" />
@@ -61,7 +61,7 @@ export function CustomerWallet() {
           </p>
         </div>
 
-        {/* Top-up */}
+        {}
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Nạp tiền vào ví</h3>
           <div className="grid grid-cols-2 gap-2 mb-3">
@@ -87,7 +87,7 @@ export function CustomerWallet() {
             <span className="text-sm text-muted-foreground">đ</span>
           </div>
 
-          {/* Chọn cổng nạp */}
+          {}
           <p className="text-xs font-semibold text-muted-foreground mb-2">Chọn cổng thanh toán</p>
           <div className="grid grid-cols-2 gap-2 mb-3">
             {GATEWAYS.map((g) => {
@@ -117,7 +117,7 @@ export function CustomerWallet() {
           </p>
         </div>
 
-        {/* History */}
+        {}
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Lịch sử giao dịch</h3>
           {loading && !wallet ? (

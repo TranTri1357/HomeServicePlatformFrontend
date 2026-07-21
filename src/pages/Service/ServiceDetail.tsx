@@ -38,7 +38,7 @@ export function ServiceDetail({
     immediate: Boolean(serviceId),
   });
 
-  // ── No id / loading / error guards ────────────────────────────────────────
+  
   if (!serviceId) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
@@ -97,7 +97,7 @@ export function ServiceDetail({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Hero */}
+      {}
       <div className="relative flex-shrink-0">
         {heroUrl ? (
           <img src={heroUrl} alt={detail.name} className="w-full h-52 object-cover" />
@@ -130,9 +130,9 @@ export function ServiceDetail({
         </div>
       </div>
 
-      {/* Content */}
+      {}
       <div className="flex-1 overflow-y-auto bg-background">
-        {/* Price highlight */}
+        {}
         <div className="bg-white px-4 py-4 flex items-center justify-between border-b border-border">
           <div>
             <span className="text-blue-600 text-2xl font-extrabold">
@@ -150,7 +150,7 @@ export function ServiceDetail({
           </div>
         </div>
 
-        {/* Tabs */}
+        {}
         <div className="flex border-b border-border bg-white">
           {["about", "pricing", "reviews"].map((t) => (
             <button
@@ -190,7 +190,7 @@ export function ServiceDetail({
                   </div>
                 ))}
               </div>
-              {/* Suggested taskers (real data) */}
+              {}
               <div className="bg-white rounded-2xl p-4">
                 <h3 className="font-bold text-foreground mb-3">Thợ gợi ý</h3>
                 {taskers.length === 0 ? (
@@ -271,7 +271,7 @@ export function ServiceDetail({
         </div>
       </div>
 
-      {/* CTA */}
+      {}
       <div className="bg-white border-t border-border px-4 py-4 flex gap-3">
         <button
           onClick={() => onNavigate("technicianMap", { serviceId: detail.serviceId })}

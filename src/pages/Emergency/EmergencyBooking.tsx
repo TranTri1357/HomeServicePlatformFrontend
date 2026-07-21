@@ -8,13 +8,13 @@ import { useAuth } from "@/app/providers";
 import { useGoBack } from "@/app/routes/useGoBack";
 import { TopBar } from "@/shared/ui";
 import { notify, getErrorMessage } from "@/shared/lib";
-// Lazy: LocationPicker kéo theo Leaflet — tách chunk, chỉ tải khi mở màn đơn khẩn.
+
 const LocationPicker = lazy(() =>
   import("@/pages/Address/LocationPicker").then((m) => ({ default: m.LocationPicker })),
 );
 import { geocodeAddress, reverseGeocode } from "@/services/vnAddress";
 
-// Các vòng bán kính quét thợ (km) — nới dần khi hết một vòng mà chưa ai nhận.
+
 const RADII = [5, 10, 15];
 const PHONE_REGEX = /^(03|05|07|08|09)\d{8}$/;
 
@@ -26,7 +26,7 @@ export function EmergencyBooking({
   const goBack = useGoBack("customerHome");
   const { user } = useAuth();
 
-  // ── Form state ──────────────────────────────────────────────────────────────
+  
   const [serviceId, setServiceId] = useState<number | undefined>(undefined);
   const [coord, setCoord] = useState<{ lat: number; lng: number } | null>(null);
   const [fullName, setFullName] = useState(user?.fullName ?? "");
@@ -36,28 +36,28 @@ export function EmergencyBooking({
   const [note, setNote] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Services to pick from.
+  
   const { data: services = [], loading: loadingServices } = useApi(
     () => serviceApi.getServicesExplorer({ pageSize: 50 }).then((p) => p.items),
     { initialData: [] },
   );
 
-  // Prefill contact (tên + SĐT) từ hồ sơ khách — đây là nguồn DUY NHẤT có số điện thoại:
-  // phiên đăng nhập chỉ mang userId/fullName/roles, còn địa chỉ đã lưu không có SĐT.
-  // Điền sẵn để khách gọi thợ khẩn cấp nhanh hơn, nhưng vẫn cho sửa tự do.
+  
+  
+  
   const { data: profile } = useApi(() => customerApi.getCustomerProfile());
   const contactPrefilledRef = useRef(false);
   useEffect(() => {
-    // Cờ riêng, KHÔNG dùng chung với prefill địa chỉ: khách chưa lưu địa chỉ nào
-    // thì effect kia thoát sớm, và SĐT sẽ không bao giờ được điền.
+    
+    
     if (contactPrefilledRef.current || !profile) return;
     contactPrefilledRef.current = true;
     if (profile.fullName) setFullName(profile.fullName);
     if (profile.phone) setPhone(profile.phone);
   }, [profile]);
 
-  // Prefill location from the default saved address — ONCE, so editing
-  // the address field later isn't overwritten.
+  
+  
   const { data: savedAddresses = [] } = useApi(() => addressApi.getMyAddresses(), {
     initialData: [],
   });
@@ -71,7 +71,7 @@ export function EmergencyBooking({
     if (def.latitude && def.longitude) setCoord({ lat: def.latitude, lng: def.longitude });
   }, [savedAddresses]);
 
-  // ── Two-way sync between the map pin and the "Địa chỉ chi tiết" field ─────────
+  
   const geoTimer = useRef<number | null>(null);
 
   const handleMapPick = async (lat: number, lng: number) => {
@@ -83,7 +83,7 @@ export function EmergencyBooking({
         setSavedAddr(null);
       }
     } catch {
-      /* keep the current address text */
+      
     }
   };
 
@@ -97,7 +97,7 @@ export function EmergencyBooking({
         const g = await geocodeAddress(`${value}, Việt Nam`);
         if (g) setCoord({ lat: g.lat, lng: g.lng });
       } catch {
-        /* leave the pin where it is */
+        
       }
     }, 700);
   };
@@ -105,15 +105,15 @@ export function EmergencyBooking({
     if (geoTimer.current) clearTimeout(geoTimer.current);
   }, []);
 
-  // ── Broadcast / waiting state ────────────────────────────────────────────────
-  // `search` bật khi đang quét thợ; hiển thị overlay với bán kính hiện tại + đếm ngược.
+  
+  
   const [search, setSearch] = useState<{ radiusKm: number } | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
 
-  // Refs điều phối vòng quét (không gây re-render).
-  const resolvedRef = useRef(false); // đã nhận / đã hủy → dừng vòng lặp
-  const stopTimerRef = useRef<(() => void) | null>(null); // dừng đồng hồ vòng hiện tại
-  const disposeHubRef = useRef<(() => void) | null>(null); // đóng kết nối SignalR
+  
+  const resolvedRef = useRef(false); 
+  const stopTimerRef = useRef<(() => void) | null>(null); 
+  const disposeHubRef = useRef<(() => void) | null>(null); 
   const bookingIdRef = useRef<number | null>(null);
 
   const cleanup = () => {
@@ -122,9 +122,9 @@ export function EmergencyBooking({
     disposeHubRef.current?.();
     disposeHubRef.current = null;
   };
-  useEffect(() => cleanup, []); // dispose on unmount
+  useEffect(() => cleanup, []); 
 
-  // Chờ tối đa `seconds` cho một vòng: resolve false khi hết giờ hoặc bị dừng.
+  
   const waitRound = (seconds: number) =>
     new Promise<void>((resolve) => {
       let remaining = seconds;
@@ -169,8 +169,8 @@ export function EmergencyBooking({
     void runRoundsImpl();
   };
 
-  // Vòng lặp quét thợ (bản dùng thật). Mỗi vòng: bắn yêu cầu → nếu có thợ thì chờ 30s,
-  // nếu vòng rỗng thì nới ngay; hết mọi vòng mà chưa ai nhận thì báo không có thợ.
+  
+  
   const runRoundsImpl = async () => {
     for (let idx = 0; idx < RADII.length; idx++) {
       if (resolvedRef.current) return;
@@ -221,15 +221,15 @@ export function EmergencyBooking({
       if (resolvedRef.current) return;
       setSearch({ radiusKm });
 
-      // Vòng rỗng → nới ngay sang bán kính lớn hơn.
+      
       if (taskerCount === 0) continue;
 
-      // Có thợ → chờ tối đa 30s cho ai đó nhận (accept do SignalR xử lý, sẽ dừng vòng).
+      
       await waitRound(waitSeconds);
       if (resolvedRef.current) return;
     }
 
-    // Hết mọi bán kính mà chưa ai nhận.
+    
     await finishNoTasker();
   };
 
@@ -242,7 +242,7 @@ export function EmergencyBooking({
       try {
         await bookingApi.cancelEmergencyBooking(id);
       } catch {
-        /* ignore */
+        
       }
     }
   };
@@ -252,7 +252,7 @@ export function EmergencyBooking({
     [services, serviceId],
   );
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  
   return (
     <div className="flex flex-col h-full relative">
       <TopBar title="Gọi thợ khẩn cấp" onBack={goBack} />
@@ -267,7 +267,7 @@ export function EmergencyBooking({
           </p>
         </div>
 
-        {/* Service */}
+        {}
         <div className="bg-white rounded-2xl p-4 space-y-2">
           <label className="text-sm font-bold text-foreground">Bạn cần dịch vụ gì gấp?</label>
           {loadingServices ? (
@@ -290,7 +290,7 @@ export function EmergencyBooking({
           )}
         </div>
 
-        {/* Location */}
+        {}
         <div className="bg-white rounded-2xl p-4 space-y-2">
           <label className="text-sm font-bold text-foreground">Vị trí của bạn</label>
           <Suspense
@@ -308,7 +308,7 @@ export function EmergencyBooking({
           </Suspense>
         </div>
 
-        {/* Contact */}
+        {}
         <div className="bg-white rounded-2xl p-4 space-y-3">
           <h3 className="font-bold text-foreground">Thông tin liên hệ</h3>
           <div className="space-y-1">
@@ -360,7 +360,7 @@ export function EmergencyBooking({
         )}
       </div>
 
-      {/* Footer CTA */}
+      {}
       <div className="bg-white border-t border-border px-4 py-4">
         <button
           onClick={startEmergency}
@@ -371,7 +371,7 @@ export function EmergencyBooking({
         </button>
       </div>
 
-      {/* Waiting / searching overlay */}
+      {}
       {search && (
         <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-6">
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm text-center space-y-4">

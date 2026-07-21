@@ -79,7 +79,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const maxStatus = Math.max(1, ...d.bookingsByStatus.map((x) => x.count));
 
   const kpis = [
-    // GMV — tổng tiền khách trả. Phần lớn thuộc về thợ, nên KHÔNG gọi là "doanh thu".
+    
     {
       label: "Giá trị giao dịch hôm nay",
       value: `${formatVnd(d.todayRevenue)}đ`,
@@ -88,7 +88,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (s: Screen) => void }) {
       color: "text-indigo-600",
       bg: "bg-indigo-100",
     },
-    // Tiền sàn thực sự thu được (hoa hồng + phí hủy), đọc thẳng từ ví doanh thu.
+    
     {
       label: "Doanh thu sàn hôm nay",
       value: `${formatVnd(d.todayPlatformRevenue)}đ`,
@@ -130,7 +130,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (s: Screen) => void }) {
         <p className="text-sm text-muted-foreground">Tổng quan hoạt động hệ thống</p>
       </div>
 
-      {/* KPI cards */}
+      {}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {kpis.map((kpi) => (
           <div key={kpi.label} className="bg-white rounded-2xl p-4 shadow-sm">
@@ -145,29 +145,27 @@ export function Dashboard({ onNavigate }: { onNavigate: (s: Screen) => void }) {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Revenue chart */}
+        {}
         <div className="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm">
           <h3 className="font-bold text-foreground mb-1">Giá trị giao dịch 7 ngày gần nhất</h3>
           <p className="text-xs text-muted-foreground mb-5">
             Tổng: {formatVnd(weekly.reduce((a, x) => a + x.amount, 0))}đ
           </p>
-          {/* Cột phải cao bằng cả khung (items-stretch) và vùng vẽ cột dùng flex-1 để có chiều
-              cao XÁC ĐỊNH. Nếu để cột cao "auto" thì height tính theo % của thanh bar không có
-              mốc quy chiếu và bị trình duyệt thu về 0 — biểu đồ trắng trơn. */}
+          {}
           <div className="flex items-stretch gap-2 h-36">
             {weekly.map((x) => {
               const pct = Math.round((x.amount / maxRev) * 100);
               return (
                 <div key={x.date} className="flex-1 flex flex-col items-center gap-1.5">
-                  {/* Số tiền của ngày, đặt ngay trên đầu cột */}
+                  {}
                   <span className="text-[10px] text-muted-foreground font-medium">
                     {formatVndCompact(x.amount)}
                   </span>
                   <div className="flex-1 w-full flex items-end">
                     <div
                       className="w-full rounded-t-lg bg-blue-500 transition-all"
-                      // Ngày có doanh thu luôn hiện tối thiểu 2% để không biến mất hẳn;
-                      // ngày không có doanh thu thì để trống đúng nghĩa.
+                      
+                      
                       style={{ height: x.amount > 0 ? `${Math.max(pct, 2)}%` : 0 }}
                       title={`${formatVnd(x.amount)}đ`}
                     />
@@ -181,7 +179,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (s: Screen) => void }) {
           </div>
         </div>
 
-        {/* Bookings by status */}
+        {}
         <div className="bg-white rounded-2xl p-5 shadow-sm">
           <h3 className="font-bold text-foreground mb-4">Đơn theo trạng thái</h3>
           {d.bookingsByStatus.length === 0 ? (
@@ -210,9 +208,9 @@ export function Dashboard({ onNavigate }: { onNavigate: (s: Screen) => void }) {
         </div>
       </div>
 
-      {/* Bottom row */}
+      {}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Recent bookings */}
+        {}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
             <h3 className="font-bold text-foreground">Đơn hàng gần đây</h3>
@@ -250,7 +248,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (s: Screen) => void }) {
           )}
         </div>
 
-        {/* Pending taskers */}
+        {}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
             <h3 className="font-bold text-foreground">Thợ chờ duyệt</h3>

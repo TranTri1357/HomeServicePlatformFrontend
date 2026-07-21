@@ -32,7 +32,7 @@ export function Commissions() {
     return () => clearTimeout(t);
   }, [search, page, refetch]);
 
-  // Dropdown sources for the scope pickers.
+  
   const { data: catalog } = useApi(() => serviceApi.getServicesExplorer({ pageSize: 100 }), {
     initialData: undefined,
   });
@@ -45,14 +45,14 @@ export function Commissions() {
   const items = paged?.items ?? [];
   const total = paged?.totalCount ?? 0;
 
-  // Create / edit modal.
+  
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Terminate confirm.
+  
   const [terminateTarget, setTerminateTarget] = useState<AdminCommissionItem | null>(null);
 
   const openAdd = () => {
@@ -82,7 +82,7 @@ export function Commissions() {
 
     const serviceId = form.serviceId === "" ? null : Number(form.serviceId);
     const taskerId = form.taskerId === "" ? null : Number(form.taskerId);
-    // End of the chosen day in VN time; null = vô thời hạn.
+    
     const effectiveTo = form.effectiveTo ? `${form.effectiveTo}T23:59:59+07:00` : null;
 
     setSaving(true);
@@ -243,7 +243,7 @@ export function Commissions() {
         <AdminPagination page={page} total={total} perPage={PAGE_SIZE} onChange={setPage} />
       </div>
 
-      {/* Create / edit modal */}
+      {}
       {showForm && (
         <div
           className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4"

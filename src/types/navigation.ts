@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-// ─── App-level navigation ─────────────────────────────────────────────────────
+
 export type Screen =
   | "auth"
   | "customerHome"
@@ -39,7 +39,7 @@ export type Screen =
 
 export type NavigateFn = (screen: Screen, data?: object) => void;
 
-// ─── Shared UI types ──────────────────────────────────────────────────────────
+
 export interface NavItem {
   screen: Screen;
   icon: LucideIcon;

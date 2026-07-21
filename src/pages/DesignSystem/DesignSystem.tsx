@@ -1,8 +1,4 @@
-/**
- * FixNow — Living Design System
- * Production-ready reference for Frontend (React/Next.js + Tailwind CSS)
- * Organized to mirror the Figma file structure
- */
+
 
 import { useState } from "react";
 import {
@@ -78,7 +74,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-// ─── Section navigation tree ─────────────────────────────────────────────────
+
 const NAV = [
   {
     group: "Foundation",
@@ -119,7 +115,7 @@ const NAV = [
   },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 const Swatch = ({ hex, name, tw }: { hex: string; name: string; tw: string }) => (
   <div className="flex flex-col gap-1.5">
     <div className="h-14 rounded-xl border border-black/5 shadow-sm" style={{ background: hex }} />
@@ -157,7 +153,7 @@ const Label = ({ children }: { children: React.ReactNode }) => (
   </p>
 );
 
-// ─── Section: Colors ──────────────────────────────────────────────────────────
+
 function SectionColors() {
   const palettes = [
     {
@@ -256,7 +252,7 @@ function SectionColors() {
   );
 }
 
-// ─── Section: Typography ──────────────────────────────────────────────────────
+
 function SectionTypography() {
   const scale = [
     {
@@ -386,7 +382,7 @@ function SectionTypography() {
   );
 }
 
-// ─── Section: Icons ───────────────────────────────────────────────────────────
+
 function SectionIcons() {
   const iconGroups = [
     {
@@ -500,7 +496,7 @@ function SectionIcons() {
   );
 }
 
-// ─── Section: Spacing ─────────────────────────────────────────────────────────
+
 function SectionSpacing() {
   const spacingScale = [
     { tw: "p-0.5", px: 2, label: "2px  · 0.5" },
@@ -596,7 +592,7 @@ function SectionSpacing() {
   );
 }
 
-// ─── Section: Effects ─────────────────────────────────────────────────────────
+
 function SectionEffects() {
   const shadows = [
     { name: "shadow-none", tw: "shadow-none", label: "None — flat elements" },
@@ -669,7 +665,7 @@ function SectionEffects() {
   );
 }
 
-// ─── Section: Buttons ─────────────────────────────────────────────────────────
+
 function SectionButtons() {
   return (
     <div className="space-y-8">
@@ -769,7 +765,7 @@ function SectionButtons() {
   );
 }
 
-// ─── Section: Inputs ──────────────────────────────────────────────────────────
+
 function SectionInputs() {
   return (
     <div className="space-y-8">
@@ -861,7 +857,7 @@ function SectionInputs() {
   );
 }
 
-// ─── Section: Select / Checkbox / Switch ─────────────────────────────────────
+
 function SectionCheckboxes() {
   const [checked, setChecked] = useState({ a: true, b: false, c: false });
   const [radio, setRadio] = useState("cash");
@@ -948,7 +944,7 @@ function SectionCheckboxes() {
   );
 }
 
-// ─── Section: Search & Filter ─────────────────────────────────────────────────
+
 function SectionFilter() {
   const [search, setSearch] = useState("");
   const [active, setActive] = useState("all");
@@ -1029,7 +1025,7 @@ function SectionFilter() {
   );
 }
 
-// ─── Section: Cards ───────────────────────────────────────────────────────────
+
 function SectionCards() {
   return (
     <div className="space-y-8">
@@ -1038,7 +1034,7 @@ function SectionCards() {
         subtitle="Service, Provider, Booking, Stats — all card variants"
       />
       <div className="grid md:grid-cols-3 gap-4">
-        {/* Service Card */}
+        {}
         <div>
           <Label>Service Card</Label>
           <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-border/50 hover:shadow-md transition-shadow">
@@ -1068,7 +1064,7 @@ function SectionCards() {
             </div>
           </div>
         </div>
-        {/* Provider Card */}
+        {}
         <div>
           <Label>Provider Card</Label>
           <div className="bg-white rounded-2xl p-3 shadow-sm border border-border/50 hover:shadow-md transition-shadow">
@@ -1102,7 +1098,7 @@ function SectionCards() {
             </button>
           </div>
         </div>
-        {/* Stat Card */}
+        {}
         <div>
           <Label>Stats Card</Label>
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-border/50">
@@ -1195,7 +1191,7 @@ function SectionCards() {
   );
 }
 
-// ─── Section: Tables ──────────────────────────────────────────────────────────
+
 function SectionTables() {
   const [sort, setSort] = useState<{ col: string; dir: "asc" | "desc" }>({
     col: "name",
@@ -1350,7 +1346,7 @@ function SectionTables() {
   );
 }
 
-// ─── Section: Badges ──────────────────────────────────────────────────────────
+
 function SectionBadges() {
   const statuses = [
     { label: "Chờ xác nhận", color: "bg-amber-100 text-amber-700", dot: "bg-amber-500" },
@@ -1404,7 +1400,7 @@ function SectionBadges() {
   );
 }
 
-// ─── Section: Modals ──────────────────────────────────────────────────────────
+
 function SectionModals() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -1429,7 +1425,7 @@ function SectionModals() {
         </div>
 
         <div className="mt-5 grid md:grid-cols-2 gap-4">
-          {/* Confirm modal preview */}
+          {}
           <div className="border-2 border-dashed border-border rounded-2xl p-4 flex items-center justify-center bg-muted/20">
             <div className="bg-white rounded-2xl p-6 max-w-xs w-full shadow-lg">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1449,7 +1445,7 @@ function SectionModals() {
               </div>
             </div>
           </div>
-          {/* Success modal preview */}
+          {}
           <div className="border-2 border-dashed border-border rounded-2xl p-4 flex items-center justify-center bg-muted/20">
             <div className="bg-white rounded-2xl p-6 max-w-xs w-full shadow-lg text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1570,7 +1566,7 @@ function SectionModals() {
   );
 }
 
-// ─── Section: Pagination ──────────────────────────────────────────────────────
+
 function SectionPagination() {
   const [page, setPage] = useState(3);
   const total = 10;
@@ -1634,12 +1630,12 @@ function SectionPagination() {
   );
 }
 
-// ─── Section: Navigation ──────────────────────────────────────────────────────
+
 function SectionNavigation() {
   return (
     <div className="space-y-8">
       <SectionTitle title="Navbar / Sidebar" />
-      {/* Top Navbar */}
+      {}
       <Card className="p-0 overflow-hidden">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-5 pt-4 pb-2">
           Top Navbar — Web
@@ -1674,7 +1670,7 @@ function SectionNavigation() {
         </div>
       </Card>
 
-      {/* Admin Sidebar */}
+      {}
       <Card className="p-0 overflow-hidden">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-5 pt-4 pb-2">
           Admin Sidebar
@@ -1704,7 +1700,7 @@ function SectionNavigation() {
         </div>
       </Card>
 
-      {/* Mobile Bottom Nav */}
+      {}
       <Card className="p-0 overflow-hidden max-w-xs">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-5 pt-4 pb-2">
           Mobile Bottom Nav
@@ -1730,7 +1726,7 @@ function SectionNavigation() {
   );
 }
 
-// ─── Section: Charts ──────────────────────────────────────────────────────────
+
 function SectionCharts() {
   const barData = [
     { d: "T2", v: 42 },
@@ -1796,7 +1792,7 @@ function SectionCharts() {
   );
 }
 
-// ─── Section: Toast ───────────────────────────────────────────────────────────
+
 function SectionToast() {
   const toasts = [
     {
@@ -1858,7 +1854,7 @@ function SectionToast() {
   );
 }
 
-// ─── Section: System States ───────────────────────────────────────────────────
+
 function SectionStates() {
   return (
     <div className="space-y-8">
@@ -1980,7 +1976,7 @@ function SectionStates() {
   );
 }
 
-// ─── Section: Forms (CRUD Patterns) ──────────────────────────────────────────
+
 function SectionForms() {
   return (
     <div className="space-y-8">
@@ -2111,7 +2107,7 @@ function SectionForms() {
   );
 }
 
-// ─── Section: Data Table Pattern ─────────────────────────────────────────────
+
 function SectionDataTable() {
   return (
     <div className="space-y-8">
@@ -2195,7 +2191,7 @@ function SectionDataTable() {
   );
 }
 
-// ─── Main Design System page ──────────────────────────────────────────────────
+
 export default function DesignSystem({ onClose }: { onClose: () => void }) {
   const [active, setActive] = useState("colors");
 
@@ -2252,9 +2248,9 @@ export default function DesignSystem({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="flex h-full bg-background" style={{ fontFamily: "'Inter', sans-serif" }}>
-      {/* Sidebar */}
+      {}
       <div className="w-56 flex-shrink-0 bg-white border-r border-border flex flex-col overflow-hidden">
-        {/* Header */}
+        {}
         <div className="h-14 flex items-center justify-between px-4 border-b border-border flex-shrink-0">
           <div>
             <p className="font-extrabold text-sm text-foreground">FixNow DS</p>
@@ -2268,7 +2264,7 @@ export default function DesignSystem({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Nav */}
+        {}
         <div className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
           {NAV.map((group) => (
             <div key={group.group}>
@@ -2288,14 +2284,14 @@ export default function DesignSystem({ onClose }: { onClose: () => void }) {
           ))}
         </div>
 
-        {/* Footer */}
+        {}
         <div className="px-4 py-3 border-t border-border flex-shrink-0">
           <p className="text-[10px] text-muted-foreground">React + Tailwind CSS</p>
           <p className="text-[10px] text-muted-foreground">Inter · 8px Grid · #2563EB</p>
         </div>
       </div>
 
-      {/* Content */}
+      {}
       <div className="flex-1 overflow-y-auto p-6">{renderContent()}</div>
     </div>
   );

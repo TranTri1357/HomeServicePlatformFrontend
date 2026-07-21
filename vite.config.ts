@@ -20,18 +20,18 @@ function figmaAssetResolver() {
 export default defineConfig({
   plugins: [
     figmaAssetResolver(),
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
+    
+    
     react(),
     tailwindcss(),
     VitePWA({
-      // 'prompt': service worker mới KHÔNG tự kích hoạt. Người dùng đang giữa
-      // luồng đặt đơn mà app tự reload thì mất dữ liệu form — ta hỏi trước
-      // (xem UpdatePrompt trong src/app/components/pwa).
+      
+      
+      
       registerType: 'prompt',
-      // Mặc định plugin chèn <script> inline vào index.html để đăng ký SW, thứ
-      // này vi phạm CSP `script-src 'self'` trong vercel.json. Ta tự đăng ký
-      // bằng virtual:pwa-register/react nên tắt hẳn việc chèn.
+      
+      
+      
       injectRegister: null,
       manifest: {
         name: 'HomeService - Dịch vụ gia đình',
@@ -59,13 +59,13 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
-        // Mọi đường dẫn lạ rơi về index.html (SPA), TRỪ các request API — nếu
-        // không, gọi API lúc offline sẽ nhận về HTML và JSON.parse sẽ nổ.
+        
+        
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
-            // Tile bản đồ nặng và gần như bất biến → cache thẳng, đỡ tốn 3G.
+            
             urlPattern: /^https:\/\/[a-c]\.tile\.openstreetmap\.org\/.*/i,
             handler: 'CacheFirst',
             options: {
@@ -75,7 +75,7 @@ export default defineConfig({
             },
           },
           {
-            // Danh mục tỉnh/huyện/xã: dữ liệu tĩnh, đổi vài năm một lần.
+            
             urlPattern: /^https:\/\/provinces\.open-api\.vn\/.*/i,
             handler: 'StaleWhileRevalidate',
             options: {
@@ -94,7 +94,7 @@ export default defineConfig({
             },
           },
           {
-            // Ảnh dịch vụ / avatar trên Cloudinary: URL có version nên an toàn.
+            
             urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/i,
             handler: 'CacheFirst',
             options: {
@@ -104,14 +104,14 @@ export default defineConfig({
             },
           },
         ],
-        // CỐ Ý không cache response của API app. Phần lớn endpoint đi kèm
-        // Authorization; nếu cache theo URL thì tài khoản đăng nhập sau sẽ đọc
-        // trúng dữ liệu (đơn hàng, ví, hồ sơ) của tài khoản trước trên cùng máy.
-        // Offline vẫn mở được app nhờ precache phần vỏ, còn dữ liệu thì báo lỗi
-        // mạng như bình thường.
+        
+        
+        
+        
+        
       },
       devOptions: {
-        // Bật SW khi chạy `npm run dev` để test được luồng cài đặt/cập nhật.
+        
         enabled: false,
         type: 'module',
       },
@@ -119,20 +119,20 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      // Alias @ to the src directory
+      
       '@': path.resolve(__dirname, './src'),
     },
   },
 
-  // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
+  
   assetsInclude: ['**/*.svg', '**/*.csv'],
 
   build: {
     rollupOptions: {
       output: {
-        // Tách Leaflet (~140KB) ra chunk riêng. Vì chỉ được import bởi các màn
-        // lazy (bản đồ thợ, chọn vị trí, mini-map đơn khẩn), chunk này chỉ tải
-        // khi người dùng thực sự mở một màn có bản đồ — không nằm trong bundle đầu.
+        
+        
+        
         manualChunks(id: string) {
           if (/node_modules\/(leaflet|react-leaflet|@react-leaflet)\//.test(id)) {
             return 'leaflet'

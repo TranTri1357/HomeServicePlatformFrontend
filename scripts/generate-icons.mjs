@@ -1,13 +1,13 @@
-// Sinh bộ icon PWA cho HomeService — PNG thuần bằng zlib, không cần thư viện ngoài.
-// Render ở 4x rồi downsample để có khử răng cưa.
+
+
 import { deflateSync } from "node:zlib";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
-const BG = [0x25, 0x63, 0xeb]; // blue-600, khớp màu active của bottom nav
+const BG = [0x25, 0x63, 0xeb]; 
 const FG = [0xff, 0xff, 0xff];
 
-// ---------- PNG encoder ----------
+
 const crcTable = (() => {
   const t = new Int32Array(256);
   for (let n = 0; n < 256; n++) {
@@ -33,14 +33,14 @@ function chunk(type, data) {
 function encodePNG(w, h, rgba) {
   const raw = Buffer.alloc((w * 4 + 1) * h);
   for (let y = 0; y < h; y++) {
-    raw[y * (w * 4 + 1)] = 0; // filter: none
+    raw[y * (w * 4 + 1)] = 0; 
     rgba.copy(raw, y * (w * 4 + 1) + 1, y * w * 4, (y + 1) * w * 4);
   }
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(w, 0);
   ihdr.writeUInt32BE(h, 4);
-  ihdr[8] = 8; // bit depth
-  ihdr[9] = 6; // colour type RGBA
+  ihdr[8] = 8; 
+  ihdr[9] = 6; 
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk("IHDR", ihdr),
@@ -49,7 +49,7 @@ function encodePNG(w, h, rgba) {
   ]);
 }
 
-// ---------- hình học ----------
+
 function inRoundedRect(x, y, size, radius) {
   const r = radius;
   const cx = Math.min(Math.max(x, r), size - r);
@@ -65,32 +65,28 @@ function inTriangle(px, py, ax, ay, bx, by, cx, cy) {
   return a >= 0 && b >= 0 && a + b <= 1;
 }
 
-// Glyph "ngôi nhà" trong hộp đơn vị [0,1]x[0,1]. Trả về: 1 = nét, 0 = nền.
+
 function houseAt(u, v) {
   if (u < 0 || u > 1 || v < 0 || v > 1) return 0;
   const roof = inTriangle(u, v, 0.5, 0.06, 0.0, 0.47, 1.0, 0.47);
   const body = u >= 0.14 && u <= 0.86 && v >= 0.42 && v <= 0.93;
   if (!roof && !body) return 0;
-  // Khoét cửa ra vào cho thấy màu nền
+  
   const door = u >= 0.40 && u <= 0.60 && v >= 0.63 && v <= 0.93;
   if (door) return 0;
-  // Khoét cửa sổ hai bên
+  
   const winL = u >= 0.22 && u <= 0.35 && v >= 0.57 && v <= 0.70;
   const winR = u >= 0.65 && u <= 0.78 && v >= 0.57 && v <= 0.70;
   if (winL || winR) return 0;
   return 1;
 }
 
-/**
- * @param size cạnh ảnh (px)
- * @param opts.maskable true → nền tràn viền, glyph co vào vùng an toàn 60%
- * @param opts.bleed    true → nền vuông tràn viền (không bo góc)
- */
+
 function renderIcon(size, opts = {}) {
-  const SS = 4; // supersampling
+  const SS = 4; 
   const S = size * SS;
   const radius = opts.bleed ? 0 : S * 0.22;
-  // Vùng an toàn của maskable icon: glyph nằm trong 60% giữa (spec khuyến nghị)
+  
   const glyphScale = opts.maskable ? 0.52 : 0.66;
   const g0 = (S - S * glyphScale) / 2;
   const gS = S * glyphScale;
@@ -119,7 +115,7 @@ const targets = [
   ["icons/icon-192.png", 192, {}],
   ["icons/icon-512.png", 512, {}],
   ["icons/icon-maskable-512.png", 512, { maskable: true, bleed: true }],
-  ["icons/apple-touch-icon.png", 180, { bleed: true }], // iOS tự bo góc
+  ["icons/apple-touch-icon.png", 180, { bleed: true }], 
   ["icons/favicon-32.png", 32, {}],
 ];
 

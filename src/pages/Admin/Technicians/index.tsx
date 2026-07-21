@@ -44,15 +44,15 @@ export function Technicians() {
   const items = paged?.items ?? [];
   const total = paged?.totalCount ?? 0;
 
-  // Detail panel.
+  
   const [detail, setDetail] = useState<AdminTaskerDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
-  // Approve / lock / unlock confirm.
+  
   const [confirm, setConfirm] = useState<{ action: Action; item: AdminTaskerItem } | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Reject with reason.
+  
   const [rejectTarget, setRejectTarget] = useState<AdminTaskerItem | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [rejecting, setRejecting] = useState(false);
@@ -304,7 +304,7 @@ export function Technicians() {
         <AdminPagination page={page} total={total} perPage={PAGE_SIZE} onChange={setPage} />
       </div>
 
-      {/* Detail panel */}
+      {}
       {detail && (
         <div className="fixed inset-0 bg-black/40 z-[100] flex justify-end" onClick={() => setDetail(null)}>
           <div
@@ -359,7 +359,7 @@ export function Technicians() {
               <div>
                 <h4 className="text-sm font-bold text-foreground mb-2">Ảnh giấy tờ xác minh</h4>
                 {detail.verificationImageUrl ? (
-                  // Mở tab mới để admin phóng to đọc số CCCD trước khi duyệt.
+                  
                   <a
                     href={getApiAssetUrl(detail.verificationImageUrl)}
                     target="_blank"
@@ -416,7 +416,7 @@ export function Technicians() {
         </div>
       )}
 
-      {/* Approve / lock / unlock confirm */}
+      {}
       {confirm && (
         <ConfirmModal
           title={
@@ -448,7 +448,7 @@ export function Technicians() {
         />
       )}
 
-      {/* Reject modal with reason */}
+      {}
       {rejectTarget && (
         <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">

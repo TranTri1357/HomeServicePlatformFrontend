@@ -11,12 +11,7 @@ export const NO_BOTTOM_NAV_SCREENS: Screen[] = [
   "providerIncome",
 ];
 
-/**
- * Customer screens that require login. Guests get bounced to the login prompt
- * when they try to reach these (route guard + in-app navigation gate).
- * The browse screens (home, services, service detail, technician map/detail)
- * are intentionally NOT here — they are public.
- */
+
 export const CUSTOMER_PROTECTED_SCREENS: Screen[] = [
   "booking",
   "emergencyBooking",

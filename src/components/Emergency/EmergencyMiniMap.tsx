@@ -2,8 +2,8 @@ import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Marker vị trí khách trên mini-map của đơn khẩn. Tách riêng (cùng Leaflet) khỏi
-// EmergencyListener để bản đồ chỉ được tải khi thực sự có đơn khẩn hiện lên.
+
+
 const custIcon = L.divIcon({
   className: "",
   html: `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="42" viewBox="0 0 30 42"><path d="M15 0C6.7 0 0 6.7 0 15c0 10 15 27 15 27s15-17 15-27C30 6.7 23.3 0 15 0z" fill="#ef4444"/><circle cx="15" cy="15" r="6" fill="white"/></svg>`,
@@ -11,7 +11,7 @@ const custIcon = L.divIcon({
   iconAnchor: [15, 42],
 });
 
-/** Bản đồ tĩnh nhỏ hiển thị vị trí khách trong modal đơn khẩn cấp. */
+
 export function EmergencyMiniMap({ latitude, longitude }: { latitude: number; longitude: number }) {
   return (
     <MapContainer

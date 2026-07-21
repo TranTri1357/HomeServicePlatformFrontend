@@ -1,6 +1,6 @@
 import { ApiError } from "./client";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+
 export type FieldKey =
   | "identifier"
   | "fullName"
@@ -17,7 +17,7 @@ export interface ParsedApiErrors {
   generalError: string | null;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 function firstMessage(value: unknown): string | null {
   if (Array.isArray(value)) {
     const msg = value.map((item) => String(item ?? "")).find((item) => item.trim());
@@ -27,10 +27,7 @@ function firstMessage(value: unknown): string | null {
   return null;
 }
 
-/**
- * Normalize backend property names:
- * Password | password | $.Password | RegisterCommand.Password | request.ConfirmPassword
- */
+
 function normalizeFieldKey(rawKey: string): FieldKey | null {
   const cleaned = rawKey
     .trim()
@@ -83,15 +80,12 @@ function normalizeFieldKey(rawKey: string): FieldKey | null {
   return null;
 }
 
-/**
- * Fallback: classify free-text validation messages into a field.
- * Keep DB uniqueness / network messages as general (null).
- */
+
 function classifyMessageToField(message: string): FieldKey | null {
   const text = message.trim().toLowerCase();
   if (!text) return null;
 
-  // Uniqueness / system / auth-failure messages stay on the top banner.
+  
   if (
     text.includes("đã được sử dụng") ||
     text.includes("đã tồn tại") ||
@@ -111,7 +105,7 @@ function classifyMessageToField(message: string): FieldKey | null {
     return null;
   }
 
-  // Confirm password first (more specific than password).
+  
   if (
     text.includes("xác nhận mật khẩu") ||
     text.includes("mật khẩu xác nhận") ||
@@ -170,11 +164,7 @@ function setFieldErrorIfEmpty(fieldErrors: FieldErrors, field: FieldKey, message
   }
 }
 
-/**
- * Convert any thrown error from the auth API into:
- *  - fieldErrors: messages mapped to a specific form field
- *  - generalError: a single banner message for system / auth-failure errors
- */
+
 export function parseApiErrors(err: unknown): ParsedApiErrors {
   const fieldErrors: FieldErrors = {};
   const generalMessages: string[] = [];
@@ -196,8 +186,8 @@ export function parseApiErrors(err: unknown): ParsedApiErrors {
       const data = err.data as Record<string, unknown> | null | undefined;
       const errors = data?.errors;
 
-      // FluentValidation / ASP.NET dictionary:
-      // { errors: { Email: ["..."], Password: ["..."] } }
+      
+      
       if (errors && typeof errors === "object" && !Array.isArray(errors)) {
         Object.entries(errors as Record<string, unknown>).forEach(([rawKey, value]) => {
           const message = firstMessage(value);
@@ -209,7 +199,7 @@ export function parseApiErrors(err: unknown): ParsedApiErrors {
             return;
           }
 
-          // Unknown key -> try classify by message content before banner.
+          
           const fieldFromMessage = classifyMessageToField(message);
           if (fieldFromMessage) {
             setFieldErrorIfEmpty(fieldErrors, fieldFromMessage, message);
@@ -219,7 +209,7 @@ export function parseApiErrors(err: unknown): ParsedApiErrors {
           generalMessages.push(message);
         });
       } else if (Array.isArray(errors)) {
-        // ApiResponse-style: { errors: ["..."] } or [{ field, message }]
+        
         errors.forEach((item) => {
           if (item && typeof item === "object" && !Array.isArray(item)) {
             const obj = item as Record<string, unknown>;
@@ -248,19 +238,19 @@ export function parseApiErrors(err: unknown): ParsedApiErrors {
         });
       }
 
-      // Only use top-level message/title when no field errors were found,
-      // and still try to map that message to a field first.
+      
+      
       if (Object.keys(fieldErrors).length === 0) {
         if (typeof data?.message === "string" && data.message.trim()) {
           pushMessage(data.message);
         } else if (typeof data?.title === "string" && data.title.trim()) {
-          // ASP.NET ProblemDetails title is often generic; prefer detail if any.
+          
           const detail =
             typeof data?.detail === "string" && data.detail.trim() ? data.detail : data.title;
           pushMessage(detail);
         } else if (typeof err.message === "string" && err.message.trim()) {
-          // ApiError.message may be joined field messages from client extractor.
-          // Split and classify each part when possible.
+          
+          
           err.message
             .split(/\.\s+/)
             .map((part) => part.trim())
@@ -269,7 +259,7 @@ export function parseApiErrors(err: unknown): ParsedApiErrors {
         }
       }
 
-      // Deduplicate general messages that already appear under fields.
+      
       const fieldValues = new Set(Object.values(fieldErrors).filter(Boolean));
       const uniqueGeneral = generalMessages.filter((msg) => !fieldValues.has(msg));
 

@@ -1,13 +1,13 @@
 import { Bell, Wrench, User, ChevronDown, LogOut, LogIn } from "lucide-react";
 import type { Screen, NavItem } from "@/shared/types";
 import { Avatar } from "@/shared/ui";
-import { useAuth } from "@/app/providers"; // Import Auth Context
+import { useAuth } from "@/app/providers"; 
 
 interface DesktopTopNavProps {
   screen: Screen;
   currentNavItems: NavItem[];
   onNavigate: (s: Screen) => void;
-  /** Show a red dot on the notification bell. */
+  
   notifDot?: boolean;
 }
 
@@ -19,10 +19,10 @@ export function DesktopTopNav({
 }: DesktopTopNavProps) {
   const { user, logout, hasRole, isAuthenticated } = useAuth();
 
-  // Tự động nhận diện Role để đổi giao diện
+  
   const guest = !isAuthenticated;
   const isProviderScreen = hasRole("provider");
-  const isCustomer = hasRole("customer") || guest; // khách vãng lai dùng giao diện khách
+  const isCustomer = hasRole("customer") || guest; 
 
   return (
     <nav
@@ -30,7 +30,7 @@ export function DesktopTopNav({
         isProviderScreen ? "bg-slate-900 border-slate-700" : "bg-white border-border shadow-sm"
       }`}
     >
-      {/* Logo */}
+      {}
       <button
         onClick={() => onNavigate(isCustomer ? "customerHome" : "providerDashboard")}
         className="flex items-center gap-2.5 mr-8 flex-shrink-0"
@@ -45,7 +45,7 @@ export function DesktopTopNav({
         </span>
       </button>
 
-      {/* Role badge */}
+      {}
       <div
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold mr-6 flex-shrink-0 ${
           isProviderScreen ? "bg-slate-800 text-slate-300" : "bg-accent text-blue-600"
@@ -55,7 +55,7 @@ export function DesktopTopNav({
         {guest ? "Khách" : isCustomer ? "Khách hàng" : "Thợ kỹ thuật"}
       </div>
 
-      {/* Nav links */}
+      {}
       <div className="flex items-center gap-1 flex-1 overflow-x-auto scrollbar-none">
         {currentNavItems.map((item) => {
           const active = screen === item.screen;
@@ -88,7 +88,7 @@ export function DesktopTopNav({
         })}
       </div>
 
-      {/* Right section */}
+      {}
       <div className="flex items-center gap-2 flex-shrink-0 ml-4">
         {guest ? (
           <button
@@ -100,7 +100,7 @@ export function DesktopTopNav({
           </button>
         ) : (
           <>
-        {/* Bell */}
+        {}
         <button
           onClick={() => onNavigate(isCustomer ? "notifications" : "providerNotifications")}
           className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
@@ -117,7 +117,7 @@ export function DesktopTopNav({
           )}
         </button>
 
-        {/* Avatar */}
+        {}
         <button
           onClick={() => onNavigate(isCustomer ? "customerProfile" : "providerProfile")}
           className={`flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full border transition-colors ${
@@ -141,7 +141,7 @@ export function DesktopTopNav({
           />
         </button>
 
-        {/* Logout */}
+        {}
         <button
           onClick={logout}
           className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors text-red-400 hover:bg-red-50 ${

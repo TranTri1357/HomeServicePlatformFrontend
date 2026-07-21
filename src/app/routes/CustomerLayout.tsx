@@ -16,13 +16,13 @@ export function CustomerLayout() {
   const onNavigate = useGatedNavigate();
   const isCustomer = hasRole("customer");
 
-  // Live nav badges chỉ nạp cho khách hàng thật (guest/thợ -> không gọi API khách).
-  // Gọi hook trước mọi early-return để tuân thủ rules-of-hooks.
+  
+  
   const { notifDot, jobBadge } = useNavBadges("customer", isCustomer);
 
-  // Người đã đăng nhập nhưng KHÔNG phải khách (thợ/admin) không được lạc vào khu
-  // khách hàng — đưa về đúng khu theo vai trò. Khách vãng lai (chưa đăng nhập)
-  // vẫn được xem bình thường.
+  
+  
+  
   if (isAuthenticated && !isCustomer) {
     return <Navigate to={getHomePath()} replace />;
   }
@@ -32,17 +32,17 @@ export function CustomerLayout() {
 
   const hideBottomNav = (NO_BOTTOM_NAV_SCREENS as readonly string[]).includes(screen);
 
-  // ⚠️ MỘT <Outlet/> DUY NHẤT: trước đây layout render hai Outlet (một cho desktop,
-  // một cho mobile) và chỉ ẩn/hiện bằng CSS. Nhưng `display:none` KHÔNG unmount React —
-  // mọi màn con mount HAI lần, mở hai kết nối SignalR (mỗi push realtime hiện 2 toast
-  // giống nhau) và gọi mọi API hai lần. Giờ chỉ đổi phần KHUNG nav theo breakpoint,
-  // nội dung dùng chung một nhánh cây.
+  
+  
+  
+  
+  
   return (
     <div
       className="w-full h-full flex flex-col bg-background"
       style={{ fontFamily: "'Inter', sans-serif" }}
     >
-      {/* Thanh điều hướng trên cùng — chỉ desktop */}
+      {}
       <div className="hidden lg:block flex-shrink-0">
         <DesktopTopNav
           screen={screen}
@@ -52,18 +52,17 @@ export function CustomerLayout() {
         />
       </div>
 
-      {/* Chừa chỗ cho status bar THẬT của máy khi chạy standalone. Cao 0px ở
-          trình duyệt thường nên không tạo khoảng trắng thừa. */}
+      {}
       <div className="lg:hidden flex-shrink-0 safe-area-top bg-white" />
 
-      {/* Nội dung dùng chung */}
+      {}
       <div className="flex-1 overflow-hidden">
         <div className="h-full flex flex-col lg:max-w-5xl lg:mx-auto">
           <Outlet />
         </div>
       </div>
 
-      {/* Thanh điều hướng dưới — chỉ mobile */}
+      {}
       {!hideBottomNav && (
         <div className="lg:hidden flex-shrink-0">
           <CustomerNav

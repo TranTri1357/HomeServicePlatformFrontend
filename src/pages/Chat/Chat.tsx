@@ -43,12 +43,12 @@ export function Chat({
   const addMessage = (msg: ConversationMessage) =>
     setMessages((prev) => (prev.some((m) => m.messageId === msg.messageId) ? prev : [...prev, msg]));
 
-  // Seed from the initial REST load.
+  
   useEffect(() => {
     if (initial) setMessages(initial);
   }, [initial]);
 
-  // Realtime: join the booking group and append incoming messages.
+  
   useEffect(() => {
     if (!bookingId) return;
     let dispose = () => {};
@@ -57,12 +57,12 @@ export function Chat({
         dispose = d;
       })
       .catch(() => {
-        /* fall back to REST-only if the hub can't connect */
+        
       });
     return () => dispose();
   }, [bookingId]);
 
-  // Mark the other party's messages as read whenever the thread changes.
+  
   useEffect(() => {
     if (bookingId) void chatApi.markConversationRead(bookingId).catch(() => {});
   }, [bookingId, messages.length]);
@@ -71,7 +71,7 @@ export function Chat({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-  // ── No booking context ──────────────────────────────────────────────────
+  
   if (!bookingId) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
@@ -96,7 +96,7 @@ export function Chat({
     setSending(true);
     try {
       const msg = await chatApi.sendMessage(bookingId, text);
-      addMessage(msg); // hub echo is deduped by messageId
+      addMessage(msg); 
     } catch (err) {
       notify.error(err);
       setInput(text);
@@ -110,7 +110,7 @@ export function Chat({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
+      {}
       <div className="bg-white border-b border-border px-4 py-3 flex items-center gap-3">
         <button
           onClick={goBack}
@@ -131,7 +131,7 @@ export function Chat({
         </button>
       </div>
 
-      {/* Messages */}
+      {}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-background">
         {loading && messages.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
@@ -173,7 +173,7 @@ export function Chat({
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
+      {}
       <div className="bg-white border-t border-border px-4 py-3 flex items-end gap-2">
         <div className="flex-1 flex items-end bg-muted rounded-2xl px-3 py-2">
           <textarea

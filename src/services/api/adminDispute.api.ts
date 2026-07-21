@@ -7,7 +7,7 @@ export type GetAdminDisputesParams = {
   pageSize?: number;
 };
 
-/** GET /api/admin/disputes — paged dispute list. Requires Admin/SuperAdmin. */
+
 export async function getDisputes(
   params?: GetAdminDisputesParams,
 ): Promise<PagedResult<AdminDisputeItem>> {
@@ -17,11 +17,7 @@ export async function getDisputes(
   return unwrap(response);
 }
 
-/**
- * PUT /api/admin/disputes/{id}/resolve — settle a dispute.
- * newStatus: 1 = đồng ý hoàn tiền · 2 = từ chối. `currentRowVersion` guards
- * against two admins resolving the same case at once.
- */
+
 export async function resolveDispute(
   id: number,
   newStatus: number,

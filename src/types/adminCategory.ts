@@ -1,4 +1,4 @@
-/** A row in the admin category list — GET /api/admin/categories. */
+
 export interface AdminCategoryItem {
   categoryId: number;
   iconUrl: string | null;
@@ -9,7 +9,7 @@ export interface AdminCategoryItem {
   isActive: boolean;
 }
 
-/** Full category detail for editing — GET /api/admin/categories/{id}. */
+
 export interface AdminCategoryDetail {
   categoryId: number;
   name: string;
@@ -18,14 +18,14 @@ export interface AdminCategoryDetail {
   isActive: boolean;
 }
 
-/** Body for POST /api/admin/categories. */
+
 export interface CreateCategoryInput {
   name: string;
   slug: string;
   iconUrl?: string;
 }
 
-/** Body for PUT /api/admin/categories/{id}. */
+
 export interface UpdateCategoryInput {
   name: string;
   slug: string;

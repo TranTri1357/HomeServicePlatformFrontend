@@ -10,18 +10,18 @@ import { ImageUploader } from "@/shared/ui";
 const PAGE_SIZE = 10;
 const EMPTY_FORM = { name: "", slug: "", iconUrl: "", isActive: true };
 
-/** Turn a name into a URL-friendly slug (handles Vietnamese diacritics). */
+
 function slugify(s: string): string {
   return s
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // strip diacritics
+    .replace(/[̀-ͯ]/g, "") 
     .replace(/đ/g, "d")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 }
 
-/** Category icon with a graceful fallback. */
+
 function CategoryIcon({ iconUrl, name }: { iconUrl: string | null; name: string }) {
   const [broken, setBroken] = useState(false);
   const url = iconUrl ? getApiAssetUrl(iconUrl) : "";
@@ -63,7 +63,7 @@ export function ServiceCategories() {
   const items = paged?.items ?? [];
   const total = paged?.totalCount ?? 0;
 
-  // Create / edit modal.
+  
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
@@ -135,7 +135,7 @@ export function ServiceCategories() {
     }
   };
 
-  // Inline active toggle: needs slug (not in the list), so fetch detail then update.
+  
   const toggleActive = async (cat: AdminCategoryItem) => {
     setTogglingId(cat.categoryId);
     try {
@@ -280,7 +280,7 @@ export function ServiceCategories() {
         <AdminPagination page={page} total={total} perPage={PAGE_SIZE} onChange={setPage} />
       </div>
 
-      {/* Create / edit modal */}
+      {}
       {showForm && (
         <div
           className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4"

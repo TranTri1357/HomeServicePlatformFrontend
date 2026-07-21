@@ -5,22 +5,19 @@ import type { UploadFolder } from "@/services/api/upload.api";
 import { getApiAssetUrl, notify, getErrorMessage, cn } from "@/shared/lib";
 
 interface ImageUploaderProps {
-  /** URL ảnh hiện tại (đã lưu) hoặc null. */
+  
   value: string | null;
-  /** Gọi khi tải xong (url) hoặc khi gỡ ảnh (null). */
+  
   onChange: (url: string | null) => void;
-  /** Nhóm lưu trên Cloudinary. */
+  
   folder: UploadFolder;
-  /** Kiểu khung xem trước: "square" cho ảnh dịch vụ, "circle" cho icon danh mục. */
+  
   shape?: "square" | "circle";
-  /** Gợi ý dưới khung. */
+  
   hint?: string;
 }
 
-/**
- * Chọn ảnh từ máy → tải lên Cloudinary (qua backend) → trả URL cho form lưu vào iconUrl/imageUrl.
- * Có xem trước, spinner khi tải, nút gỡ ảnh. Không tự lưu vào DB — chỉ trả URL qua onChange.
- */
+
 export function ImageUploader({ value, onChange, folder, shape = "square", hint }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -32,7 +29,7 @@ export function ImageUploader({ value, onChange, folder, shape = "square", hint 
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    e.target.value = ""; // cho phép chọn lại cùng một tệp
+    e.target.value = ""; 
     if (!file) return;
     setUploading(true);
     try {

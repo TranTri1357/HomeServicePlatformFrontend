@@ -3,10 +3,7 @@ import { Loader2, Lock, X } from "lucide-react";
 import { authApi } from "@/services/api";
 import { notify, getErrorMessage } from "@/shared/lib";
 
-/**
- * Modal đổi mật khẩu (dùng chung cho hồ sơ Khách hàng & Đối tác).
- * Gọi POST /api/Auth/change-password; UserId lấy từ token phía server.
- */
+
 export function ChangePasswordModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");

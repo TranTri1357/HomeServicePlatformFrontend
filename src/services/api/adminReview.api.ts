@@ -8,7 +8,7 @@ export type GetAdminReviewsParams = {
   pageSize?: number;
 };
 
-/** GET /api/admin/reviews — paged review list. Requires Admin/SuperAdmin. */
+
 export async function getReviews(
   params?: GetAdminReviewsParams,
 ): Promise<PagedResult<AdminReviewItem>> {
@@ -18,7 +18,7 @@ export async function getReviews(
   return unwrap(response);
 }
 
-/** DELETE /api/admin/reviews/{id} — remove a review (recomputes tasker rating). */
+
 export async function deleteReview(id: number): Promise<boolean> {
   const response = await del<ApiResponse<boolean>>(`/admin/reviews/${id}`);
   return unwrap(response);

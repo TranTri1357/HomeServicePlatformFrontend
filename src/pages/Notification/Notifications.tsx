@@ -6,7 +6,7 @@ import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { formatDateVn, notify } from "@/shared/lib";
 
-/** Pull a human title/body out of the notification's JSON payload. */
+
 function parsePayload(payload: string | null): { title: string; body: string } {
   if (!payload) return { title: "Thông báo", body: "" };
   try {
@@ -22,7 +22,7 @@ function parsePayload(payload: string | null): { title: string; body: string } {
     const body = pick("body", "Body", "message", "Message", "content", "Content");
     return { title, body };
   } catch {
-    // Not JSON — show the raw string as the body.
+    
     return { title: "Thông báo", body: payload };
   }
 }
@@ -33,7 +33,7 @@ export function Notifications({
   variant?: "customer" | "provider";
 }) {
   const isProvider = variant === "provider";
-  // Pick the endpoints matching the current role (same UI, different route).
+  
   const fetchList = isProvider
     ? notificationApi.getTaskerNotifications
     : notificationApi.getMyNotifications;
@@ -43,7 +43,7 @@ export function Notifications({
   const backTarget: Screen = isProvider ? "providerDashboard" : "customerHome";
   const goBack = useGoBack(backTarget);
 
-  // Backend giới hạn pageSize tối đa 20 mỗi lần tải.
+  
   const { data: paged, loading, error, refetch } = useApi(() => fetchList(1, 20));
 
   const items: AppNotification[] = paged?.items ?? [];

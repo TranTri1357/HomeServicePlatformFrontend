@@ -31,9 +31,9 @@ export default tseslint.config(
     },
   },
   {
-    // The generated shadcn UI kit and React context providers legitimately
-    // co-export variants / hooks alongside components — an accepted exception
-    // to the Fast Refresh rule.
+    
+    
+    
     files: ["src/app/components/ui/**", "src/app/providers/**"],
     rules: {
       "react-refresh/only-export-components": "off",

@@ -34,15 +34,15 @@ export function Complaints() {
   );
   useEffect(() => {
     void refetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [statusFilter, page]);
 
   const items = paged?.items ?? [];
   const total = paged?.totalCount ?? 0;
 
-  // Detail / resolve panel.
+  
   const [selected, setSelected] = useState<AdminDisputeItem | null>(null);
-  const [decision, setDecision] = useState<1 | 2>(1); // 1 hoàn tiền · 2 từ chối
+  const [decision, setDecision] = useState<1 | 2>(1); 
   const [note, setNote] = useState("");
   const [refund, setRefund] = useState("");
   const [resolving, setResolving] = useState(false);
@@ -182,7 +182,7 @@ export function Complaints() {
         <AdminPagination page={page} total={total} perPage={PAGE_SIZE} onChange={setPage} />
       </div>
 
-      {/* Detail / resolve panel */}
+      {}
       {selected && (
         <div className="fixed inset-0 bg-black/40 z-[100] flex justify-end" onClick={() => setSelected(null)}>
           <div

@@ -18,7 +18,7 @@ export function AuthScreen({
   onBack,
 }: {
   onLogin: (result: LoginResult) => void;
-  /** Quay lại trang duyệt công khai (khách vãng lai). */
+  
   onBack?: () => void;
 }) {
   const [tab, setTab] = useState<"login" | "register">("login");
@@ -28,7 +28,7 @@ export function AuthScreen({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // roleId: 2 = Customer, 3 = Provider
+  
   const [roleId, setRoleId] = useState<2 | 3>(2);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -99,7 +99,7 @@ export function AuthScreen({
       setPassword("");
       setConfirmPassword("");
 
-      // Auto switch to Login tab after successful register.
+      
       window.setTimeout(() => {
         setTab("login");
         setSuccessMessage("Đăng ký thành công. Vui lòng đăng nhập.");
@@ -129,7 +129,7 @@ export function AuthScreen({
           </button>
         )}
 
-        {/* Logo */}
+        {}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
             <Wrench className="w-8 h-8 text-blue-600" />
@@ -139,7 +139,7 @@ export function AuthScreen({
         </div>
 
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-          {/* Tabs */}
+          {}
           <div className="flex border-b border-border">
             {(["login", "register"] as const).map((t) => (
               <button
@@ -159,7 +159,7 @@ export function AuthScreen({
           </div>
 
           <form onSubmit={handleSubmit} autoComplete="off" className="p-6 space-y-4" noValidate>
-            {/* Banner chỉ dùng cho lỗi hệ thống / lỗi không gắn field */}
+            {}
             {generalError && (
               <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">
                 {generalError}

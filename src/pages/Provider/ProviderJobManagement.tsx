@@ -19,7 +19,7 @@ import { useApi, useInfiniteList, useDebounced } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { formatVnd, notify } from "@/shared/lib";
 
-// JobStatus (BookingStatus codes) → label + colors.
+
 const STATUS: Record<number, { label: string; cls: string; dot: string }> = {
   0: { label: "Chờ xác nhận", cls: "bg-amber-100 text-amber-700", dot: "bg-amber-500" },
   1: { label: "Đã nhận", cls: "bg-blue-100 text-blue-700", dot: "bg-blue-500" },
@@ -56,11 +56,11 @@ export function ProviderJobManagement({
   const [activeTab, setActiveTab] = useState("incoming");
   const goBack = useGoBack("providerDashboard");
 
-  // Tìm kiếm (debounce) — theo mã đơn / tên khách / tên dịch vụ, LỌC ở server.
+  
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounced(searchInput.trim());
 
-  // Danh sách việc GỘP THEO ĐƠN + phân trang "tải thêm" (server đã lọc theo tab).
+  
   const fetchPage = useCallback(
     (page: number) => {
       const statuses = TABS.find((t) => t.key === activeTab)?.statuses;
@@ -76,7 +76,7 @@ export function ProviderJobManagement({
   const { items: groups, hasNext, loading, loadingMore, error, loadMore, reload } =
     useInfiniteList(fetchPage);
 
-  // Số lượng trên mỗi tab (đếm đơn ở server) — làm mới sau mỗi thao tác đổi trạng thái.
+  
   const { data: stats, refetch: refetchStats } = useApi(() => taskerApi.getTaskerJobStats());
   const tabCount: Record<string, number> = {
     incoming: stats?.incoming ?? 0,
@@ -91,7 +91,7 @@ export function ProviderJobManagement({
 
   const [busyId, setBusyId] = useState<number | null>(null);
 
-  // Cancel/decline modal.
+  
   const [cancelJob, setCancelJob] = useState<TaskerJobGroup | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
@@ -119,9 +119,9 @@ export function ProviderJobManagement({
       notify.error("Vui lòng nhập lý do.");
       return;
     }
-    // Đơn CHƯA NHẬN (Pending) đi đường /decline: hoàn 100% cho khách và KHÔNG ghi nhận lần hủy.
-    // Đơn ĐÃ NHẬN đi đường /cancel: cũng hoàn 100% nhưng thợ bị hạ độ tin cậy.
-    // Trước đây cả hai cùng gọi /cancel, mà backend chặn Pending nên nút "Từ chối" luôn lỗi 400.
+    
+    
+    
     const isPending = cancelJob.jobStatus === 0;
     setCancelling(true);
     try {
@@ -162,7 +162,7 @@ export function ProviderJobManagement({
         })}
       </div>
 
-      {/* Ô tìm kiếm */}
+      {}
       <div className="bg-white px-4 py-2 border-b border-border">
         <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2.5">
           <Search className="w-4 h-4 text-muted-foreground" />
@@ -209,7 +209,7 @@ export function ProviderJobManagement({
             const busy = busyId === g.bookingId;
             return (
               <div key={g.bookingId} className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-                {/* Header: mã đơn + khách + trạng thái */}
+                {}
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0">
                     <p className="font-bold text-foreground">Đơn BK{g.bookingId}</p>
@@ -225,7 +225,7 @@ export function ProviderJobManagement({
                   </span>
                 </div>
 
-                {/* Địa chỉ + liên hệ khách */}
+                {}
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
@@ -240,7 +240,7 @@ export function ProviderJobManagement({
                   </a>
                 </div>
 
-                {/* Danh sách hạng mục dịch vụ của đơn */}
+                {}
                 <div className="space-y-2">
                   {g.items.map((it) => (
                     <div key={it.bookingItemId} className="rounded-xl bg-muted/50 p-3">
@@ -262,7 +262,7 @@ export function ProviderJobManagement({
                   ))}
                 </div>
 
-                {/* Tổng tiền */}
+                {}
                 <div className="flex items-center justify-between border-t border-border pt-3">
                   <span className="text-xs text-muted-foreground">Tổng nhận</span>
                   <span className="text-base font-extrabold text-green-600">
@@ -270,10 +270,10 @@ export function ProviderJobManagement({
                   </span>
                 </div>
 
-                {/* Actions — thao tác trên cả đơn */}
+                {}
                 {g.jobStatus <= 3 && (
                   <div className="flex gap-2 pt-1">
-                    {/* Chat (except pending) */}
+                    {}
                     {g.jobStatus >= 1 && (
                       <button
                         onClick={() => onNavigate("providerChat", { bookingId: g.bookingId })}
@@ -283,8 +283,7 @@ export function ProviderJobManagement({
                       </button>
                     )}
 
-                    {/* Từ chối (Pending) / Hủy đơn (đã nhận: Accepted/OnTheWay/InProgress).
-                        Thợ hủy đơn đã nhận -> khách được hoàn 100% và thợ bị ghi 1 lần hủy. */}
+                    {}
                     {g.jobStatus >= 0 && g.jobStatus <= 3 && (
                       <button
                         onClick={() => {
@@ -299,7 +298,7 @@ export function ProviderJobManagement({
                       </button>
                     )}
 
-                    {/* Primary advance action */}
+                    {}
                     {g.jobStatus === 0 && (
                       <button
                         onClick={() => runAction(g.bookingId, taskerApi.acceptJob, "Đã nhận đơn.")}
@@ -359,7 +358,7 @@ export function ProviderJobManagement({
         )}
       </div>
 
-      {/* Cancel / decline modal */}
+      {}
       {cancelJob && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">

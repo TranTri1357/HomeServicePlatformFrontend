@@ -28,7 +28,7 @@ export function TechnicianDetail({
   const taskerId = data?.taskerId;
   const goBack = useGoBack("customerHome");
 
-  // Service picker sheet: choose which of the tasker's services to book.
+  
   const [pickerOpen, setPickerOpen] = useState(false);
   const [services, setServices] = useState<TaskerServiceOption[]>([]);
   const [loadingServices, setLoadingServices] = useState(false);
@@ -55,7 +55,7 @@ export function TechnicianDetail({
     immediate: Boolean(taskerId),
   });
 
-  // ── Guards ──────────────────────────────────────────────────────────────
+  
   if (!taskerId) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
@@ -113,7 +113,7 @@ export function TechnicianDetail({
   const subtitle = tech.skills[0] ?? "Thợ dịch vụ";
   const firstName = tech.fullName.split(" ").slice(-1)[0];
 
-  // Rating distribution (percent per star) from the review summary.
+  
   const s = tech.reviewSummary;
   const totalRatings =
     s.fiveStarCount + s.fourStarCount + s.threeStarCount + s.twoStarCount + s.oneStarCount;
@@ -128,7 +128,7 @@ export function TechnicianDetail({
   return (
     <div className="flex flex-col h-full relative">
       <div className="flex-1 overflow-y-auto">
-        {/* Header */}
+        {}
         <div className="relative bg-gradient-to-br from-blue-600 to-blue-800 px-4 pt-6 pb-16">
           <button
             onClick={goBack}
@@ -157,7 +157,7 @@ export function TechnicianDetail({
         </div>
 
         <div className="px-4 -mt-8 space-y-4 pb-4">
-          {/* Quick Stats */}
+          {}
           <div className="bg-white rounded-2xl p-4 shadow-sm grid grid-cols-3 divide-x divide-border">
             {[
               { label: "Đánh giá", value: `${tech.ratingAvg}`, icon: Star },
@@ -176,7 +176,7 @@ export function TechnicianDetail({
             ))}
           </div>
 
-          {/* Bio */}
+          {}
           {tech.bio?.trim() && (
             <div className="bg-white rounded-2xl p-4">
               <h3 className="font-bold text-foreground mb-2">Giới thiệu</h3>
@@ -184,7 +184,7 @@ export function TechnicianDetail({
             </div>
           )}
 
-          {/* Skills */}
+          {}
           <div className="bg-white rounded-2xl p-4">
             <h3 className="font-bold text-foreground mb-3">Kỹ năng chuyên môn</h3>
             {tech.skills.length === 0 ? (
@@ -203,7 +203,7 @@ export function TechnicianDetail({
             )}
           </div>
 
-          {/* Certificates */}
+          {}
           {tech.certificates.length > 0 && (
             <div className="bg-white rounded-2xl p-4">
               <h3 className="font-bold text-foreground mb-3">Chứng chỉ</h3>
@@ -218,7 +218,7 @@ export function TechnicianDetail({
             </div>
           )}
 
-          {/* Reviews */}
+          {}
           <div className="bg-white rounded-2xl p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-foreground">Đánh giá của khách hàng</h3>
@@ -286,7 +286,7 @@ export function TechnicianDetail({
         </div>
       </div>
 
-      {/* CTA */}
+      {}
       <div className="bg-white border-t border-border px-4 py-4 flex gap-3">
         <button
           onClick={openPicker}
@@ -296,7 +296,7 @@ export function TechnicianDetail({
         </button>
       </div>
 
-      {/* Service picker bottom sheet */}
+      {}
       {pickerOpen && (
         <div className="absolute inset-0 z-40 flex flex-col justify-end">
           <button

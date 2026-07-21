@@ -23,7 +23,7 @@ export function Services() {
       }),
     { immediate: false },
   );
-  // Debounced fetch on search / page change.
+  
   useEffect(() => {
     const t = setTimeout(() => void refetch(), 300);
     return () => clearTimeout(t);
@@ -36,7 +36,7 @@ export function Services() {
   const items = paged?.items ?? [];
   const total = paged?.totalCount ?? 0;
 
-  // Form modal (create or edit).
+  
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
@@ -44,7 +44,7 @@ export function Services() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Delete confirm.
+  
   const [deleteTarget, setDeleteTarget] = useState<AdminServiceItem | null>(null);
 
   const openAdd = () => {
@@ -238,7 +238,7 @@ export function Services() {
         <AdminPagination page={page} total={total} perPage={PAGE_SIZE} onChange={setPage} />
       </div>
 
-      {/* Create / edit modal */}
+      {}
       {showForm && (
         <div
           className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4"

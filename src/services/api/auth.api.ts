@@ -1,7 +1,7 @@
 import { post, clearTokens, getRefreshToken, setTokens } from "./client";
 import { getPrimaryRole, type FrontendRole } from "@/shared/auth/roles";
 
-// ─── Backend response types ────────────────────────────────────────────────────
+
 export interface LoginPayload {
   identifier: string;
   password: string;
@@ -81,17 +81,13 @@ function getFailedMessage(
   return fallback;
 }
 
-/**
- * Backend may return either:
- * 1) ApiResponse wrapper: { succeeded, data: { accessToken, refreshToken, ... } }
- * 2) Flat token payload: { accessToken, refreshToken, ... }
- */
+
 function extractTokenPair(response: unknown): TokenPair | null {
   if (!response || typeof response !== "object") return null;
 
   const root = response as Record<string, unknown>;
 
-  // ApiResponse-style
+  
   if ("data" in root && root.data && typeof root.data === "object") {
     const data = root.data as Record<string, unknown>;
     const accessToken = data.accessToken;
@@ -109,7 +105,7 @@ function extractTokenPair(response: unknown): TokenPair | null {
     }
   }
 
-  // Flat payload
+  
   if (typeof root.accessToken === "string" && typeof root.refreshToken === "string") {
     return {
       accessToken: root.accessToken,
@@ -124,7 +120,7 @@ function extractTokenPair(response: unknown): TokenPair | null {
   return null;
 }
 
-// ─── API functions ─────────────────────────────────────────────────────────────
+
 export async function login(payload: LoginPayload): Promise<LoginResult> {
   const response = await post<ApiResponse<LoginResponseData>>("/Auth/login", payload, {
     skipAuth: true,
@@ -170,10 +166,7 @@ export async function register(payload: RegisterPayload): Promise<RegisterResult
   };
 }
 
-/**
- * Refresh access/refresh token pair.
- * Must never attach old access token and never auto-retry on 401 (prevents infinite loop).
- */
+
 export async function refreshToken(token: string): Promise<TokenPair> {
   if (!token?.trim()) {
     throw new Error("Thiếu refresh token");
@@ -198,11 +191,7 @@ export async function refreshToken(token: string): Promise<TokenPair> {
   return pair;
 }
 
-/**
- * Đổi mật khẩu khi đã đăng nhập — POST /api/Auth/change-password.
- * UserId lấy từ token phía server. Thành công thì backend thu hồi các refresh token cũ
- * (đăng xuất thiết bị khác); phiên hiện tại vẫn dùng access token tới khi hết hạn.
- */
+
 export async function changePassword(payload: ChangePasswordPayload): Promise<boolean> {
   const response = await post<ApiResponse<boolean>>("/Auth/change-password", payload, {
     retryOnUnauthorized: false,
@@ -215,19 +204,7 @@ export async function changePassword(payload: ChangePasswordPayload): Promise<bo
   return Boolean(response.data);
 }
 
-/**
- * Log out: revoke the refresh token on the backend, then clear local tokens.
- *
- * Backend contract — POST /api/Auth/logout
- *   body:     { refreshToken: string }
- *   response: ApiResponse<bool>  (succeeded === true on success)
- *   effect:   sets Tokens.IsRevoked = true, RevokedAt = now for Type == 1
- *   errors:   "Token không hợp lệ hoặc không tồn tại." (unknown token)
- *             "Phiên làm việc này đã được đăng xuất trước đó." (already revoked)
- *
- * The server call is best-effort: an invalid / already-revoked token, a missing
- * endpoint or a network failure must never block the local logout below.
- */
+
 export async function logout(): Promise<void> {
   const token = getRefreshToken();
   if (token) {
@@ -238,7 +215,7 @@ export async function logout(): Promise<void> {
         { retryOnUnauthorized: false },
       );
     } catch {
-      // Ignore — token may be expired/revoked, or the backend is unreachable.
+      
     }
   }
   clearTokens();

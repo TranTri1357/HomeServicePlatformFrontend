@@ -9,28 +9,15 @@ export interface UseApiResult<T> {
 }
 
 export interface UseApiOptions<T> {
-  /** Run the fetcher automatically on mount. Default: true. */
+  
   immediate?: boolean;
-  /** Seed value shown before the first successful response (e.g. a mock fallback). */
+  
   initialData?: T;
-  /** Called with the parsed message whenever the fetcher throws. */
+  
   onError?: (message: string, err: unknown) => void;
 }
 
-/**
- * Standard data-fetching hook. Handles loading / error state, cancellation on
- * unmount, and message extraction from ApiError — so every screen fetches data
- * the same way.
- *
- * Example:
- *   const { data, loading, error, refetch } = useApi(
- *     () => serviceApi.getPopularServices(),
- *     { initialData: [] },
- *   );
- *
- * For an action triggered by the user (not on mount), pass `immediate: false`
- * and call `refetch()` from the handler.
- */
+
 export function useApi<T>(
   fetcher: () => Promise<T>,
   options: UseApiOptions<T> = {},
@@ -41,7 +28,7 @@ export function useApi<T>(
   const [loading, setLoading] = useState<boolean>(immediate);
   const [error, setError] = useState<string | null>(null);
 
-  // Keep the latest callbacks without retriggering the auto-fetch effect.
+  
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
   const onErrorRef = useRef(onError);
