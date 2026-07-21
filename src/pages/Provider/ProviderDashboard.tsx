@@ -171,7 +171,7 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Hoa hồng nền tảng</span>
-              <span className="font-semibold text-red-500">−{formatVnd(monthCommission)}đ</span>
+              <span className="font-semibold text-red-500">−{formatVnd(Math.max(0, monthCommission))}đ</span>
             </div>
             <div className="flex items-center justify-between border-t border-border pt-2 mt-1">
               <span className="font-semibold text-foreground">Thực nhận</span>

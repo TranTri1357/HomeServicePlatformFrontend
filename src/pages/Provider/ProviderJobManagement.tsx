@@ -264,7 +264,7 @@ export function ProviderJobManagement({
 
                 {}
                 <div className="flex items-center justify-between border-t border-border pt-3">
-                  <span className="text-xs text-muted-foreground">Tổng nhận</span>
+                  <span className="text-xs text-muted-foreground">Tổng đơn</span>
                   <span className="text-base font-extrabold text-green-600">
                     {formatVnd(g.total)}đ
                   </span>
