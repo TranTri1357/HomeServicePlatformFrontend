@@ -5,10 +5,7 @@ export function getUnsplashUrl(key: string, w = 200, h = 200) {
   return `${UNSPLASH_BASE}/${key}?w=${w}&h=${h}&fit=crop&auto=format`;
 }
 
-/**
- * Resolve a backend-relative asset path (e.g. "/images/categories/x.png") to an
- * absolute URL served from the API host. Absolute URLs are returned unchanged.
- */
+
 export function getApiAssetUrl(path: string): string {
   if (!path) return "";
   if (/^https?:\/\//i.test(path)) return path;

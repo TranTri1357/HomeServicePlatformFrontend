@@ -19,7 +19,7 @@ import { useInfiniteList, useDebounced } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { formatVnd, notify } from "@/shared/lib";
 
-// Nhãn trạng thái để hiện toast khi trạng thái đơn đổi realtime.
+
 const STATUS_TOAST: Record<number, string> = {
   1: "Thợ đã xác nhận đơn",
   2: "Thợ đang trên đường đến",
@@ -28,7 +28,7 @@ const STATUS_TOAST: Record<number, string> = {
   5: "Đơn đã bị hủy",
 };
 
-// Numeric BookingStatus → label + colors.
+
 const STATUS: Record<number, { label: string; cls: string; dot: string }> = {
   0: { label: "Chờ xác nhận", cls: "bg-amber-100 text-amber-700", dot: "bg-amber-500" },
   1: { label: "Đã xác nhận", cls: "bg-blue-100 text-blue-700", dot: "bg-blue-500" },
@@ -44,15 +44,15 @@ const TABS: { key: string; label: string; statuses: number[] | null }[] = [
   { key: "all", label: "Tất cả", statuses: null },
   { key: "waiting", label: "Chờ", statuses: [0, 1, 2] },
   { key: "working", label: "Đang làm", statuses: [3] },
-  // Khiếu nại bị từ chối (7) => kết quả đơn giữ nguyên là đã làm xong, nên xếp cùng nhóm "Xong".
+  
   { key: "done", label: "Xong", statuses: [4, 7] },
   { key: "cancelled", label: "Hủy", statuses: [5, 6] },
 ];
 
-// Khách được tự hủy khi đơn Chờ xác nhận / Đã xác nhận / Đang đến (Pending/Accepted/OnTheWay).
-// Số tiền hoàn phụ thuộc chính sách, xem trước trong modal trước khi xác nhận.
+
+
 const CANCELLABLE = [0, 1, 2];
-// Chỉ cho khiếu nại khi đơn đã Hoàn thành (đánh giá chất lượng sau khi xong việc).
+
 const DISPUTABLE = [4];
 const MIN_DISPUTE_LEN = 10;
 
@@ -76,11 +76,11 @@ export function BookingManagement({
   const [activeTab, setActiveTab] = useState("all");
   const goBack = useGoBack("customerHome");
 
-  // Ô tìm kiếm (debounce) — tìm theo mã đơn hoặc tên dịch vụ, LỌC ở server.
+  
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounced(searchInput.trim());
 
-  // Danh sách phân trang "tải thêm" ở server (không tải toàn bộ đơn).
+  
   const fetchPage = useCallback(
     (page: number) => {
       const statuses = TABS.find((t) => t.key === activeTab)?.statuses ?? undefined;
@@ -103,8 +103,8 @@ export function BookingManagement({
     reload: refetch,
   } = useInfiniteList(fetchPage);
 
-  // Realtime status pushes from the tasker, applied on top of the fetched list
-  // so a single row updates in place without a full refetch (no empty-state flash).
+  
+  
   const [statusOverride, setStatusOverride] = useState<Record<number, number>>({});
   useEffect(() => {
     let dispose = () => {};
@@ -119,7 +119,7 @@ export function BookingManagement({
         dispose = d;
       })
       .catch(() => {
-        /* fall back to manual refresh if the hub can't connect */
+        
       });
     return () => dispose();
   }, []);
@@ -130,15 +130,15 @@ export function BookingManagement({
       : b,
   );
 
-  // Cancel modal state.
+  
   const [cancelTarget, setCancelTarget] = useState<number | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
-  // Xem trước chính sách hoàn tiền cho đơn sắp hủy.
+  
   const [cancelPreview, setCancelPreview] = useState<CancellationPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 
-  // Mở modal hủy và tải trước số tiền hoàn/phí hủy để khách cân nhắc.
+  
   const openCancel = async (bookingId: number) => {
     setCancelTarget(bookingId);
     setCancelReason("");
@@ -158,12 +158,12 @@ export function BookingManagement({
     setCancelPreview(null);
   };
 
-  // Dispute (complaint) modal state.
+  
   const [disputeTarget, setDisputeTarget] = useState<number | null>(null);
   const [disputeReason, setDisputeReason] = useState("");
   const [disputing, setDisputing] = useState(false);
 
-  // Review modal state (keyed by bookingItemId).
+  
   const [reviewTarget, setReviewTarget] = useState<number | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
@@ -241,7 +241,7 @@ export function BookingManagement({
     <div className="flex flex-col h-full">
       <TopBar title="Lịch đặt của tôi" onBack={goBack} />
 
-      {/* Tabs */}
+      {}
       <div className="bg-white border-b border-border px-4 py-2 flex gap-1 overflow-x-auto scrollbar-none">
         {TABS.map((t) => (
           <button
@@ -254,7 +254,7 @@ export function BookingManagement({
         ))}
       </div>
 
-      {/* Ô tìm kiếm */}
+      {}
       <div className="bg-white px-4 py-2 border-b border-border">
         <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2.5">
           <Search className="w-4 h-4 text-muted-foreground" />
@@ -299,11 +299,11 @@ export function BookingManagement({
           {bookings.map((bk) => {
             const s = STATUS[bk.status] ?? STATUS[0];
             const discount = bk.discountAmount ?? 0;
-            const canReview = bk.status === 4; // Chỉ đánh giá khi đơn đã hoàn thành.
-            const showPay = bk.status === 0 && !bk.isPaid; // Ẩn nút khi đã thanh toán.
+            const canReview = bk.status === 4; 
+            const showPay = bk.status === 0 && !bk.isPaid; 
             return (
               <div key={bk.bookingId} className="bg-white rounded-2xl p-4 shadow-sm">
-                {/* Header: mã đơn + ngày tạo + trạng thái */}
+                {}
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <p className="font-bold text-foreground">Đơn BK{bk.bookingId}</p>
@@ -319,13 +319,13 @@ export function BookingManagement({
                   </span>
                 </div>
 
-                {/* Địa chỉ */}
+                {}
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                   <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                   <span className="truncate">{bk.fullAddress}</span>
                 </div>
 
-                {/* Danh sách hạng mục dịch vụ (một đơn có thể gồm nhiều dịch vụ) */}
+                {}
                 <div className="space-y-2 mb-3">
                   {bk.items.map((it) => (
                     <div key={it.bookingItemId} className="rounded-xl bg-muted/50 p-3">
@@ -352,7 +352,7 @@ export function BookingManagement({
                         </div>
                       </div>
 
-                      {/* Đánh giá theo từng hạng mục — đã đánh giá thì khoá lại */}
+                      {}
                       {canReview &&
                         (it.hasReview ? (
                           <div className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-green-600">
@@ -372,7 +372,7 @@ export function BookingManagement({
                   ))}
                 </div>
 
-                {/* Tóm tắt tiền + hành động cho cả đơn */}
+                {}
                 <div className="flex items-end justify-between border-t border-border pt-3">
                   <div>
                     {discount > 0 && (
@@ -458,7 +458,7 @@ export function BookingManagement({
         )}
       </div>
 
-      {/* Cancel modal */}
+      {}
       {cancelTarget != null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">
@@ -469,7 +469,7 @@ export function BookingManagement({
               </p>
             </div>
 
-            {/* Xem trước chính sách hoàn tiền */}
+            {}
             {previewLoading ? (
               <div className="flex items-center gap-2 rounded-xl bg-muted p-3 text-sm text-muted-foreground">
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -482,8 +482,7 @@ export function BookingManagement({
                     <span className="text-muted-foreground">Đã thanh toán</span>
                     <span className="font-medium">{formatVnd(cancelPreview.totalPaid)}</span>
                   </div>
-                  {/* Cố ý KHÔNG hiện con số %: nó là % trên TIỀN CỌC, không phải trên tổng đã
-                      trả — hiện ra dễ khiến khách tưởng bị trừ nhiều hơn thực tế. Chỉ hiện tiền. */}
+                  {}
                   {cancelPreview.penaltyAmount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Phí hủy (đền thợ)</span>
@@ -538,7 +537,7 @@ export function BookingManagement({
         </div>
       )}
 
-      {/* Dispute modal */}
+      {}
       {disputeTarget != null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">
@@ -578,7 +577,7 @@ export function BookingManagement({
         </div>
       )}
 
-      {/* Review modal */}
+      {}
       {reviewTarget != null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">

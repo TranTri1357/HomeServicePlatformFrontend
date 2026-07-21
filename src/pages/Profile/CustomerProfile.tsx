@@ -27,16 +27,16 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
   const { user, logout } = useAuth();
   const { data: profile, loading, error, refetch } = useApi(() => customerApi.getCustomerProfile());
 
-  // Graceful fallbacks: show the auth name immediately, real data once loaded.
+  
   const name = profile?.fullName || user?.fullName || "Khách hàng";
   const email = profile?.email || "";
   const phone = profile?.phone || "";
   const address = profile?.defaultAddress || "Chưa cập nhật địa chỉ";
 
-  // Change-password modal state.
+  
   const [changingPassword, setChangingPassword] = useState(false);
 
-  // Edit-profile modal state.
+  
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
@@ -90,7 +90,7 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
   return (
     <div className="flex flex-col h-full">
       <div className="overflow-y-auto flex-1">
-        {/* Header */}
+        {}
         <div className="bg-gradient-to-br from-blue-600 to-blue-800 px-4 pt-6 pb-12">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white text-xl font-bold">Hồ sơ của tôi</h2>
@@ -116,7 +116,7 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
         </div>
 
         <div className="px-4 -mt-6 space-y-4 pb-6">
-          {/* Stats */}
+          {}
           <div className="bg-white rounded-2xl p-4 shadow-sm grid grid-cols-2 divide-x divide-border">
             {[
               [profile?.totalBookingsCount, "Đã đặt"],
@@ -137,7 +137,7 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
             </div>
           )}
 
-          {/* Personal Info */}
+          {}
           <div className="bg-white rounded-2xl overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <h3 className="font-bold text-foreground">Thông tin cá nhân</h3>
@@ -165,7 +165,7 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
             ))}
           </div>
 
-          {/* Menu Items */}
+          {}
           {menuItems.map((item) => (
             <button
               key={item.label}
@@ -194,7 +194,7 @@ export function CustomerProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
         </div>
       </div>
 
-      {/* Edit profile modal */}
+      {}
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">

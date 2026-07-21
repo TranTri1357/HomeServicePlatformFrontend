@@ -8,17 +8,12 @@ interface AdminPaginationProps {
   onChange: (p: number) => void;
 }
 
-/** Số nút trang hiển thị quanh trang hiện tại (không kể trang đầu/cuối). */
+
 const WINDOW_SIZE = 3;
 
-/**
- * Dựng danh sách nút trang dạng "cửa sổ trượt": luôn có trang đầu + trang cuối,
- * tối đa 3 trang quanh trang hiện tại, chèn "…" ở chỗ bị ngắt quãng.
- *   Trang 1/9 → 1 2 3 … 9      Trang 5/9 → 1 … 4 5 6 … 9      Trang 9/9 → 1 … 7 8 9
- * Nhờ vậy số nút LUÔN cố định, dù có 9 hay 1000 trang.
- */
+
 function buildPages(current: number, totalPages: number): (number | "gap-left" | "gap-right")[] {
-  // Cửa sổ mặc định là [current-1, current+1]; ở sát hai đầu thì dồn lại cho đủ 3 nút.
+  
   let start = Math.max(1, current - 1);
   let end = Math.min(totalPages, current + 1);
   if (current <= 2) {
@@ -32,7 +27,7 @@ function buildPages(current: number, totalPages: number): (number | "gap-left" |
 
   const pages: (number | "gap-left" | "gap-right")[] = [];
 
-  // Trang đầu (+ "…" nếu cửa sổ không dính liền với nó).
+  
   if (start > 1) {
     pages.push(1);
     if (start > 2) pages.push("gap-left");
@@ -40,7 +35,7 @@ function buildPages(current: number, totalPages: number): (number | "gap-left" |
 
   for (let p = start; p <= end; p++) pages.push(p);
 
-  // Trang cuối (+ "…" nếu cửa sổ không dính liền với nó).
+  
   if (end < totalPages) {
     if (end < totalPages - 1) pages.push("gap-right");
     pages.push(totalPages);
@@ -52,12 +47,12 @@ function buildPages(current: number, totalPages: number): (number | "gap-left" |
 export function AdminPagination({ page, total, perPage, onChange }: AdminPaginationProps) {
   const totalPages = perPage > 0 ? Math.ceil(total / perPage) : 0;
 
-  // Trang dùng để HIỂN THỊ luôn nằm trong [1, totalPages] — tránh tô sai nút hoặc
-  // in ra khoảng "81–80 / 80" khi state `page` đang lệch.
+  
+  
   const current = Math.min(Math.max(1, page), Math.max(1, totalPages));
 
-  // Tự kéo về trang hợp lệ khi danh sách co lại (vd đang ở trang cuối, xóa nốt bản ghi
-  // cuối cùng → totalPages giảm nhưng `page` vẫn giữ giá trị cũ nên bảng trống trơn).
+  
+  
   useEffect(() => {
     if (totalPages > 0 && page > totalPages) onChange(totalPages);
     else if (page < 1) onChange(1);
@@ -65,9 +60,9 @@ export function AdminPagination({ page, total, perPage, onChange }: AdminPaginat
 
   if (totalPages <= 1) return null;
 
-  // Mọi đường đổi trang đều đi qua đây: kẹp cứng vào [1, totalPages] nên không thể
-  // ra số âm hay vượt quá số trang thật — kể cả khi thuộc tính `disabled` của nút bị
-  // gỡ bằng devtools (disabled chỉ là lớp chặn giao diện, không phải lớp chặn logic).
+  
+  
+  
   const goTo = (p: number) => {
     const next = Math.min(Math.max(1, p), totalPages);
     if (next !== current) onChange(next);

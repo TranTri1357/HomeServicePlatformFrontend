@@ -13,9 +13,9 @@ export function AppProviders({ children }: AppProvidersProps) {
     <ErrorBoundary>
       <AuthProvider>
         {children}
-        {/* App-wide toast host. Trigger toasts via `notify` from @/shared/lib. */}
+        {}
         <Toaster position="top-right" richColors closeButton />
-        {/* PWA: đăng ký service worker + mời cài lên màn hình chính. */}
+        {}
         <UpdatePrompt />
         <InstallPrompt />
       </AuthProvider>

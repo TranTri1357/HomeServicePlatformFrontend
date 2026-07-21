@@ -22,11 +22,7 @@ import { useAuth } from "@/app/providers";
 import { Avatar } from "@/shared/ui";
 import { getApiAssetUrl, getUnsplashUrl, formatVnd } from "@/shared/lib";
 
-/**
- * Thông báo cho một mục khi tải xong mà không có dữ liệu, hoặc gọi API lỗi.
- * Trước đây màn này seed dữ liệu giả làm `initialData`, nên backend chết thì khách
- * vẫn thấy danh mục/thợ "ảo" như thật — nay hiển thị đúng trạng thái thực.
- */
+
 function SectionMessage({ error, onRetry }: { error?: string | null; onRetry?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
@@ -46,7 +42,7 @@ function SectionMessage({ error, onRetry }: { error?: string | null; onRetry?: (
   );
 }
 
-/** Category thumbnail: chỉ hiện icon đã upload, còn lại là icon mặc định gọn. */
+
 function CategoryIcon({ iconUrl, name }: { iconUrl: string; name: string }) {
   const [broken, setBroken] = useState(false);
   const url = iconUrl ? getApiAssetUrl(iconUrl) : "";
@@ -60,25 +56,25 @@ function CategoryIcon({ iconUrl, name }: { iconUrl: string; name: string }) {
 
 export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: object) => void }) {
   const { user, isAuthenticated } = useAuth();
-  // Reference example for teammates: fetch each resource through `useApi`.
-  // Khởi tạo bằng mảng RỖNG (không phải dữ liệu giả): trong lúc tải thì hiện skeleton,
-  // tải xong mà rỗng/lỗi thì hiện đúng trạng thái đó — không bịa dữ liệu cho khách xem.
-  //
-  // Service categories — GET /api/Categories/active (real endpoint).
+  
+  
+  
+  
+  
   const {
     data: categories = [],
     loading: loadingCategories,
     error: errorCategories,
     refetch: refetchCategories,
   } = useApi(() => categoryApi.getActiveCategories(), { initialData: [] });
-  // Featured taskers — GET /api/Taskers/top (real endpoint).
+  
   const {
     data: taskers = [],
     loading: loadingTaskers,
     error: errorTaskers,
     refetch: refetchTaskers,
   } = useApi(() => taskerApi.getTopTaskers({ limit: 10 }), { initialData: [] });
-  // Popular services — GET /api/Services/popular (real endpoint).
+  
   const {
     data: popularServices = [],
     loading: loadingPopular,
@@ -86,7 +82,7 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
     refetch: refetchPopular,
   } = useApi(() => serviceApi.getPopularServices({ limit: 5 }), { initialData: [] });
 
-  // Global search — GET /api/Search?keyword= (debounced, dropdown results).
+  
   const [keyword, setKeyword] = useState("");
   const trimmed = keyword.trim();
   const showResults = trimmed.length >= 2;
@@ -112,7 +108,7 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
 
   return (
     <div className="overflow-y-auto h-full">
-      {/* Header */}
+      {}
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 px-4 pt-6 pb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -150,7 +146,7 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
 
 
 
-        {/* Search */}
+        {}
         <div className="relative">
           <div className="flex items-center gap-2 bg-white rounded-xl px-4 py-3">
             <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -247,7 +243,7 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
       </div>
 
       <div className="px-4 space-y-6 pb-6 -mt-3">
-        {/* Emergency call */}
+        {}
         <button
           onClick={() => onNavigate("emergencyBooking")}
           className="w-full flex items-center gap-3 bg-gradient-to-r from-red-500 to-rose-600 rounded-2xl p-4 shadow-lg shadow-red-200 text-left hover:from-red-600 hover:to-rose-700 transition-colors"
@@ -262,7 +258,7 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
           <ChevronRight className="w-5 h-5 text-white/90 flex-shrink-0" />
         </button>
 
-        {/* Promo Banner */}
+        {}
         <div className="relative bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl overflow-hidden shadow-lg">
           <img
             src={getUnsplashUrl("photo-1581578731548-c64695cc6952", 600, 180)}
@@ -283,7 +279,7 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
           </div>
         </div>
 
-        {/* Service Categories */}
+        {}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-foreground">Danh mục dịch vụ</h3>
@@ -329,7 +325,7 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
           )}
         </div>
 
-        {/* Popular Taskers */}
+        {}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-foreground">Thợ phổ biến</h3>
@@ -398,7 +394,7 @@ export function CustomerHome({ onNavigate }: { onNavigate: (s: Screen, data?: ob
           </div>
         </div>
 
-        {/* Popular Services */}
+        {}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-foreground">Dịch vụ phổ biến</h3>

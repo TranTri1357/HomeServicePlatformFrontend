@@ -40,11 +40,11 @@ export function Users() {
   const items = paged?.items ?? [];
   const total = paged?.totalCount ?? 0;
 
-  // Detail side panel.
+  
   const [detail, setDetail] = useState<AdminUserDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
-  // Lock/unlock confirm.
+  
   const [toggleTarget, setToggleTarget] = useState<AdminUserItem | null>(null);
   const [toggling, setToggling] = useState(false);
 
@@ -195,7 +195,7 @@ export function Users() {
         <AdminPagination page={page} total={total} perPage={PAGE_SIZE} onChange={setPage} />
       </div>
 
-      {/* Detail side panel */}
+      {}
       {detail && (
         <div className="fixed inset-0 bg-black/40 z-[100] flex justify-end" onClick={() => setDetail(null)}>
           <div

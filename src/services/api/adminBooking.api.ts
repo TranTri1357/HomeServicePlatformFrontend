@@ -10,7 +10,7 @@ export type GetAdminBookingsParams = {
   pageSize?: number;
 };
 
-/** GET /api/admin/bookings — paged booking list. Requires Admin/SuperAdmin. */
+
 export async function getBookings(
   params?: GetAdminBookingsParams,
 ): Promise<PagedResult<AdminBookingItem>> {
@@ -20,17 +20,13 @@ export async function getBookings(
   return unwrap(response);
 }
 
-/** GET /api/admin/bookings/{id} — full detail of one booking. */
+
 export async function getBookingDetail(id: number): Promise<AdminBookingDetail> {
   const response = await get<ApiResponse<AdminBookingDetail>>(`/admin/bookings/${id}`);
   return unwrap(response);
 }
 
-/**
- * PUT /api/admin/bookings/{id}/status — change a booking's status.
- * `currentRowVersion` guards against concurrent edits; BookingId + ChangedBy
- * are set from the route/token server-side.
- */
+
 export async function updateBookingStatus(
   id: number,
   newStatus: number,

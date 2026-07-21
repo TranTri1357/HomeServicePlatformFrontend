@@ -7,7 +7,7 @@ import { useApi, useInfiniteList, useDebounced } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { getApiAssetUrl, formatVnd } from "@/shared/lib";
 
-/** Service banner: chỉ hiện ảnh khi đã upload, còn lại là placeholder gọn. */
+
 function ServiceImage({ imageUrl, name }: { imageUrl: string | null; name: string }) {
   const [broken, setBroken] = useState(false);
   const url = imageUrl ? getApiAssetUrl(imageUrl) : "";
@@ -37,23 +37,23 @@ export function ServiceList({
 }) {
   const goBack = useGoBack("customerHome");
   const [search, setSearch] = useState("");
-  // Pre-select the category when arriving from a home-screen category tile.
+  
   const [categoryId, setCategoryId] = useState<number | undefined>(data?.categoryId);
   const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none");
-  // Bộ lọc nâng cao: khoảng giá + đánh giá tối thiểu (0 = tất cả).
+  
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [minRating, setMinRating] = useState<number>(0);
 
   const sortBy = priceSort === "asc" ? "price_asc" : priceSort === "desc" ? "price_desc" : undefined;
 
-  // Filter chips come from the real category list.
+  
   const { data: categories = [] } = useApi(() => categoryApi.getActiveCategories(), {
     initialData: [],
   });
 
-  // GET /api/Services/explorer — phân trang "tải thêm", nạp lại trang 1 khi đổi lọc/từ khoá.
-  // Chỉ debounce ô tìm kiếm (gõ liên tục); các nút lọc đổi là nạp ngay.
+  
+  
   const debouncedSearch = useDebounced(search);
   const fetchPage = useCallback(
     (page: number) =>
@@ -72,13 +72,13 @@ export function ServiceList({
   const { items, total, hasNext, loading, loadingMore, error, loaded, loadMore, reload } =
     useInfiniteList(fetchPage);
 
-  const showSkeleton = !loaded; // first load only; keep old data during refetch
+  const showSkeleton = !loaded; 
 
   return (
     <div className="flex flex-col h-full">
       <TopBar title="Dịch vụ" onBack={goBack} />
 
-      {/* Search + Filter */}
+      {}
       <div className="bg-white px-4 py-3 border-b border-border space-y-3">
         <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2.5">
           <Search className="w-4 h-4 text-muted-foreground" />
@@ -125,7 +125,7 @@ export function ServiceList({
           ))}
         </div>
 
-        {/* Bộ lọc nâng cao: khoảng giá + đánh giá tối thiểu */}
+        {}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 border-t border-border">
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground whitespace-nowrap">Khoảng giá:</span>
@@ -168,7 +168,7 @@ export function ServiceList({
         </div>
       </div>
 
-      {/* Grid */}
+      {}
       <div className="flex-1 overflow-y-auto p-4">
         {showSkeleton ? (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">

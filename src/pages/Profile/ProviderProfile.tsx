@@ -22,7 +22,7 @@ import { Avatar, ImageUploader } from "@/shared/ui";
 import { notify } from "@/shared/lib";
 import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 
-// Status → nhãn hiển thị (0 chờ duyệt · 1 nhận việc · 2 khóa · 3 tạm nghỉ · 4 bị từ chối).
+
 const STATUS_LABEL: Record<number, { label: string; online: boolean }> = {
   0: { label: "Chờ duyệt", online: false },
   1: { label: "Đang nhận việc", online: true },
@@ -31,8 +31,8 @@ const STATUS_LABEL: Record<number, { label: string; online: boolean }> = {
   4: { label: "Bị từ chối", online: false },
 };
 
-// Không có toạ độ mặc định: vị trí phải do thợ cung cấp thật. Toạ độ mặc định sẽ khiến
-// thuật toán tìm thợ theo bán kính tin rằng thợ đang ở đó, nên "chưa có" phải là null.
+
+
 
 export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const { user, logout } = useAuth();
@@ -45,7 +45,7 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
 
   const [changingPassword, setChangingPassword] = useState(false);
 
-  // ── Edit-account modal ──────────────────────────────────────────────────
+  
   const [editing, setEditing] = useState(false);
   const [fFullName, setFFullName] = useState("");
   const [fPhone, setFPhone] = useState("");
@@ -53,7 +53,7 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
   const [fBio, setFBio] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // ── Create-profile modal ────────────────────────────────────────────────
+  
   const [creating, setCreating] = useState(false);
   const [cBio, setCBio] = useState("");
   const [cExp, setCExp] = useState(0);
@@ -68,8 +68,8 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
   const isOnline = st.online;
   const isRejected = profile?.status === 4;
 
-  // Mở modal hồ sơ. Nộp lại (prefill = true) giữ bio/kinh nghiệm cũ để thợ chỉ sửa chỗ cần;
-  // ảnh và vị trí luôn nhập lại vì đó thường là thứ khiến hồ sơ bị từ chối.
+  
+  
   const openProfileModal = (prefill: boolean) => {
     setCBio(prefill ? profile?.bio ?? "" : "");
     setCExp(prefill ? profile?.experienceYears ?? 0 : 0);
@@ -128,7 +128,7 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
   };
 
   const submitCreate = async () => {
-    // Gom mọi thứ còn thiếu báo một lần, đừng bắt thợ sửa từng cái rồi bấm gửi nhiều lần.
+    
     const missing: string[] = [];
     if (!cBio.trim()) missing.push("giới thiệu bản thân");
     if (!cImageUrl) missing.push("ảnh giấy tờ");
@@ -170,7 +170,7 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      {/* Header */}
+      {}
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 px-4 pt-6 pb-12">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-white text-xl font-bold">Hồ sơ thợ</h2>
@@ -199,7 +199,7 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
       </div>
 
       <div className="px-4 -mt-6 space-y-4 pb-6">
-        {/* No profile yet / load error → offer create + retry */}
+        {}
         {error && !profile && (
           <div className="bg-white rounded-2xl p-4 flex flex-col items-center gap-3 text-center shadow-sm">
             <AlertCircle className="w-8 h-8 text-amber-400" />
@@ -223,7 +223,7 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
           </div>
         )}
 
-        {/* Hồ sơ bị từ chối → hiện lý do + nút nộp lại (banner thường trực, không phụ thuộc thông báo) */}
+        {}
         {isRejected && (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-4 space-y-3">
             <div className="flex gap-2">
@@ -246,7 +246,7 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
           </div>
         )}
 
-        {/* Stats */}
+        {}
         <div className="bg-white rounded-2xl p-4 shadow-sm grid grid-cols-3 divide-x divide-border">
           {stats.map(([v, l]) => (
             <div key={l} className="flex flex-col items-center gap-1 px-3">
@@ -258,7 +258,7 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
           ))}
         </div>
 
-        {/* Personal info */}
+        {}
         <div className="bg-white rounded-2xl overflow-hidden">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <h3 className="font-bold text-foreground">Thông tin cá nhân</h3>
@@ -288,7 +288,7 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
           ))}
         </div>
 
-        {/* Địa chỉ hoạt động (Phương án B: dùng chung bảng Address) */}
+        {}
         <button
           onClick={() => onNavigate("providerAddresses")}
           className="w-full bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:bg-muted transition-colors"
@@ -303,7 +303,7 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
           <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         </button>
 
-        {/* Đổi mật khẩu */}
+        {}
         <button
           onClick={() => setChangingPassword(true)}
           className="w-full bg-white rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:bg-muted transition-colors"
@@ -318,7 +318,7 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
           <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         </button>
 
-        {/* Verification note */}
+        {}
         <div className="bg-blue-50 rounded-2xl px-4 py-3 flex items-center gap-3">
           <BadgeCheck className="w-5 h-5 text-blue-600 flex-shrink-0" />
           <p className="text-xs text-blue-700">
@@ -337,7 +337,7 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
         </button>
       </div>
 
-      {/* Edit-account modal */}
+      {}
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto">
@@ -401,7 +401,7 @@ export function ProviderProfile({ onNavigate }: { onNavigate: (s: Screen) => voi
         </div>
       )}
 
-      {/* Create-profile modal */}
+      {}
       {creating && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto">

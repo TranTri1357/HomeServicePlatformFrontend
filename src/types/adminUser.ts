@@ -1,4 +1,4 @@
-/** A row in the admin user list — GET /api/admin/users. Status: 1 active · 0 blocked. */
+
 export interface AdminUserItem {
   userId: number;
   fullName: string;
@@ -16,7 +16,7 @@ export interface AdminUserAddress {
   isDefault: boolean;
 }
 
-/** Full user detail — GET /api/admin/users/{id}. */
+
 export interface AdminUserDetail {
   userId: number;
   fullName: string;

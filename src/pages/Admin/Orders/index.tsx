@@ -8,7 +8,7 @@ import { ConfirmModal, AdminPagination } from "@/components/Admin";
 
 const PAGE_SIZE = 10;
 
-// Numeric BookingStatus → label + colors.
+
 const STATUS: Record<number, { label: string; cls: string; dot: string }> = {
   0: { label: "Chờ xác nhận", cls: "bg-amber-100 text-amber-700", dot: "bg-amber-500" },
   1: { label: "Đã xác nhận", cls: "bg-blue-100 text-blue-700", dot: "bg-blue-500" },
@@ -20,7 +20,7 @@ const STATUS: Record<number, { label: string; cls: string; dot: string }> = {
   7: { label: "Khiếu nại bị từ chối", cls: "bg-slate-200 text-slate-600", dot: "bg-slate-500" },
 };
 
-// Admin may cancel an order that isn't finished/cancelled/refunding.
+
 const CANCELLABLE = [0, 1, 2, 3];
 
 function Badge({ status }: { status: number }) {
@@ -50,7 +50,7 @@ export function Orders() {
   );
   useEffect(() => {
     void refetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [statusFilter, page]);
 
   const items = paged?.items ?? [];
@@ -212,7 +212,7 @@ export function Orders() {
         <AdminPagination page={page} total={total} perPage={PAGE_SIZE} onChange={setPage} />
       </div>
 
-      {/* Detail panel */}
+      {}
       {selected && (
         <div className="fixed inset-0 bg-black/40 z-[100] flex justify-end" onClick={closeDetail}>
           <div
@@ -283,7 +283,7 @@ export function Orders() {
                     </div>
                   </div>
 
-                  {/* Amounts */}
+                  {}
                   <div className="bg-muted rounded-xl p-3 space-y-1.5">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Tạm tính</span>

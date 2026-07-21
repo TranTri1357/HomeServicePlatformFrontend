@@ -11,12 +11,7 @@ import { LogIn, Lock, X } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 
 interface AuthGateValue {
-  /**
-   * Cổng đăng nhập cấp hành động. Trả về true nếu đã đăng nhập (cứ tiếp tục);
-   * nếu là khách vãng lai thì mở popup nhắc đăng nhập và trả về false.
-   * @param intendedPath đường dẫn quay lại sau khi đăng nhập thành công.
-   * @param intendedState state điều hướng cần khôi phục (vd: { serviceId }).
-   */
+  
   requireAuth: (intendedPath?: string, intendedState?: object) => boolean;
 }
 

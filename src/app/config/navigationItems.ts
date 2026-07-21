@@ -18,7 +18,7 @@ export const CUSTOMER_NAV_ITEMS: NavItem[] = [
   { screen: "customerProfile", icon: User, label: "Hồ sơ" },
 ];
 
-/** Reduced navigation shown to guests (chưa đăng nhập): chỉ các mục công khai. */
+
 export const GUEST_NAV_ITEMS: NavItem[] = [
   { screen: "customerHome", icon: Home, label: "Trang chủ" },
   { screen: "serviceList", icon: Search, label: "Dịch vụ" },

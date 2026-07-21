@@ -5,7 +5,7 @@ export interface ChatMessage {
   time: string;
 }
 
-/** A message in a booking conversation — GET/POST /api/chat/{bookingId}. */
+
 export interface ConversationMessage {
   messageId: number;
   bookingId: number;

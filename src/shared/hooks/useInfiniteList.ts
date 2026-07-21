@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getErrorMessage } from "@/shared/lib";
 import type { PagedResult } from "@/shared/types";
 
-/** Giá trị `value` bị trễ `delay` ms — dùng cho ô tìm kiếm để tránh gọi API mỗi phím. */
+
 export function useDebounced<T>(value: T, delay = 300): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -16,29 +16,18 @@ export interface UseInfiniteListResult<T> {
   items: T[];
   total: number;
   hasNext: boolean;
-  /** Đang tải trang đầu / tải lại (thay toàn bộ). */
+  
   loading: boolean;
-  /** Đang tải thêm trang tiếp theo (nối vào cuối). */
+  
   loadingMore: boolean;
   error: string | null;
-  /** Đã hoàn tất ít nhất một lần tải (để hiện skeleton lần đầu). */
+  
   loaded: boolean;
   loadMore: () => void;
   reload: () => void;
 }
 
-/**
- * Danh sách phân trang "tải thêm" dùng chung: tự tải trang 1 và tải lại mỗi khi
- * `fetchPage` đổi (hãy bọc `fetchPage` bằng useCallback theo đúng các bộ lọc).
- *
- * Ví dụ:
- *   const search = useDebounced(searchInput);
- *   const fetchPage = useCallback(
- *     (page: number) => api.getList({ search, pageIndex: page, pageSize: 10 }),
- *     [search],
- *   );
- *   const { items, hasNext, loadMore, loading } = useInfiniteList(fetchPage);
- */
+
 export function useInfiniteList<T>(
   fetchPage: (pageIndex: number) => Promise<PagedResult<T>>,
 ): UseInfiniteListResult<T> {
@@ -73,7 +62,7 @@ export function useInfiniteList<T>(
     [fetchPage],
   );
 
-  // Tải lại từ trang 1 khi fetchPage đổi (tức khi bộ lọc/từ khoá đổi).
+  
   useEffect(() => {
     void run(1, true);
   }, [run]);

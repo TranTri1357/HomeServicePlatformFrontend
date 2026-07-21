@@ -20,7 +20,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Keep logging centralized here; replace with Sentry/LogRocket later if needed.
+    
     console.error("Unhandled application error", error, errorInfo);
   }
 

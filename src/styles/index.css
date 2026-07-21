@@ -13,12 +13,6 @@
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  /*
-   * Vùng đệm cho status bar thật của máy khi app chạy standalone (đã cài lên màn
-   * hình chính). Trên iOS có tai thỏ, inset này khác 0 và nội dung sẽ chui lên
-   * dưới đồng hồ/pin nếu không chừa chỗ. Trên trình duyệt thường và trên Android
-   * inset = 0 nên phần tử co lại còn 0px, không để lại khoảng trắng thừa.
-   */
   .safe-area-top {
     height: env(safe-area-inset-top, 0px);
   }
@@ -29,20 +23,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/*
- * Nhốt z-index của Leaflet vào trong chính bản đồ.
- *
- * Leaflet gán z-index tuyệt đối cho các lớp bên trong (.leaflet-pane: 400,
- * .leaflet-control: 1000) nhưng .leaflet-container chỉ có position: relative
- * mà KHÔNG có z-index → nó không tạo stacking context, nên mấy con số đó leo ra
- * ngoài so kè với modal/overlay của app và thắng (400 > z-50). Hậu quả: tile bản
- * đồ vẽ đè lên modal chờ thợ và modal đơn khẩn của thợ.
- *
- * Thêm z-index: 0 (trên phần tử đã positioned) là đủ tạo stacking context, nhốt
- * toàn bộ 200/400/600/700 lại bên trong. Thứ tự lớp NỘI BỘ của Leaflet vẫn giữ
- * nguyên — đây là lý do không dùng cách ghi đè .leaflet-pane { z-index: 1 },
- * cách đó sẽ làm marker chui xuống dưới tile.
- */
 .leaflet-container {
   position: relative;
   z-index: 0;

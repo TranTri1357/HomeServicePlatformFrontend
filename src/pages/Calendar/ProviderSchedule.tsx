@@ -15,9 +15,9 @@ import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { notify, getErrorMessage } from "@/shared/lib";
 
-const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"]; // index = JS getDay()
+const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"]; 
 const MONTHS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
-// Day toggles for the weekly setup, mapped to .NET DayOfWeek (Sun=0).
+
 const SETUP_DAYS = [
   { label: "T2", dow: 1 },
   { label: "T3", dow: 2 },
@@ -27,7 +27,7 @@ const SETUP_DAYS = [
   { label: "T7", dow: 6 },
   { label: "CN", dow: 0 },
 ];
-const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 6h → 22h
+const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); 
 
 function toISODate(d: Date): string {
   const y = d.getFullYear();
@@ -42,8 +42,8 @@ function addDays(d: Date, n: number): Date {
 }
 function mondayOf(d: Date): Date {
   const r = new Date(d);
-  const dow = r.getDay(); // 0 Sun … 6 Sat
-  const diff = dow === 0 ? -6 : 1 - dow; // back to Monday
+  const dow = r.getDay(); 
+  const diff = dow === 0 ? -6 : 1 - dow; 
   return addDays(r, diff);
 }
 const hhmm = (t: string) => t.slice(0, 5);
@@ -68,15 +68,15 @@ export function ProviderSchedule() {
     () => scheduleApi.getDailySchedule(isoDate),
     { immediate: false },
   );
-  // Fetch on mount and whenever the selected date changes.
+  
   useEffect(() => {
     void refetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [isoDate]);
 
-  // Weekly-hours setup modal.
+  
   const [showSetup, setShowSetup] = useState(false);
-  const [days, setDays] = useState<number[]>([1, 2, 3, 4, 5]); // Mon–Fri default
+  const [days, setDays] = useState<number[]>([1, 2, 3, 4, 5]); 
   const [startHour, setStartHour] = useState(8);
   const [endHour, setEndHour] = useState(17);
   const [savingSetup, setSavingSetup] = useState(false);
@@ -110,7 +110,7 @@ export function ProviderSchedule() {
   const markDayOff = async () => {
     setMarkingOff(true);
     try {
-      // Nghỉ cả ngày đã chọn (giờ VN +7).
+      
       await scheduleApi.createTimeOff(
         `${isoDate}T00:00:00+07:00`,
         `${isoDate}T23:59:59+07:00`,
@@ -142,7 +142,7 @@ export function ProviderSchedule() {
       />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Week strip */}
+        {}
         <div className="bg-white rounded-2xl p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-foreground">
@@ -192,7 +192,7 @@ export function ProviderSchedule() {
           </div>
         </div>
 
-        {/* Time slots */}
+        {}
         <div className="bg-white rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-foreground">
@@ -276,7 +276,7 @@ export function ProviderSchedule() {
           )}
         </div>
 
-        {/* Upcoming jobs of the day */}
+        {}
         <div className="bg-white rounded-2xl overflow-hidden">
           <div className="px-4 py-3 border-b border-border">
             <h3 className="font-bold text-foreground">Công việc trong ngày</h3>
@@ -308,7 +308,7 @@ export function ProviderSchedule() {
         </div>
       </div>
 
-      {/* Weekly working-hours setup modal */}
+      {}
       {showSetup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">

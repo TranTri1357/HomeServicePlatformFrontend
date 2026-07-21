@@ -17,7 +17,7 @@ import { formatVnd, formatDateVn, notify, getErrorMessage } from "@/shared/lib";
 const QUICK_AMOUNTS = [100_000, 200_000, 500_000, 1_000_000];
 const MIN_WITHDRAW = 50_000;
 
-// Loại giao dịch ví → nhãn + có ghi có (credit) hay ghi nợ (debit).
+
 const TX: Record<number, { label: string; credit: boolean }> = {
   1: { label: "Nạp tiền", credit: true },
   2: { label: "Thanh toán", credit: false },
@@ -49,7 +49,7 @@ export function ProviderIncome({ onNavigate: _onNavigate }: { onNavigate: (s: Sc
       notify.error("Số dư ví không đủ để rút số tiền này.");
       return;
     }
-    // Kiểm tra trước ở client cho phản hồi nhanh; backend vẫn xác thực lại bằng validator.
+    
     if (!/^0\d{9}$/.test(phoneNumber)) {
       notify.error("Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0.");
       return;
@@ -86,7 +86,7 @@ export function ProviderIncome({ onNavigate: _onNavigate }: { onNavigate: (s: Sc
       <TopBar title="Ví thu nhập" onBack={goBack} />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Balance card */}
+        {}
         <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200">
           <div className="flex items-center gap-2 text-emerald-100 text-sm mb-1">
             <WalletIcon className="w-4 h-4" />
@@ -101,7 +101,7 @@ export function ProviderIncome({ onNavigate: _onNavigate }: { onNavigate: (s: Sc
           </div>
         </div>
 
-        {/* Withdraw */}
+        {}
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Rút tiền về tài khoản</h3>
           <div className="grid grid-cols-2 gap-2 mb-3">
@@ -127,7 +127,7 @@ export function ProviderIncome({ onNavigate: _onNavigate }: { onNavigate: (s: Sc
             <span className="text-sm text-muted-foreground">đ</span>
           </div>
 
-          {/* Tài khoản nhận tiền */}
+          {}
           <p className="text-xs font-semibold text-muted-foreground mb-2">Tài khoản nhận tiền</p>
           <div className="space-y-2 mb-3">
             <input
@@ -173,7 +173,7 @@ export function ProviderIncome({ onNavigate: _onNavigate }: { onNavigate: (s: Sc
           </p>
         </div>
 
-        {/* History */}
+        {}
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Lịch sử giao dịch</h3>
           {loading && !income ? (
@@ -223,7 +223,7 @@ export function ProviderIncome({ onNavigate: _onNavigate }: { onNavigate: (s: Sc
                       </p>
                     </div>
 
-                    {/* Chi tiết chỉ cho dòng thu nhập: gộp → hoa hồng → thực nhận */}
+                    {}
                     {isEarning ? (
                       <div className="mt-2 ml-12 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
                         <span>Gộp: {formatVnd(e.gross)}đ</span>

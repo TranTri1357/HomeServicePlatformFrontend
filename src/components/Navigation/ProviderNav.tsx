@@ -4,7 +4,7 @@ import type { Screen } from "@/shared/types";
 interface ProviderNavProps {
   current: Screen;
   onNavigate: (s: Screen) => void;
-  /** Count shown as a red badge on "Công việc". */
+  
   jobBadge?: number;
 }
 

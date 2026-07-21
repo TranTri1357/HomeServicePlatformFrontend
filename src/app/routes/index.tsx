@@ -18,10 +18,9 @@ export function AppRouter() {
           <Route path="auth" element={<AuthLayout />} />
           <Route path="403" element={<ForbiddenPage />} />
 
-          {/* Customer — the browse screens are public (khách vãng lai xem được),
-              only the action screens below require a customer login. */}
+          {}
           <Route path="customer" element={<CustomerLayout />}>
-            {/* Public (guest-accessible) */}
+            {}
             <Route index element={<RouteScreen screen="customerHome" />} />
             <Route path="home" element={<RouteScreen screen="customerHome" />} />
             <Route path="services" element={<RouteScreen screen="serviceList" />} />
@@ -29,7 +28,7 @@ export function AppRouter() {
             <Route path="technicians" element={<RouteScreen screen="technicianMap" />} />
             <Route path="technician/detail" element={<RouteScreen screen="technicianDetail" />} />
 
-            {/* Protected — require a logged-in customer */}
+            {}
             <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
               <Route path="booking" element={<RouteScreen screen="booking" />} />
               <Route path="emergency" element={<RouteScreen screen="emergencyBooking" />} />
@@ -44,7 +43,7 @@ export function AppRouter() {
             </Route>
           </Route>
 
-          {/* Provider / Worker */}
+          {}
           <Route element={<ProtectedRoute allowedRoles={["provider"]} />}>
             <Route path="provider" element={<ProviderLayout />}>
               <Route index element={<RouteScreen screen="providerDashboard" />} />
@@ -60,7 +59,7 @@ export function AppRouter() {
             </Route>
           </Route>
 
-          {/* Admin */}
+          {}
           <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
             <Route path="admin" element={<AdminRouteLayout />}>
               <Route index element={<RouteScreen screen="adminDashboard" />} />

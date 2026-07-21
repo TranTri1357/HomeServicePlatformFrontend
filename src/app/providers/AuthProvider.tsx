@@ -76,9 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) return null;
 
     const stored = readStoredUser();
-    // Có token nhưng thiếu/hỏng thông tin user -> trạng thái "mồ côi" gây rối
-    // (app tưởng guest nhưng vẫn gắn token khi gọi API). Dọn sạch token để về
-    // đúng trạng thái khách vãng lai.
+    
+    
+    
     if (!stored) {
       clearTokens();
       return null;
@@ -103,12 +103,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
-    // Best-effort backend revoke; reads the refresh token before it clears tokens.
+    
     void authApi.logout();
     clearStoredUser();
     clearTokens();
     setUser(null);
-    // Đăng xuất -> về trang duyệt công khai (khách vãng lai), không ép vào /auth.
+    
     if (typeof window !== "undefined") {
       window.location.href = "/customer/home";
     }

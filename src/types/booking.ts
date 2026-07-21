@@ -17,19 +17,19 @@ export interface Booking {
   address: string;
 }
 
-/** One line item when creating a booking — POST /api/customer/bookings. */
+
 export interface BookingItemInput {
   serviceId: number;
   taskerId?: number | null;
-  /** ISO 8601; must be in the future. */
+  
   startAt: string;
-  /** ISO 8601; must be after startAt. */
+  
   endAt: string;
   unitPrice: number;
   quantity: number;
 }
 
-/** Request body for POST /api/customer/bookings. CustomerId comes from the JWT. */
+
 export interface CreateBookingInput {
   note?: string;
   fullName: string;
@@ -44,7 +44,7 @@ export interface CreateBookingInput {
   bookingItems: BookingItemInput[];
 }
 
-/** Response of POST /api/customer/bookings. */
+
 export interface CreateBookingResult {
   bookingId: number;
   message: string;
@@ -52,10 +52,7 @@ export interface CreateBookingResult {
   finalAmount: number;
 }
 
-/**
- * Body for POST /api/customer/bookings/emergency — BROADCAST tới mọi thợ rảnh trong bán kính.
- * Không còn chọn 1 thợ hay gửi giá: giá chốt theo thợ nào bấm nhận trước.
- */
+
 export interface EmergencyBookingInput {
   serviceId: number;
   latitude: number;
@@ -69,7 +66,7 @@ export interface EmergencyBookingInput {
   note?: string;
 }
 
-/** Một thợ được bắn yêu cầu trong một vòng broadcast (kèm giá riêng của thợ). */
+
 export interface EmergencyTaskerOffer {
   taskerId: number;
   fullName: string;
@@ -77,10 +74,7 @@ export interface EmergencyTaskerOffer {
   distanceKm: number;
 }
 
-/**
- * Response của POST /api/customer/bookings/emergency và POST .../emergency/{id}/broadcast.
- * `taskers` là các thợ đã được bắn yêu cầu ở vòng này (có thể rỗng → frontend nới bán kính).
- */
+
 export interface EmergencyBookingResult {
   bookingId: number;
   serviceName: string;
@@ -92,36 +86,30 @@ export interface EmergencyBookingResult {
   taskers: EmergencyTaskerOffer[];
 }
 
-/**
- * Numeric booking status (matches backend BookingStatus enum):
- * 0 Pending · 1 Accepted · 2 OnTheWay · 3 InProgress · 4 Completed · 5 Cancelled · 6 Refund
- */
+
 export type BookingStatusCode = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-/**
- * Xem trước chính sách hủy đơn — GET /api/customer/bookings/{id}/cancellation-preview.
- * Cho khách biết sẽ được hoàn bao nhiêu / giữ lại bao nhiêu TRƯỚC khi bấm hủy.
- */
+
 export interface CancellationPreview {
   bookingId: number;
-  /** Trạng thái đơn có cho phép khách tự hủy không. */
+  
   canCancel: boolean;
   status: number;
-  /** Tổng đã thanh toán qua hệ thống. */
+  
   totalPaid: number;
-  /** % được hoàn TRÊN TIỀN CỌC (không phải trên tổng đã trả) — không hiển thị, dễ gây hiểu nhầm. */
+  
   refundPercent: number;
-  /** Tiền hoàn dự kiến cho khách. */
+  
   refundAmount: number;
-  /** Phí hủy giữ lại (đền thợ) — luôn ≤ tiền cọc. */
+  
   penaltyAmount: number;
-  /** Tiền cọc = phần DUY NHẤT chịu rủi ro khi hủy, bất kể khách trả cọc hay trả hết. */
+  
   depositAtRisk: number;
-  /** Diễn giải chính sách để hiển thị cho khách. */
+  
   reason: string;
 }
 
-/** One service line inside a booking (a booking may have several). */
+
 export interface MyBookingItem {
   bookingItemId: number;
   serviceName: string;
@@ -133,11 +121,11 @@ export interface MyBookingItem {
   unitPrice: number;
   totalPrice: number;
   status: number;
-  /** True once this item has been reviewed — hides the review button. */
+  
   hasReview: boolean;
 }
 
-/** One row of GET /api/customer/bookings/my-orders. */
+
 export interface MyBooking {
   bookingId: number;
   fullAddress: string;
@@ -147,10 +135,10 @@ export interface MyBooking {
   note: string | null;
   createdAt: string;
   status: number;
-  /** True once a successful payment exists — hides the pay button. */
+  
   isPaid: boolean;
-  /** True once a complaint has been filed — hides the complaint button. */
+  
   hasDispute: boolean;
-  /** All service line items of this booking (1..n). */
+  
   items: MyBookingItem[];
 }

@@ -1,7 +1,7 @@
-// Layout
+
 export { AdminLayout } from "@/layouts";
 
-// Pages — each in its own feature folder
+
 export { Dashboard as AdminDashboard } from "./Dashboard";
 export { Orders as AdminOrders } from "./Orders";
 export { Technicians as AdminProviders } from "./Technicians";

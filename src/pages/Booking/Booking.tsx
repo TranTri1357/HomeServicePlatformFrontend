@@ -18,17 +18,17 @@ import { TopBar, Avatar } from "@/shared/ui";
 import { formatVnd, notify, getErrorMessage, getApiAssetUrl } from "@/shared/lib";
 
 const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
-// Fallback slots used only when no specific tasker is chosen (system auto-assigns).
+
 const DEFAULT_TIME_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
 const PHONE_REGEX = /^(03|05|07|08|09)\d{8}$/;
-// Khách phải đặt trước ít nhất bằng này phút — thợ cần thời gian chuẩn bị & di chuyển.
-// Mọi khung giờ bắt đầu sớm hơn (now + LEAD_TIME) đều bị khóa trên giao diện.
+
+
 const LEAD_TIME_MINUTES = 60;
-// Số dịch vụ hiển thị trước khi phải bấm "Xem thêm"; và ngưỡng bắt đầu hiện ô tìm kiếm.
+
 const SERVICE_VISIBLE_LIMIT = 10;
 const SERVICE_SEARCH_THRESHOLD = 8;
 
-/** Local date → "yyyy-MM-dd" (VN date, no timezone shift) for the availability API. */
+
 function toDateParam(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -36,7 +36,7 @@ function toDateParam(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-/** "HH:mm:ss" | "HH:mm" → "HH:mm". */
+
 const hhmm = (t: string) => t.slice(0, 5);
 
 export function Booking({
@@ -59,7 +59,7 @@ export function Booking({
     immediate: Boolean(serviceId),
   });
 
-  // Next 7 days starting today.
+  
   const dateOptions = useMemo(() => {
     const today = new Date();
     return Array.from({ length: 7 }, (_, i) => {
@@ -71,20 +71,20 @@ export function Booking({
   }, []);
 
   const [dateIdx, setDateIdx] = useState(0);
-  // Không chọn sẵn khung giờ; khách phải tự chọn (bấm lại để bỏ chọn).
+  
   const [time, setTime] = useState("");
 
-  // Mốc "bây giờ" tick mỗi phút để các khung giờ tự khóa dần khi khách mở form lâu,
-  // thay vì chỉ tính một lần lúc render đầu tiên.
+  
+  
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(id);
   }, []);
-  /** Thời điểm sớm nhất được phép hẹn (ms epoch). */
+  
   const earliestStart = now + LEAD_TIME_MINUTES * 60_000;
 
-  /** Khung giờ "HH:mm" của ngày đang chọn → mốc bắt đầu (ms epoch). */
+  
   const slotStartMs = useCallback(
     (value: string) => {
       const d = new Date(dateOptions[dateIdx]);
@@ -95,12 +95,12 @@ export function Booking({
     [dateOptions, dateIdx],
   );
 
-  // Khung giờ đang chọn trôi vào quá khứ (khách để form mở lâu) ⇒ tự bỏ chọn để không
-  // gửi đi một giờ hẹn mà server chắc chắn từ chối.
+  
+  
   useEffect(() => {
     if (time && slotStartMs(time) < earliestStart) setTime("");
   }, [time, slotStartMs, earliestStart]);
-  // Pre-select the tasker when the customer arrived from a technician's profile.
+  
   const [taskerId, setTaskerId] = useState<number | undefined>(data?.taskerId);
   const [fullName, setFullName] = useState(user?.fullName ?? "");
   const [phone, setPhone] = useState("");
@@ -109,37 +109,37 @@ export function Booking({
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Services offered by the chosen tasker (extra services can be added to the order).
+  
   const [serviceOptions, setServiceOptions] = useState<TaskerServiceOption[]>([]);
   const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
-  // Tìm kiếm + giới hạn hiển thị danh sách "Dịch vụ của thợ" (tránh cuộn dài khi thợ có nhiều dịch vụ).
+  
   const [serviceSearch, setServiceSearch] = useState("");
   const [showAllServices, setShowAllServices] = useState(false);
 
-  // The chosen tasker's free/busy hours for the selected date.
+  
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const [hasSchedule, setHasSchedule] = useState(true);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  // Saved addresses — GET /api/customer/addresses.
+  
   const { data: savedAddresses = [] } = useApi(() => addressApi.getMyAddresses(), {
     initialData: [],
   });
   const [savedAddr, setSavedAddr] = useState<CustomerAddress | null>(null);
 
-  // Tọa độ ĐÍCH của đơn — chỉ có khi khách chọn một địa chỉ đã lưu (địa chỉ này kèm lat/lng).
-  // Có tọa độ thì khung giờ mới được lọc theo "thời gian đệm di chuyển" của thợ.
+  
+  
   const destLat = savedAddr?.latitude;
   const destLng = savedAddr?.longitude;
 
   const pickSavedAddress = (addr: CustomerAddress) => {
     setSavedAddr(addr);
     setAddress(addr.addressLine);
-    setTime(""); // đổi vị trí ⇒ khung giờ khả thi thay đổi, buộc chọn lại
+    setTime(""); 
   };
 
-  // Prefill số điện thoại (và tên) từ hồ sơ khách — đáp ứng "mặc định SĐT vào thông tin liên hệ".
+  
   useEffect(() => {
     let alive = true;
     customerApi
@@ -150,14 +150,14 @@ export function Booking({
         if (p.fullName) setFullName((prev) => prev || p.fullName);
       })
       .catch(() => {
-        /* prefill là tiện ích, lỗi thì bỏ qua, khách tự nhập */
+        
       });
     return () => {
       alive = false;
     };
   }, []);
 
-  // Tự chọn địa chỉ mặc định để có sẵn tọa độ đích ngay từ đầu (nếu khách có địa chỉ mặc định).
+  
   useEffect(() => {
     if (savedAddr || savedAddresses.length === 0) return;
     const def = savedAddresses.find((a) => a.isDefault) ?? savedAddresses[0];
@@ -167,11 +167,11 @@ export function Booking({
     }
   }, [savedAddresses, savedAddr]);
 
-  // ── Danh sách thợ nhận dịch vụ này: sắp theo đánh giá, phân trang "tải thêm" (5/trang) ──
-  // Trước đây lấy detail.suggestedTaskers (chốt cứng top 5, không xem thêm được).
-  // 📍 Chỉ lấy thợ CÙNG TỈNH với địa chỉ khách đặt (và kèm khoảng cách). Không lọc thì khách
-  // Cà Mau vẫn thấy thợ TP.HCM, chọn xong mới biết quá xa. Khi khách chưa chọn địa chỉ đã lưu
-  // thì destProvince = undefined -> trả toàn bộ thợ như trước, không chặn khách xem.
+  
+  
+  
+  
+  
   const destProvince = savedAddr?.provinceCode ?? undefined;
   const fetchTaskerPage = useCallback(
     (page: number): Promise<PagedResult<ServiceTaskerSuggestion>> =>
@@ -200,8 +200,8 @@ export function Booking({
     loadMore: loadMoreTaskers,
   } = useInfiniteList(fetchTaskerPage);
 
-  // Ghim thẻ thợ khách chọn sẵn (vào đặt lịch từ trang hồ sơ thợ) lên đầu — thợ đó có thể
-  // xếp hạng thấp, nằm ở trang sau nên không lọt vào 5 người đầu.
+  
+  
   const [pinnedTasker, setPinnedTasker] = useState<ServiceTaskerSuggestion | null>(null);
   useEffect(() => {
     const pre = data?.taskerId;
@@ -211,14 +211,14 @@ export function Booking({
       .getServiceTaskerCard(serviceId, pre, { lat: destLat, lng: destLng })
       .then((card) => alive && setPinnedTasker(card))
       .catch(() => {
-        /* không ghim được thì thôi, thợ vẫn nằm trong danh sách phân trang */
+        
       });
     return () => {
       alive = false;
     };
   }, [data?.taskerId, serviceId, destLat, destLng]);
 
-  // Thợ hiển thị = thẻ ghim (nếu có) + danh sách phân trang, bỏ trùng theo taskerId.
+  
   const displayedTaskers = useMemo(
     () =>
       pinnedTasker
@@ -227,22 +227,22 @@ export function Booking({
     [pinnedTasker, taskerItems],
   );
 
-  // Tên tỉnh/quận để hiện trên thẻ thợ (backend chỉ trả mã hành chính).
+  
   const areaLabel = useAreaLabels(useMemo(
     () => displayedTaskers.map((t) => t.provinceCode),
     [displayedTaskers],
   ));
 
-  // Thợ đang chọn có ở khác tỉnh với điểm đến không? Chỉ xảy ra với thẻ GHIM (khách vào
-  // đặt lịch từ trang hồ sơ thợ) — danh sách thường đã lọc cùng tỉnh.
+  
+  
   const selectedTasker = displayedTaskers.find((t) => t.taskerId === taskerId);
   const taskerOutOfProvince = Boolean(
     selectedTasker?.provinceCode && destProvince && selectedTasker.provinceCode !== destProvince,
   );
 
-  // ── Load the tasker's service options when a specific tasker is picked ───────
+  
   useEffect(() => {
-    // Đổi thợ -> làm mới danh sách dịch vụ: xoá từ khoá tìm và thu gọn lại.
+    
     setServiceSearch("");
     setShowAllServices(false);
     if (taskerId == null) {
@@ -257,7 +257,7 @@ export function Booking({
       .then((opts) => {
         if (!alive) return;
         setServiceOptions(opts);
-        // Pre-select the primary service the customer arrived with (if the tasker offers it).
+        
         setSelectedServiceIds(
           opts.some((o) => o.serviceId === serviceId) && serviceId != null ? [serviceId] : [],
         );
@@ -269,7 +269,7 @@ export function Booking({
     };
   }, [taskerId, serviceId]);
 
-  // ── Load the tasker's availability whenever tasker or date changes ───────────
+  
   useEffect(() => {
     if (taskerId == null) {
       setSlots([]);
@@ -278,7 +278,7 @@ export function Booking({
     }
     let alive = true;
     setLoadingSlots(true);
-    // Truyền tọa độ đích (nếu có) để backend trừ thêm buffer di chuyển khi sinh khung giờ.
+    
     taskerApi
       .getTaskerAvailability(taskerId, toDateParam(dateOptions[dateIdx]), destLat, destLng)
       .then((av) => {
@@ -293,7 +293,7 @@ export function Booking({
     };
   }, [taskerId, dateIdx, dateOptions, destLat, destLng]);
 
-  // ── Guards ────────────────────────────────────────────────────────────────
+  
   if (!serviceId) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
@@ -339,7 +339,7 @@ export function Booking({
 
   const hasTasker = taskerId != null;
 
-  // Services actually going on the order, ordered so the primary one comes first.
+  
   const chosenServices: TaskerServiceOption[] = hasTasker
     ? serviceOptions.filter((o) => selectedServiceIds.includes(o.serviceId))
     : [];
@@ -348,8 +348,8 @@ export function Booking({
     ...chosenServices.filter((s) => s.serviceId !== serviceId),
   ];
 
-  // Danh sách "Dịch vụ của thợ" sau khi lọc theo từ khoá + giới hạn hiển thị.
-  // Dịch vụ chính LUÔN được giữ (không bị ẩn bởi tìm kiếm/giới hạn).
+  
+  
   const kw = serviceSearch.trim().toLowerCase();
   const matchedServices = serviceOptions
     .filter(
@@ -359,7 +359,7 @@ export function Booking({
         o.serviceName.toLowerCase().includes(kw) ||
         o.categoryName.toLowerCase().includes(kw),
     )
-    // Ghim dịch vụ chính lên đầu để không bị ẩn bởi giới hạn hiển thị.
+    
     .sort((a, b) =>
       a.serviceId === serviceId ? -1 : b.serviceId === serviceId ? 1 : 0,
     );
@@ -368,22 +368,22 @@ export function Booking({
     : matchedServices.slice(0, SERVICE_VISIBLE_LIMIT);
   const hiddenServiceCount = matchedServices.length - visibleServices.length;
 
-  // Estimated total: sum of chosen services when a tasker is picked, else the
-  // service's starting price (system will assign a tasker & confirm final price).
+  
+  
   const estimatedTotal = hasTasker
     ? orderedServices.reduce((sum, s) => sum + s.price, 0)
     : detail.startingPrice;
 
   const toggleService = (sid: number) => {
-    if (sid === serviceId) return; // primary service stays selected
+    if (sid === serviceId) return; 
     setSelectedServiceIds((prev) =>
       prev.includes(sid) ? prev.filter((x) => x !== sid) : [...prev, sid],
     );
   };
 
-  // Time slots to render: from the tasker's availability, else the static fallback.
-  // Một khung giờ chỉ chọn được khi thợ rảnh (`isFree`) VÀ chưa quá hạn đặt trước
-  // (`!past`) — hai lý do khóa được tách riêng để hiển thị đúng thông báo cho khách.
+  
+  
+  
   const timeChoices = (
     hasTasker
       ? slots.map((s) => ({ label: hhmm(s.time), value: hhmm(s.time), isFree: s.isFree }))
@@ -393,11 +393,10 @@ export function Booking({
     return { ...t, past, free: t.isFree && !past };
   });
 
-  // Ngày đang chọn đã trôi qua hết khung giờ khả dụng (thường là hôm nay, về chiều tối).
+  
   const allSlotsPast = timeChoices.length > 0 && timeChoices.every((t) => t.past);
 
-  /** Build the (possibly multi-service) booking items, chained sequentially so a
-   *  single tasker never has two overlapping items. */
+  
   const buildBookingItems = (): BookingItemInput[] => {
     const base = new Date(dateOptions[dateIdx]);
     const [h, m] = time.split(":").map(Number);
@@ -433,7 +432,7 @@ export function Booking({
     });
   };
 
-  // Create the order (Pending "hold") NOW, then go to payment to check out.
+  
   const handleSubmit = async () => {
     setFormError(null);
 
@@ -451,7 +450,7 @@ export function Booking({
         `Vui lòng đặt trước ít nhất ${LEAD_TIME_MINUTES} phút. Hãy chọn khung giờ muộn hơn.`,
       );
 
-    // Guard: the chosen slot must be free (when booking a specific tasker).
+    
     if (hasTasker) {
       const slot = timeChoices.find((t) => t.value === time);
       if (!slot || !slot.free)
@@ -482,7 +481,7 @@ export function Booking({
         finalAmount: created.finalAmount,
       });
     } catch (err) {
-      // Backend returns a friendly 400 when the slot was just taken (overlap).
+      
       setFormError(getErrorMessage(err));
     } finally {
       setSubmitting(false);
@@ -494,7 +493,7 @@ export function Booking({
       <TopBar title="Đặt lịch dịch vụ" onBack={goBack} />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Selected service */}
+        {}
         <div className="bg-white rounded-2xl p-4 flex gap-3">
           {detail.imageUrl ? (
             <img
@@ -526,7 +525,7 @@ export function Booking({
           </button>
         </div>
 
-        {/* Tasker selection */}
+        {}
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-1">Chọn thợ</h3>
           <p className="text-xs text-muted-foreground mb-3">
@@ -579,8 +578,7 @@ export function Booking({
                       {t.experienceYears} năm KN
                       {t.currentPrice > 0 && <> · {formatVnd(t.currentPrice)}đ</>}
                     </p>
-                    {/* Khu vực + khoảng cách: để khách biết thợ ở đâu TRƯỚC khi đặt và trả tiền.
-                        Chỉ tới cấp quận/huyện — số nhà của thợ là thông tin riêng tư. */}
+                    {}
                     {(() => {
                       const area = areaLabel(t.provinceCode, t.districtCode);
                       if (!area && t.distanceKm == null) return null;
@@ -605,7 +603,7 @@ export function Booking({
               ))
             )}
 
-            {/* Tải thêm thợ (mỗi lần 5 người, sắp theo đánh giá) */}
+            {}
             {hasMoreTaskers && (
               <button
                 type="button"
@@ -620,7 +618,7 @@ export function Booking({
           </div>
         </div>
 
-        {/* Extra services of the chosen tasker */}
+        {}
         {hasTasker && (
           <div className="bg-white rounded-2xl p-4">
             <h3 className="font-bold text-foreground mb-1">Dịch vụ của thợ</h3>
@@ -635,7 +633,7 @@ export function Booking({
               <p className="text-sm text-muted-foreground py-2">Thợ chưa cấu hình dịch vụ nào.</p>
             ) : (
               <>
-                {/* Ô tìm kiếm chỉ hiện khi thợ có nhiều dịch vụ */}
+                {}
                 {serviceOptions.length > SERVICE_SEARCH_THRESHOLD && (
                   <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2.5 mb-2">
                     <Search className="w-4 h-4 text-muted-foreground" />
@@ -728,8 +726,7 @@ export function Booking({
           </div>
         )}
 
-        {/* Contact & address — ĐẶT TRƯỚC bước chọn ngày/giờ: hệ thống cần tọa độ điểm đến
-            để trừ "thời gian đệm di chuyển" của thợ khi hiện khung giờ trống. */}
+        {}
         <div className="bg-white rounded-2xl p-4 space-y-3">
           <h3 className="font-bold text-foreground">Thông tin liên hệ</h3>
           <div className="space-y-1">
@@ -792,7 +789,7 @@ export function Booking({
           </div>
         </div>
 
-        {/* Date */}
+        {}
         {hasTasker && (
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Chọn ngày</h3>
@@ -820,7 +817,7 @@ export function Booking({
         </div>
         )}
 
-        {/* Time */}
+        {}
         {hasTasker && (
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Chọn giờ</h3>
@@ -871,7 +868,7 @@ export function Booking({
         </div>
         )}
 
-        {/* Notes */}
+        {}
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-2">Ghi chú cho thợ</h3>
           <textarea
@@ -883,7 +880,7 @@ export function Booking({
           />
         </div>
 
-        {/* Cost summary */}
+        {}
         <div className="bg-white rounded-2xl p-4">
           <h3 className="font-bold text-foreground mb-3">Tóm tắt chi phí</h3>
           <div className="space-y-2">

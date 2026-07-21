@@ -26,23 +26,23 @@ export function ProviderServiceManagement() {
     taskerServiceApi.getMyTaskerServices(),
   );
 
-  // Platform services to pick from when adding (fetched once).
+  
   const { data: catalog } = useApi(() => serviceApi.getServicesExplorer({ pageSize: 100 }), {
     initialData: undefined,
   });
 
-  // Add modal.
+  
   const [showAdd, setShowAdd] = useState(false);
   const [addServiceId, setAddServiceId] = useState<number | "">("");
   const [addPrice, setAddPrice] = useState("");
   const [adding, setAdding] = useState(false);
 
-  // Edit-price modal.
+  
   const [editSvc, setEditSvc] = useState<TaskerService | null>(null);
   const [editPrice, setEditPrice] = useState("");
   const [savingPrice, setSavingPrice] = useState(false);
 
-  // Delete confirm.
+  
   const [deleteSvc, setDeleteSvc] = useState<TaskerService | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -52,7 +52,7 @@ export function ProviderServiceManagement() {
       s.categoryName.toLowerCase().includes(search.toLowerCase()),
   );
 
-  // Services in the catalog the tasker hasn't registered yet.
+  
   const registeredIds = new Set(services.map((s) => s.serviceId));
   const available = (catalog?.items ?? []).filter((s) => !registeredIds.has(s.serviceId));
 
@@ -135,7 +135,7 @@ export function ProviderServiceManagement() {
         }
       />
 
-      {/* Search */}
+      {}
       <div className="bg-white px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2.5">
           <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -153,7 +153,7 @@ export function ProviderServiceManagement() {
         </div>
       </div>
 
-      {/* Stats */}
+      {}
       <div className="bg-white border-b border-border px-4 py-3 flex gap-4">
         {[
           { label: "Tổng dịch vụ", value: `${services.length}`, color: "text-blue-600" },
@@ -171,7 +171,7 @@ export function ProviderServiceManagement() {
         ))}
       </div>
 
-      {/* List */}
+      {}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {loading && services.length === 0 ? (
           [1, 2, 3].map((i) => (
@@ -198,8 +198,8 @@ export function ProviderServiceManagement() {
           </div>
         ) : (
           filtered.map((svc) => (
-            // Key by serviceId: the backend returns TaskerServiceId = taskerId (same
-            // for every row), so serviceId is the real unique id per registered service.
+            
+            
             <div key={svc.serviceId} className="bg-white rounded-2xl p-3 shadow-sm">
               <div className="flex gap-3">
                 {svc.imageUrl ? (
@@ -260,7 +260,7 @@ export function ProviderServiceManagement() {
         )}
       </div>
 
-      {/* Add service modal */}
+      {}
       {showAdd && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
           <div className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-2xl p-6 space-y-4">
@@ -324,7 +324,7 @@ export function ProviderServiceManagement() {
         </div>
       )}
 
-      {/* Edit price modal */}
+      {}
       {editSvc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">
@@ -361,7 +361,7 @@ export function ProviderServiceManagement() {
         </div>
       )}
 
-      {/* Delete confirm modal */}
+      {}
       {deleteSvc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">

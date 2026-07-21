@@ -10,12 +10,12 @@ import { Avatar, TopBar } from "@/shared/ui";
 import { formatVnd, getApiAssetUrl } from "@/shared/lib";
 import { useGoBack } from "@/app/routes/useGoBack";
 
-const DEFAULT_CENTER = { lat: 10.7769, lng: 106.7009 }; // TP.HCM
+const DEFAULT_CENTER = { lat: 10.7769, lng: 106.7009 }; 
 const RADIUS_KM = 10;
 
 type LatLng = { lat: number; lng: number };
 
-/** Colored circle marker as an inline SVG divIcon (no external asset paths). */
+
 function markerIcon(color: string, bounce: boolean): L.DivIcon {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="10" fill="${color}" stroke="white" stroke-width="3"/></svg>`;
   return L.divIcon({
@@ -26,7 +26,7 @@ function markerIcon(color: string, bounce: boolean): L.DivIcon {
   });
 }
 
-/** 1–2 chữ cái đầu của tên (vd "Nguyễn Văn A" → "NA") cho avatar trên ghim. */
+
 function initialsOf(name: string): string {
   const parts = (name || "").trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -35,10 +35,7 @@ function initialsOf(name: string): string {
   return (first + last).toUpperCase();
 }
 
-/**
- * Ghim hình giọt nước cắm đúng tọa độ, đầu ghim là avatar chữ cái của thợ, thân
- * ghim tô màu theo trạng thái (xanh = rảnh, cam = bận). Nảy nhẹ khi được chọn.
- */
+
 function taskerPinIcon(name: string, color: string, bounce: boolean): L.DivIcon {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50">
     <path d="M20 0C9 0 0 9 0 20c0 13 20 30 20 30s20-17 20-30C40 9 31 0 20 0z" fill="${color}"/>
@@ -62,7 +59,7 @@ function CenterMessage({ icon, text }: { icon: React.ReactNode; text: string }) 
   );
 }
 
-/** Recenter the map imperatively whenever `center` changes. */
+
 function Recenter({ center }: { center: LatLng }) {
   const map = useMap();
   useEffect(() => {
@@ -120,7 +117,7 @@ export function TechnicianMap({
   const [locReady, setLocReady] = useState(false);
   const [selectedTaskerId, setSelectedTaskerId] = useState<number | null>(null);
 
-  // Try to get the user's real location; fall back to the default center.
+  
   useEffect(() => {
     if (!navigator.geolocation) {
       setLocReady(true);
@@ -136,7 +133,7 @@ export function TechnicianMap({
     );
   }, []);
 
-  // Nearby taskers for this service around the current center.
+  
   const {
     data: taskers = [],
     loading,
@@ -157,7 +154,7 @@ export function TechnicianMap({
     if (serviceId && locReady) void refetch();
   }, [serviceId, locReady, center.lat, center.lng, refetch]);
 
-  // Quick info for the tapped marker.
+  
   const {
     data: quickInfo,
     loading: loadingQuick,
@@ -172,7 +169,7 @@ export function TechnicianMap({
 
   const selectedNearby = taskers.find((t) => t.taskerId === selectedTaskerId);
 
-  // ── Guards ────────────────────────────────────────────────────────────────
+  
   if (!serviceId) {
     return (
       <div className="flex flex-col h-full">
@@ -197,7 +194,7 @@ export function TechnicianMap({
     <div className="flex flex-col h-full relative">
       <TopBar title="Tìm thợ gần bạn" onBack={goBack} />
 
-      {/* Map */}
+      {}
       <div className="flex-1 relative overflow-hidden bg-blue-50">
         {!locReady ? (
           <CenterMessage
@@ -213,7 +210,7 @@ export function TechnicianMap({
           />
         )}
 
-        {/* Legend */}
+        {}
         <div className="absolute top-3 left-14 bg-white/90 backdrop-blur rounded-xl px-3 py-2 shadow z-[1000]">
           <p className="text-xs font-bold text-foreground mb-1.5">Trạng thái thợ</p>
           {[
@@ -228,7 +225,7 @@ export function TechnicianMap({
           ))}
         </div>
 
-        {/* Result count / status */}
+        {}
         <div className="absolute top-3 right-3 bg-white/90 backdrop-blur rounded-xl px-3 py-2 shadow z-[1000] text-xs font-semibold">
           {loading ? (
             <span className="flex items-center gap-1.5 text-muted-foreground">
@@ -244,7 +241,7 @@ export function TechnicianMap({
         </div>
       </div>
 
-      {/* Bottom sheet — quick info of the selected tasker */}
+      {}
       {selectedTaskerId ? (
         <div className="bg-white border-t border-border p-4 space-y-3">
           {loadingQuick && !quickInfo ? (

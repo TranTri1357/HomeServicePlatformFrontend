@@ -12,7 +12,7 @@ export type GetAdminCommissionsParams = {
   pageSize?: number;
 };
 
-/** GET /api/admin/commissions — paged commission-rule list. Requires Admin/SuperAdmin. */
+
 export async function getCommissions(
   params?: GetAdminCommissionsParams,
 ): Promise<PagedResult<AdminCommissionItem>> {
@@ -22,13 +22,13 @@ export async function getCommissions(
   return unwrap(response);
 }
 
-/** POST /api/admin/commissions — create a commission rule. Returns the new id. */
+
 export async function createCommission(input: CreateCommissionInput): Promise<number> {
   const response = await post<ApiResponse<number>>("/admin/commissions", input);
   return unwrap(response);
 }
 
-/** PUT /api/admin/commissions/{id} — update a commission rule. */
+
 export async function updateCommission(
   id: number,
   input: UpdateCommissionInput,
@@ -37,7 +37,7 @@ export async function updateCommission(
   return unwrap(response);
 }
 
-/** DELETE /api/admin/commissions/{id} — terminate (end) a commission rule. */
+
 export async function terminateCommission(id: number): Promise<boolean> {
   const response = await del<ApiResponse<boolean>>(`/admin/commissions/${id}`);
   return unwrap(response);

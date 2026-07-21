@@ -1,4 +1,4 @@
-/** Global search results — GET /api/Search?keyword=. */
+
 export interface SearchCategoryResult {
   id: number;
   name: string;

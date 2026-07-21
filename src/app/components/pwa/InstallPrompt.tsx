@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Download, Share, Plus, X } from "lucide-react";
 
-/** Sự kiện Chrome/Edge bắn ra khi trang đủ điều kiện cài đặt. Chưa có trong lib.dom. */
+
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
@@ -9,13 +9,13 @@ interface BeforeInstallPromptEvent extends Event {
 
 const DISMISS_KEY = "pwa-install-dismissed-at";
 const DISMISS_DAYS = 7;
-/** Đợi một lát rồi mới mời cài, tránh chặn ngay khi người dùng vừa mở app. */
+
 const SHOW_DELAY_MS = 8000;
 
 function isStandalone() {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
-    // iOS Safari không hỗ trợ display-mode, dùng cờ riêng của Apple.
+    
     (window.navigator as { standalone?: boolean }).standalone === true
   );
 }
@@ -32,17 +32,7 @@ function wasDismissedRecently() {
   return Date.now() - at < DISMISS_DAYS * 24 * 60 * 60 * 1000;
 }
 
-/**
- * Mời người dùng thêm app vào màn hình chính.
- *
- * Hai đường đi khác nhau:
- * - Android/Chrome/Edge: bắt `beforeinstallprompt`, gọi prompt() để hiện hộp
- *   thoại cài đặt thật của hệ điều hành.
- * - iOS/Safari: KHÔNG có API cài đặt, chỉ còn cách hướng dẫn thao tác tay
- *   (Chia sẻ → Thêm vào MH chính).
- *
- * Mount một lần trong AppProviders.
- */
+
 export function InstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIOSHint, setShowIOSHint] = useState(false);
@@ -51,7 +41,7 @@ export function InstallPrompt() {
     if (isStandalone() || wasDismissedRecently()) return;
 
     const onBeforeInstall = (e: Event) => {
-      // Chặn banner mặc định của trình duyệt để tự chọn thời điểm hiện.
+      
       e.preventDefault();
       const evt = e as BeforeInstallPromptEvent;
       setTimeout(() => setDeferred(evt), SHOW_DELAY_MS);
@@ -85,7 +75,7 @@ export function InstallPrompt() {
     if (!deferred) return;
     await deferred.prompt();
     await deferred.userChoice;
-    // Sự kiện chỉ dùng được một lần; bỏ đi dù người dùng chọn gì.
+    
     setDeferred(null);
     localStorage.setItem(DISMISS_KEY, String(Date.now()));
   };
@@ -95,7 +85,7 @@ export function InstallPrompt() {
   return (
     <div
       className="fixed left-3 right-3 z-[60] mx-auto max-w-md rounded-2xl border border-border bg-white p-4 shadow-lg"
-      // Nhấc lên trên bottom nav (~64px) và vùng gesture của máy.
+      
       style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 76px)" }}
       role="dialog"
       aria-label="Cài đặt ứng dụng"

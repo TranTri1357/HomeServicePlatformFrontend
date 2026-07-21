@@ -18,19 +18,19 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
   const [online, setOnline] = useState(true);
   const [togglingOnline, setTogglingOnline] = useState(false);
 
-  // Seed the toggle from the server state once loaded.
+  
   useEffect(() => {
     if (dashboard) setOnline(dashboard.isAvailable);
   }, [dashboard]);
 
   const toggleOnline = async () => {
     const next = !online;
-    setOnline(next); // optimistic
+    setOnline(next); 
     setTogglingOnline(true);
     try {
       await taskerApi.setAvailability(next);
     } catch (err) {
-      setOnline(!next); // revert
+      setOnline(!next); 
       notify.error(err);
     } finally {
       setTogglingOnline(false);
@@ -38,7 +38,7 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
   };
 
   const name = dashboard?.fullName || user?.fullName || "Thợ";
-  // "Việc hôm nay" đã được server tính sẵn (theo giờ VN, đã loại đơn hủy).
+  
   const todayJobs = dashboard?.todayJobs ?? [];
 
   const weekly = dashboard?.weeklyRevenue ?? [];
@@ -82,7 +82,7 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
 
   return (
     <div className="overflow-y-auto h-full">
-      {/* Header */}
+      {}
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 px-4 pt-6 pb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -115,7 +115,7 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
           </div>
         </div>
 
-        {/* Online Toggle */}
+        {}
         <div className="bg-white/10 rounded-2xl p-3 flex items-center justify-between">
           <div>
             <p className="text-white font-semibold text-sm">Trạng thái nhận việc</p>
@@ -138,7 +138,7 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
       </div>
 
       <div className="px-4 -mt-4 space-y-4 pb-6">
-        {/* Stats Grid */}
+        {}
         <div className="grid grid-cols-2 gap-3">
           {stats.map((stat) => (
             <div key={stat.label} className="bg-white rounded-2xl p-4 shadow-sm">
@@ -153,7 +153,7 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
           ))}
         </div>
 
-        {/* Month earnings breakdown (sau khi trừ hoa hồng) */}
+        {}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-foreground">Thu nhập tháng này</h3>
@@ -180,7 +180,7 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
           </div>
         </div>
 
-        {/* Today's Jobs */}
+        {}
         <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <h3 className="font-bold text-foreground">Công việc hôm nay</h3>
@@ -226,7 +226,7 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
           )}
         </div>
 
-        {/* Revenue Chart */}
+        {}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-foreground">Doanh thu 7 ngày</h3>
@@ -248,16 +248,14 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
               </p>
             </div>
           ) : (
-            /* Cột phải cao bằng cả khung (items-stretch) và vùng vẽ cột dùng flex-1 để có
-               chiều cao XÁC ĐỊNH. Nếu để cột cao "auto" thì height tính theo % của thanh bar
-               không có mốc quy chiếu và bị trình duyệt thu về 0 — biểu đồ trắng trơn. */
+            
             <div className="flex items-stretch gap-2 h-32">
               {weekly.map((d, i) => {
                 const pct = Math.round((d.amount / maxRevenue) * 100);
                 const isLast = i === weekly.length - 1;
                 return (
                   <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
-                    {/* Số tiền của ngày, đặt ngay trên đầu cột */}
+                    {}
                     <span
                       className={`text-[10px] font-semibold ${isLast ? "text-blue-600" : "text-muted-foreground"}`}
                     >
@@ -266,8 +264,8 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
                     <div className="flex-1 w-full flex items-end">
                       <div
                         className={`w-full rounded-t-lg transition-all ${isLast ? "bg-blue-600" : "bg-blue-100"}`}
-                        // Cột có doanh thu luôn hiện tối thiểu 4% để không biến mất hẳn;
-                        // ngày không có doanh thu thì để trống đúng nghĩa.
+                        
+                        
                         style={{ height: d.amount > 0 ? `${Math.max(pct, 4)}%` : 0 }}
                         title={`${formatVnd(d.amount)}đ`}
                       />
@@ -282,7 +280,7 @@ export function ProviderDashboard({ onNavigate }: { onNavigate: (s: Screen) => v
           )}
         </div>
 
-        {/* Quick Actions */}
+        {}
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => onNavigate("providerJobManagement")}

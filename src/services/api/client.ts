@@ -1,15 +1,12 @@
-// ─── Environment config ────────────────────────────────────────────────────────
+
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://homeserviceplatform.onrender.com/api";
 export const WS_URL = import.meta.env.VITE_WS_URL || "https://homeserviceplatform.onrender.com";
 
-/**
- * Default request timeout (ms). The Render free tier can cold-start for tens of
- * seconds; without an upper bound a hung request would freeze the UI forever.
- */
+
 export const DEFAULT_TIMEOUT_MS = 15000;
 
-// ─── Token helpers ─────────────────────────────────────────────────────────────
+
 const TOKEN_KEYS = {
   access: "access_token",
   refresh: "refresh_token",
@@ -49,7 +46,7 @@ export function clearTokens() {
   }
 }
 
-// ─── Error type ────────────────────────────────────────────────────────────────
+
 export class ApiError extends Error {
   status: number;
   data: unknown;
@@ -62,8 +59,8 @@ export class ApiError extends Error {
   }
 }
 
-// ─── Standard backend envelope ───────────────────────────────────────────────
-/** Every backend endpoint replies with this shape: the data lives under `data`. */
+
+
 export interface ApiResponse<T> {
   succeeded: boolean;
   statusCode: number;
@@ -72,11 +69,7 @@ export interface ApiResponse<T> {
   errors: unknown[] | null;
 }
 
-/**
- * Unwrap an ApiResponse<T>: return `data` on success, or throw an ApiError
- * carrying the backend message on failure. Use this in every *.api.ts function
- * so components receive the payload directly, never the envelope.
- */
+
 export function unwrap<T>(response: ApiResponse<T>): T {
   if (!response?.succeeded || response.data == null) {
     const joinedErrors =
@@ -93,15 +86,11 @@ interface RequestOptions extends RequestInit {
   params?: Record<string, unknown>;
   skipAuth?: boolean;
   retryOnUnauthorized?: boolean;
-  /** Abort the request after this many ms. Defaults to DEFAULT_TIMEOUT_MS. */
+  
   timeoutMs?: number;
 }
 
-/**
- * fetch() that rejects after `timeoutMs` and normalizes failures into ApiError,
- * so the UI never stays stuck on a spinner and always gets a friendly message.
- * Honors a caller-provided AbortSignal in addition to the timeout.
- */
+
 async function fetchWithTimeout(
   url: string,
   init: RequestInit,
@@ -110,7 +99,7 @@ async function fetchWithTimeout(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-  // Chain any caller-provided signal into our controller.
+  
   const callerSignal = init.signal;
   if (callerSignal) {
     if (callerSignal.aborted) controller.abort();
@@ -121,7 +110,7 @@ async function fetchWithTimeout(
     return await fetch(url, { ...init, signal: controller.signal });
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") {
-      // Distinguish a real timeout from a caller cancellation.
+      
       if (callerSignal?.aborted) {
         throw new ApiError("Yêu cầu đã bị hủy", 0);
       }
@@ -138,7 +127,7 @@ function buildUrl(path: string, params?: RequestOptions["params"]) {
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value === undefined || value === null || value === "") return;
-      // Mảng -> lặp lại key (status=0&status=1) để khớp binding mảng của ASP.NET.
+      
       if (Array.isArray(value)) {
         value.forEach((v) => {
           if (v !== undefined && v !== null && v !== "") url.searchParams.append(key, String(v));
@@ -151,7 +140,7 @@ function buildUrl(path: string, params?: RequestOptions["params"]) {
   return url.toString();
 }
 
-/** Public auth endpoints must never trigger refresh/redirect loops. */
+
 function isPublicAuthPath(path: string) {
   const normalized = path.toLowerCase();
   return (
@@ -174,7 +163,7 @@ function extractBackendMessage(data: unknown, fallback: string) {
   if (typeof data === "object") {
     const obj = data as Record<string, unknown>;
 
-    // ASP.NET validation dictionary: { errors: { Field: ["msg"] } }
+    
     if (obj.errors && typeof obj.errors === "object" && !Array.isArray(obj.errors)) {
       const messages = Object.values(obj.errors as Record<string, unknown>)
         .flatMap((value) => (Array.isArray(value) ? value : [value]))
@@ -183,7 +172,7 @@ function extractBackendMessage(data: unknown, fallback: string) {
       if (messages.length > 0) return messages.join(". ");
     }
 
-    // ApiResponse-style: { errors: ["msg"] }
+    
     if (Array.isArray(obj.errors) && obj.errors.length > 0) {
       return obj.errors.map((value) => String(value)).join(". ");
     }
@@ -222,11 +211,7 @@ function forceLogoutToAuth() {
   }
 }
 
-/**
- * Single-flight refresh:
- * If many APIs get 401 at the same time, only one refresh request is sent.
- * Others await the same promise.
- */
+
 let refreshInFlight: Promise<string | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
@@ -237,8 +222,8 @@ async function refreshAccessToken(): Promise<string | null> {
     if (!currentRefreshToken) return null;
 
     try {
-      // Dynamic import avoids circular dependency:
-      // auth.api.ts imports post() from client.ts
+      
+      
       const { refreshToken } = await import("./auth.api");
       const pair = await refreshToken(currentRefreshToken);
       return pair.accessToken;
@@ -252,7 +237,7 @@ async function refreshAccessToken(): Promise<string | null> {
   return refreshInFlight;
 }
 
-// ─── Fetch wrapper — request/response interceptor style ───────────────────────
+
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const {
     params,
@@ -264,15 +249,15 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     ...fetchOptions
   } = options;
 
-  // Public auth APIs must never auto-refresh / hard-redirect.
-  // Backend returns 401 UnauthorizedException for wrong credentials on login.
+  
+  
   const isPublicAuth = isPublicAuthPath(path);
   const shouldRetryUnauthorized = retryOnUnauthorized && !skipAuth && !isPublicAuth;
 
   const token = getAccessToken();
   const finalHeaders = new Headers(headers);
-  // Với FormData (upload file) KHÔNG tự set Content-Type — để trình duyệt tự thêm
-  // boundary "multipart/form-data; boundary=…". Ép JSON sẽ làm hỏng request upload.
+  
+  
   if (!finalHeaders.has("Content-Type") && body !== undefined && !(body instanceof FormData)) {
     finalHeaders.set("Content-Type", "application/json");
   }
@@ -290,12 +275,12 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     const newAccessToken = await refreshAccessToken();
 
     if (!newAccessToken) {
-      // Refresh failed: expired/revoked/locked/reuse attack, etc.
+      
       forceLogoutToAuth();
       throw new ApiError("Phiên đăng nhập đã hết hạn", 401);
     }
 
-    // Retry original request once with the new access token.
+    
     finalHeaders.set("Authorization", `Bearer ${newAccessToken}`);
     const retryResponse = await fetchWithTimeout(
       buildUrl(path, params),
@@ -303,7 +288,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
       timeoutMs,
     );
 
-    // If still unauthorized after a successful refresh, force re-login.
+    
     if (retryResponse.status === 401) {
       forceLogoutToAuth();
       throw new ApiError("Phiên đăng nhập đã hết hạn", 401);
@@ -315,7 +300,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   return parseResponse<T>(response);
 }
 
-// ─── Typed request helpers ─────────────────────────────────────────────────────
+
 export function get<T>(url: string, config?: Omit<RequestOptions, "method" | "body">): Promise<T> {
   return request<T>(url, { ...config, method: "GET" });
 }
@@ -332,10 +317,7 @@ export function post<T>(
   });
 }
 
-/**
- * POST multipart/form-data (upload file). Truyền thẳng FormData làm body — interceptor
- * tự gắn Bearer token, và KHÔNG ép Content-Type để trình duyệt tự set boundary.
- */
+
 export function postForm<T>(
   url: string,
   formData: FormData,

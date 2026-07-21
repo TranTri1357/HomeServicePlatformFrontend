@@ -4,9 +4,9 @@ import type { Screen } from "@/shared/types";
 interface CustomerNavProps {
   current: Screen;
   onNavigate: (s: Screen) => void;
-  /** Count shown as a red badge on "Lịch đặt". */
+  
   jobBadge?: number;
-  /** Khách vãng lai (chưa đăng nhập): hiện nav rút gọn + nút Đăng nhập. */
+  
   guest?: boolean;
 }
 
