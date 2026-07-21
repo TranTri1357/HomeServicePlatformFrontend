@@ -14,6 +14,7 @@ import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { notify, getErrorMessage } from "@/shared/lib";
+import { useTaskerApproval, TaskerApprovalNotice } from "@/components/TaskerApprovalGate";
 
 const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"]; 
 const MONTHS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
@@ -56,6 +57,7 @@ const SLOT_STYLE: Record<number, { cls: string; label?: string }> = {
 
 export function ProviderSchedule() {
   const goBack = useGoBack("providerDashboard");
+  const approval = useTaskerApproval();
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const isoDate = toISODate(selectedDate);
 
@@ -70,9 +72,9 @@ export function ProviderSchedule() {
   );
   
   useEffect(() => {
-    void refetch();
-    
-  }, [isoDate]);
+    if (approval.approved) void refetch();
+
+  }, [isoDate, approval.approved]);
 
   
   const [showSetup, setShowSetup] = useState(false);
@@ -131,16 +133,24 @@ export function ProviderSchedule() {
         title="Lịch làm việc"
         onBack={goBack}
         actions={
-          <button
-            onClick={() => setShowSetup(true)}
-            className="text-blue-600 text-xs font-semibold flex items-center gap-1"
-          >
-            <Settings className="w-3.5 h-3.5" />
-            Giờ làm
-          </button>
+          approval.approved ? (
+            <button
+              onClick={() => setShowSetup(true)}
+              className="text-blue-600 text-xs font-semibold flex items-center gap-1"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              Giờ làm
+            </button>
+          ) : undefined
         }
       />
 
+      {!approval.approved ? (
+        <div className="flex-1 overflow-y-auto">
+          <TaskerApprovalNotice approval={approval} />
+        </div>
+      ) : (
+      <>
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {}
         <div className="bg-white rounded-2xl p-4">
@@ -388,6 +398,8 @@ export function ProviderSchedule() {
             </div>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   );

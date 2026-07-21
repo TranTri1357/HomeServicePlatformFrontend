@@ -17,9 +17,11 @@ import { useGoBack } from "@/app/routes/useGoBack";
 import { useApi } from "@/shared/hooks";
 import { TopBar } from "@/shared/ui";
 import { formatVnd, notify, getErrorMessage, getApiAssetUrl } from "@/shared/lib";
+import { useTaskerApproval, TaskerApprovalNotice } from "@/components/TaskerApprovalGate";
 
 export function ProviderServiceManagement() {
   const goBack = useGoBack("providerDashboard");
+  const approval = useTaskerApproval();
   const [search, setSearch] = useState("");
 
   const { data: services = [], loading, error, refetch } = useApi(() =>
@@ -126,15 +128,23 @@ export function ProviderServiceManagement() {
         title="Dịch vụ & giá"
         onBack={goBack}
         actions={
-          <button
-            onClick={openAdd}
-            className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-4 h-4 text-white" />
-          </button>
+          approval.approved ? (
+            <button
+              onClick={openAdd}
+              className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-4 h-4 text-white" />
+            </button>
+          ) : undefined
         }
       />
 
+      {!approval.approved ? (
+        <div className="flex-1 overflow-y-auto">
+          <TaskerApprovalNotice approval={approval} />
+        </div>
+      ) : (
+      <>
       {}
       <div className="bg-white px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2.5">
@@ -388,6 +398,8 @@ export function ProviderServiceManagement() {
             </div>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   );
